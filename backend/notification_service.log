@@ -15031,3 +15031,612 @@ ValueError: Unsupported notification type: incidentReviewerAssigned
 2025-07-07 22:33:52,399 - mysql.connector - INFO - plugin_name: caching_sha2_password
 2025-07-07 22:33:52,399 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
 2025-07-07 22:33:52,865 - botocore.credentials - INFO - Found credentials in shared credentials file: ~/.aws/credentials
+2025-07-08 03:02:31,771 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:02:32,920 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:02:32,920 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:02:32,920 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:03:30,874 - django.request - ERROR - Internal Server Error: /api/upload-file/
+2025-07-08 03:05:19,666 - django.request - ERROR - Internal Server Error: /api/upload-file/
+2025-07-08 03:07:13,177 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\s3_fucntions.py changed, reloading.
+2025-07-08 03:07:22,655 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:08:34,771 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:08:40,207 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:11:26,747 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:12:07,068 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:12:14,105 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:12:32,603 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:12:47,898 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:26:39,209 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:26:46,746 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:27:07,628 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:27:22,712 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:27:28,340 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\incident_views.py changed, reloading.
+2025-07-08 03:27:30,806 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:27:31,464 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:27:31,464 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:27:31,464 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:28:03,603 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 03:28:03,656 - grc.routes.policy - INFO - Successfully retrieved 232 frameworks
+2025-07-08 03:30:46,107 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:30:46,125 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:30:46,125 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.evaluate = ALLOWED
+2025-07-08 03:30:46,126 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:30:46,126 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:30:46,127 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_EVALUATE
+2025-07-08 03:30:46,127 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 03:30:46,127 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:30:46.127701
+2025-07-08 03:30:46,132 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:30:46,133 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:30:46,137 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:30:46,141 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 03:30:46,141 - grc.rbac.utils - INFO - [RBAC DEBUG] Permission Result: UNKNOWN ACTION
+2025-07-08 03:30:46,142 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:33:43,635 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:33:43,641 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:33:43,642 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) risk.view = ALLOWED
+2025-07-08 03:33:43,643 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:33:43,644 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:33:43,645 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: RISK_VIEW
+2025-07-08 03:33:43,646 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: risk (ID: None)
+2025-07-08 03:33:43,647 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:33:43.647328
+2025-07-08 03:33:43,652 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:33:43,654 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:33:43,655 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:33:43,655 - grc.rbac.utils - INFO - [RBAC DEBUG] Risk Permissions: {'CREATE_RISK': True, 'VIEW_RISK': True, 'EDIT_RISK': True, 'APPROVE_RISK': True, 'ASSIGN_RISK': True, 'EVALUATE_RISK': True, 'RISK_ANALYTICS': True}
+2025-07-08 03:33:43,656 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'RISK_VIEW' requires 'view_all_risk': GRANTED
+2025-07-08 03:33:43,656 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:33:44,260 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:33:44,263 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:33:44,264 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:33:44,265 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_business_impacts
+2025-07-08 03:33:44,266 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_risk_categories
+2025-07-08 03:33:44,266 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_all_compliances_for_dropdown
+2025-07-08 03:33:44,267 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:44,267 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:44,267 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:44,268 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/business-impacts/
+2025-07-08 03:33:44,268 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/risk-categories/
+2025-07-08 03:33:44,268 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/compliances-for-dropdown/
+2025-07-08 03:33:44,268 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:33:44,269 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:33:44,269 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:33:44,279 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:33:44,279 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:33:44,280 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:33:44,289 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:33:44,290 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:33:44,290 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:33:44,291 - grc.rbac.utils - INFO - [RBAC] ===== PERMISSION CHECK DETAILS =====
+2025-07-08 03:33:44,291 - grc.rbac.utils - INFO - [RBAC] ===== PERMISSION CHECK DETAILS =====
+2025-07-08 03:33:44,291 - grc.rbac.utils - INFO - [RBAC] ===== PERMISSION CHECK DETAILS =====
+2025-07-08 03:33:44,291 - grc.rbac.utils - INFO - [RBAC] User: 2 (vikram.patel)
+2025-07-08 03:33:44,291 - grc.rbac.utils - INFO - [RBAC] User: 2 (vikram.patel)
+2025-07-08 03:33:44,291 - grc.rbac.utils - INFO - [RBAC] User: 2 (vikram.patel)
+2025-07-08 03:33:44,291 - grc.rbac.utils - INFO - [RBAC] Role: GRC Administrator
+2025-07-08 03:33:44,291 - grc.rbac.utils - INFO - [RBAC] Role: GRC Administrator
+2025-07-08 03:33:44,291 - grc.rbac.utils - INFO - [RBAC] Role: GRC Administrator
+2025-07-08 03:33:44,294 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_business_impacts
+2025-07-08 03:33:44,294 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_all_compliances_for_dropdown
+2025-07-08 03:33:44,295 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_risk_categories
+2025-07-08 03:33:44,295 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:44,296 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:44,296 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:44,297 - grc.rbac.utils - INFO - [RBAC] Permission Value: True
+2025-07-08 03:33:44,298 - grc.rbac.utils - INFO - [RBAC] Permission Value: True
+2025-07-08 03:33:44,300 - grc.rbac.utils - INFO - [RBAC] Permission Value: True
+2025-07-08 03:33:44,300 - grc.rbac.utils - INFO - [RBAC] Result: ACCESS GRANTED
+2025-07-08 03:33:44,301 - grc.rbac.utils - INFO - [RBAC] Result: ACCESS GRANTED
+2025-07-08 03:33:44,301 - grc.rbac.utils - INFO - [RBAC] Result: ACCESS GRANTED
+2025-07-08 03:33:44,302 - grc.rbac.utils - INFO - [RBAC] =====================================
+2025-07-08 03:33:44,302 - grc.rbac.utils - INFO - [RBAC] =====================================
+2025-07-08 03:33:44,302 - grc.rbac.utils - INFO - [RBAC] =====================================
+2025-07-08 03:33:44,303 - grc.rbac.decorators - INFO - [RBAC DECORATOR] Access granted to get_business_impacts for user 2
+2025-07-08 03:33:44,303 - grc.rbac.decorators - INFO - [RBAC DECORATOR] Access granted to get_all_compliances_for_dropdown for user 2
+2025-07-08 03:33:44,304 - grc.rbac.decorators - INFO - [RBAC DECORATOR] Access granted to get_risk_categories for user 2
+2025-07-08 03:33:48,039 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:33:48,040 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_all_risks_for_dropdown
+2025-07-08 03:33:48,041 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:33:48,045 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:33:48,045 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:48,048 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:33:48,049 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_users_for_dropdown
+2025-07-08 03:33:48,051 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:33:48,054 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_all_compliances_for_dropdown
+2025-07-08 03:33:48,055 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/risks-for-dropdown/
+2025-07-08 03:33:48,055 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_business_impacts
+2025-07-08 03:33:48,056 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:48,057 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_risk_categories
+2025-07-08 03:33:48,057 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:48,058 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:33:48,058 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:48,059 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/users-for-dropdown/
+2025-07-08 03:33:48,059 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:33:48,060 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/compliances-for-dropdown/
+2025-07-08 03:33:48,061 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/business-impacts/
+2025-07-08 03:33:48,061 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:33:48,061 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:33:48,062 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/risk-categories/
+2025-07-08 03:33:48,063 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:33:48,065 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:33:48,068 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_all_risks_for_dropdown
+2025-07-08 03:33:48,070 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:33:48,070 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:33:48,070 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_all_risks_for_dropdown: No user ID found in session
+2025-07-08 03:33:48,070 - django.request - WARNING - Forbidden: /api/risks-for-dropdown/
+2025-07-08 03:33:48,070 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:33:48,070 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_users_for_dropdown
+2025-07-08 03:33:48,070 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:33:48,074 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_users_for_dropdown: No user ID found in session
+2025-07-08 03:33:48,074 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:33:48,074 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_all_compliances_for_dropdown
+2025-07-08 03:33:48,074 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_business_impacts
+2025-07-08 03:33:48,074 - django.request - WARNING - Forbidden: /api/users-for-dropdown/
+2025-07-08 03:33:48,076 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_risk_categories
+2025-07-08 03:33:48,076 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_all_compliances_for_dropdown: No user ID found in session
+2025-07-08 03:33:48,077 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_business_impacts: No user ID found in session
+2025-07-08 03:33:48,078 - django.request - WARNING - Forbidden: /api/compliances-for-dropdown/
+2025-07-08 03:33:48,077 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_risk_categories: No user ID found in session
+2025-07-08 03:33:48,081 - django.request - WARNING - Forbidden: /api/business-impacts/
+2025-07-08 03:33:48,086 - django.request - WARNING - Forbidden: /api/risk-categories/
+2025-07-08 03:34:29,256 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:34:29,263 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:34:29,264 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 03:34:29,266 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:34:29,266 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:34:29,266 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 03:34:29,266 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 03:34:29,266 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:34:29.266013
+2025-07-08 03:34:29,266 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:34:29,273 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:34:29,274 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:34:29,274 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 03:34:29,275 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 03:34:29,276 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:34:30,466 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:34:30,479 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:34:30,480 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 03:34:30,488 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:34:30,489 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:34:30,491 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 03:34:30,492 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 03:34:30,493 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:34:30.493275
+2025-07-08 03:34:30,501 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:34:30,501 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:34:30,501 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:34:30,501 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 03:34:30,505 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 03:34:30,506 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:34:40,137 - grc.views - INFO - Login attempt for user: vikram.patel
+2025-07-08 03:34:40,607 - grc.rbac.utils - INFO - [RBAC] ===== USER LOGIN PERMISSIONS AUDIT =====
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] User ID: 2
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] Username: vikram.patel
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] Role: GRC Administrator
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] Account Status: ACTIVE
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] Login Time: 2025-07-08 03:34:40.624074
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] 
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] === INCIDENT MODULE PERMISSIONS ===
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] Create Incidents: YES
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] View All Incidents: YES
+2025-07-08 03:34:40,624 - grc.rbac.utils - INFO - [RBAC] Edit Incidents: YES
+2025-07-08 03:34:40,635 - grc.rbac.utils - INFO - [RBAC] Assign Incidents: YES
+2025-07-08 03:34:40,635 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Incidents: YES
+2025-07-08 03:34:40,635 - grc.rbac.utils - INFO - [RBAC] Escalate to Risk: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Incident Analytics: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] === POLICY MODULE PERMISSIONS ===
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Create Policy: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] View All Policy: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Edit Policy: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Approve Policy: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Create Framework: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Approve Framework: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Policy Analytics: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] === AUDIT MODULE PERMISSIONS ===
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Assign Audit: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Conduct Audit: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Review Audit: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] View Audit Reports: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Audit Analytics: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] === RISK MODULE PERMISSIONS ===
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Create Risk: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] View All Risk: YES
+2025-07-08 03:34:40,639 - grc.rbac.utils - INFO - [RBAC] Edit Risk: YES
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] Approve Risk: YES
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] Assign Risk: YES
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Risk: YES
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] Risk Analytics: YES
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] === COMPLIANCE MODULE PERMISSIONS ===
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] Create Compliance: YES
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] View All Compliance: YES
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] Edit Compliance: YES
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] Approve Compliance: YES
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] Compliance Analytics: YES
+2025-07-08 03:34:40,655 - grc.rbac.utils - INFO - [RBAC] ===============================================
+2025-07-08 03:34:40,655 - grc.views - INFO - Successful login for user: vikram.patel
+2025-07-08 03:34:40,726 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:34:40,744 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:34:40,753 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 03:34:40,792 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:34:40,795 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:34:40,795 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 03:34:40,804 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 03:34:40,807 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:34:40.807424
+2025-07-08 03:34:40,818 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:34:40,820 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:34:40,820 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:34:40,820 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 03:34:40,820 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 03:34:40,820 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:34:44,575 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:34:44,576 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:34:44,576 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:34:44,576 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:34:44,576 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:34:44,576 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_all_risks_for_dropdown
+2025-07-08 03:34:44,581 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_all_compliances_for_dropdown
+2025-07-08 03:34:44,583 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_risk_categories
+2025-07-08 03:34:44,584 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_users_for_dropdown
+2025-07-08 03:34:44,585 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_business_impacts
+2025-07-08 03:34:44,586 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:34:44,586 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:34:44,586 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:34:44,587 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:34:44,587 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:34:44,587 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/risks-for-dropdown/
+2025-07-08 03:34:44,588 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/compliances-for-dropdown/
+2025-07-08 03:34:44,588 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/risk-categories/
+2025-07-08 03:34:44,589 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/users-for-dropdown/
+2025-07-08 03:34:44,589 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/business-impacts/
+2025-07-08 03:34:44,590 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:34:44,592 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:34:44,591 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:34:44,592 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:34:44,590 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:34:44,594 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:34:44,596 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:34:44,596 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:34:44,600 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_risk_categories
+2025-07-08 03:34:44,600 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_all_risks_for_dropdown
+2025-07-08 03:34:44,600 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_risk_categories: No user ID found in session
+2025-07-08 03:34:44,601 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:34:44,601 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:34:44,603 - django.request - WARNING - Forbidden: /api/risk-categories/
+2025-07-08 03:34:44,602 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_business_impacts
+2025-07-08 03:34:44,602 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_all_risks_for_dropdown: No user ID found in session
+2025-07-08 03:34:44,604 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_users_for_dropdown
+2025-07-08 03:34:44,604 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_all_compliances_for_dropdown
+2025-07-08 03:34:44,608 - django.request - WARNING - Forbidden: /api/risks-for-dropdown/
+2025-07-08 03:34:44,605 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_business_impacts: No user ID found in session
+2025-07-08 03:34:44,609 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_users_for_dropdown: No user ID found in session
+2025-07-08 03:34:44,611 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_all_compliances_for_dropdown: No user ID found in session
+2025-07-08 03:34:44,612 - django.request - WARNING - Forbidden: /api/business-impacts/
+2025-07-08 03:34:44,615 - django.request - WARNING - Forbidden: /api/users-for-dropdown/
+2025-07-08 03:34:44,616 - django.request - WARNING - Forbidden: /api/compliances-for-dropdown/
+2025-07-08 03:34:51,028 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\urls.py changed, reloading.
+2025-07-08 03:34:53,727 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:34:54,251 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:34:54,252 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:34:54,252 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:37:14,506 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:37:14,537 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:37:14,538 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 03:37:14,539 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:37:14,540 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:37:14,544 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 03:37:14,550 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 03:37:14,551 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:37:14.551098
+2025-07-08 03:37:14,556 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:37:14,560 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:37:14,561 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:37:14,562 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 03:37:14,563 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 03:37:14,565 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:37:15,301 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:37:15,309 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:37:15,311 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 03:37:15,313 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:37:15,315 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:37:15,315 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 03:37:15,315 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 03:37:15,317 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:37:15.317116
+2025-07-08 03:37:15,321 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:37:15,322 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:37:15,324 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:37:15,326 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 03:37:15,330 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 03:37:15,337 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:37:23,571 - grc.views - INFO - Login attempt for user: vikram.patel
+2025-07-08 03:37:24,159 - grc.rbac.utils - INFO - [RBAC] ===== USER LOGIN PERMISSIONS AUDIT =====
+2025-07-08 03:37:24,159 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:37:24,159 - grc.rbac.utils - INFO - [RBAC] User ID: 2
+2025-07-08 03:37:24,159 - grc.rbac.utils - INFO - [RBAC] Username: vikram.patel
+2025-07-08 03:37:24,159 - grc.rbac.utils - INFO - [RBAC] Role: GRC Administrator
+2025-07-08 03:37:24,159 - grc.rbac.utils - INFO - [RBAC] Account Status: ACTIVE
+2025-07-08 03:37:24,168 - grc.rbac.utils - INFO - [RBAC] Login Time: 2025-07-08 03:37:24.168456
+2025-07-08 03:37:24,169 - grc.rbac.utils - INFO - [RBAC] 
+2025-07-08 03:37:24,169 - grc.rbac.utils - INFO - [RBAC] === INCIDENT MODULE PERMISSIONS ===
+2025-07-08 03:37:24,169 - grc.rbac.utils - INFO - [RBAC] Create Incidents: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] View All Incidents: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Edit Incidents: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Assign Incidents: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Incidents: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Escalate to Risk: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Incident Analytics: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] === POLICY MODULE PERMISSIONS ===
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Create Policy: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] View All Policy: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Edit Policy: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Approve Policy: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Create Framework: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Approve Framework: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] Policy Analytics: YES
+2025-07-08 03:37:24,173 - grc.rbac.utils - INFO - [RBAC] === AUDIT MODULE PERMISSIONS ===
+2025-07-08 03:37:24,184 - grc.rbac.utils - INFO - [RBAC] Assign Audit: YES
+2025-07-08 03:37:24,184 - grc.rbac.utils - INFO - [RBAC] Conduct Audit: YES
+2025-07-08 03:37:24,184 - grc.rbac.utils - INFO - [RBAC] Review Audit: YES
+2025-07-08 03:37:24,184 - grc.rbac.utils - INFO - [RBAC] View Audit Reports: YES
+2025-07-08 03:37:24,184 - grc.rbac.utils - INFO - [RBAC] Audit Analytics: YES
+2025-07-08 03:37:24,184 - grc.rbac.utils - INFO - [RBAC] === RISK MODULE PERMISSIONS ===
+2025-07-08 03:37:24,184 - grc.rbac.utils - INFO - [RBAC] Create Risk: YES
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] View All Risk: YES
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] Edit Risk: YES
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] Approve Risk: YES
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] Assign Risk: YES
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Risk: YES
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] Risk Analytics: YES
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] === COMPLIANCE MODULE PERMISSIONS ===
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] Create Compliance: YES
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] View All Compliance: YES
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] Edit Compliance: YES
+2025-07-08 03:37:24,190 - grc.rbac.utils - INFO - [RBAC] Approve Compliance: YES
+2025-07-08 03:37:24,199 - grc.rbac.utils - INFO - [RBAC] Compliance Analytics: YES
+2025-07-08 03:37:24,199 - grc.rbac.utils - INFO - [RBAC] ===============================================
+2025-07-08 03:37:24,199 - grc.views - INFO - Successful login for user: vikram.patel
+2025-07-08 03:37:24,267 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:37:24,316 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:37:24,327 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 03:37:24,333 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:37:24,338 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:37:24,342 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 03:37:24,343 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 03:37:24,344 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:37:24.344605
+2025-07-08 03:37:24,362 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:37:24,362 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:37:24,364 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:37:24,364 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 03:37:24,364 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 03:37:24,366 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:37:38,451 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:37:38,451 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_all_risks_for_dropdown
+2025-07-08 03:37:38,452 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:37:38,452 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/risks-for-dropdown/
+2025-07-08 03:37:38,453 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:37:38,454 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:37:38,455 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_all_risks_for_dropdown
+2025-07-08 03:37:38,455 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_all_risks_for_dropdown: No user ID found in session
+2025-07-08 03:37:38,456 - django.request - WARNING - Forbidden: /api/risks-for-dropdown/
+2025-07-08 03:37:38,471 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:37:38,473 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:37:38,473 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:37:38,473 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:37:38,473 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_users_for_dropdown
+2025-07-08 03:37:38,473 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_all_compliances_for_dropdown
+2025-07-08 03:37:38,478 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_business_impacts
+2025-07-08 03:37:38,479 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_risk_categories
+2025-07-08 03:37:38,480 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:37:38,481 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:37:38,481 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:37:38,481 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:37:38,482 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/users-for-dropdown/
+2025-07-08 03:37:38,482 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/compliances-for-dropdown/
+2025-07-08 03:37:38,482 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/business-impacts/
+2025-07-08 03:37:38,483 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/risk-categories/
+2025-07-08 03:37:38,483 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:37:38,484 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:37:38,485 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:37:38,486 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:37:38,488 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:37:38,489 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_users_for_dropdown
+2025-07-08 03:37:38,489 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:37:38,490 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:37:38,490 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:37:38,490 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_users_for_dropdown: No user ID found in session
+2025-07-08 03:37:38,490 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_all_compliances_for_dropdown
+2025-07-08 03:37:38,491 - django.request - WARNING - Forbidden: /api/users-for-dropdown/
+2025-07-08 03:37:38,491 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_business_impacts
+2025-07-08 03:37:38,491 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_risk_categories
+2025-07-08 03:37:38,492 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_all_compliances_for_dropdown: No user ID found in session
+2025-07-08 03:37:38,492 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_business_impacts: No user ID found in session
+2025-07-08 03:37:38,493 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_risk_categories: No user ID found in session
+2025-07-08 03:37:38,494 - django.request - WARNING - Forbidden: /api/compliances-for-dropdown/
+2025-07-08 03:37:38,494 - django.request - WARNING - Forbidden: /api/business-impacts/
+2025-07-08 03:37:38,495 - django.request - WARNING - Forbidden: /api/risk-categories/
+2025-07-08 03:41:20,484 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:41:23,742 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:41:24,384 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:41:24,384 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:41:24,384 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:41:30,406 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:41:33,278 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:41:33,950 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:41:33,951 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:41:33,952 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:45:15,854 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:45:18,234 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:45:18,779 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:45:18,780 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:45:18,782 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:45:27,980 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:45:30,768 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:45:31,245 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:45:31,245 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:45:31,245 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:49:50,076 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:49:50,086 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:49:50,091 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 03:49:50,100 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:49:50,103 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:49:50,103 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 03:49:50,106 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 03:49:50,106 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:49:50.106312
+2025-07-08 03:49:50,109 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:49:50,109 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:49:50,114 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:49:50,115 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 03:49:50,117 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 03:49:50,118 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:49:51,059 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:49:51,074 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:49:51,075 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 03:49:51,076 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:49:51,077 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:49:51,078 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 03:49:51,079 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 03:49:51,082 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:49:51.080811
+2025-07-08 03:49:51,090 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:49:51,092 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:49:51,093 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:49:51,100 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 03:49:51,104 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 03:49:51,105 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:51:27,755 - grc.views - INFO - Login attempt for user: vikram.patel
+2025-07-08 03:51:28,314 - grc.rbac.utils - INFO - [RBAC] ===== USER LOGIN PERMISSIONS AUDIT =====
+2025-07-08 03:51:28,330 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:51:28,330 - grc.rbac.utils - INFO - [RBAC] User ID: 2
+2025-07-08 03:51:28,330 - grc.rbac.utils - INFO - [RBAC] Username: vikram.patel
+2025-07-08 03:51:28,330 - grc.rbac.utils - INFO - [RBAC] Role: GRC Administrator
+2025-07-08 03:51:28,330 - grc.rbac.utils - INFO - [RBAC] Account Status: ACTIVE
+2025-07-08 03:51:28,330 - grc.rbac.utils - INFO - [RBAC] Login Time: 2025-07-08 03:51:28.330580
+2025-07-08 03:51:28,343 - grc.rbac.utils - INFO - [RBAC] 
+2025-07-08 03:51:28,343 - grc.rbac.utils - INFO - [RBAC] === INCIDENT MODULE PERMISSIONS ===
+2025-07-08 03:51:28,346 - grc.rbac.utils - INFO - [RBAC] Create Incidents: YES
+2025-07-08 03:51:28,346 - grc.rbac.utils - INFO - [RBAC] View All Incidents: YES
+2025-07-08 03:51:28,346 - grc.rbac.utils - INFO - [RBAC] Edit Incidents: YES
+2025-07-08 03:51:28,346 - grc.rbac.utils - INFO - [RBAC] Assign Incidents: YES
+2025-07-08 03:51:28,346 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Incidents: YES
+2025-07-08 03:51:28,351 - grc.rbac.utils - INFO - [RBAC] Escalate to Risk: YES
+2025-07-08 03:51:28,351 - grc.rbac.utils - INFO - [RBAC] Incident Analytics: YES
+2025-07-08 03:51:28,351 - grc.rbac.utils - INFO - [RBAC] === POLICY MODULE PERMISSIONS ===
+2025-07-08 03:51:28,351 - grc.rbac.utils - INFO - [RBAC] Create Policy: YES
+2025-07-08 03:51:28,351 - grc.rbac.utils - INFO - [RBAC] View All Policy: YES
+2025-07-08 03:51:28,351 - grc.rbac.utils - INFO - [RBAC] Edit Policy: YES
+2025-07-08 03:51:28,351 - grc.rbac.utils - INFO - [RBAC] Approve Policy: YES
+2025-07-08 03:51:28,351 - grc.rbac.utils - INFO - [RBAC] Create Framework: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] Approve Framework: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] Policy Analytics: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] === AUDIT MODULE PERMISSIONS ===
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] Assign Audit: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] Conduct Audit: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] Review Audit: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] View Audit Reports: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] Audit Analytics: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] === RISK MODULE PERMISSIONS ===
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] Create Risk: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] View All Risk: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] Edit Risk: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] Approve Risk: YES
+2025-07-08 03:51:28,362 - grc.rbac.utils - INFO - [RBAC] Assign Risk: YES
+2025-07-08 03:51:28,378 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Risk: YES
+2025-07-08 03:51:28,378 - grc.rbac.utils - INFO - [RBAC] Risk Analytics: YES
+2025-07-08 03:51:28,378 - grc.rbac.utils - INFO - [RBAC] === COMPLIANCE MODULE PERMISSIONS ===
+2025-07-08 03:51:28,378 - grc.rbac.utils - INFO - [RBAC] Create Compliance: YES
+2025-07-08 03:51:28,378 - grc.rbac.utils - INFO - [RBAC] View All Compliance: YES
+2025-07-08 03:51:28,378 - grc.rbac.utils - INFO - [RBAC] Edit Compliance: YES
+2025-07-08 03:51:28,378 - grc.rbac.utils - INFO - [RBAC] Approve Compliance: YES
+2025-07-08 03:51:28,378 - grc.rbac.utils - INFO - [RBAC] Compliance Analytics: YES
+2025-07-08 03:51:28,378 - grc.rbac.utils - INFO - [RBAC] ===============================================
+2025-07-08 03:51:28,378 - grc.views - INFO - Successful login for user: vikram.patel
+2025-07-08 03:51:28,461 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 03:51:28,469 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:51:28,476 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 03:51:28,476 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 03:51:28,492 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 03:51:28,507 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 03:51:28,513 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 03:51:28,521 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 03:51:28.521278
+2025-07-08 03:51:28,536 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 03:51:28,537 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 03:51:28,540 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 03:51:28,543 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 03:51:28,555 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 03:51:28,561 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 03:51:32,882 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:51:32,883 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_all_risks_for_dropdown
+2025-07-08 03:51:32,885 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:51:32,887 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:51:32,887 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:51:32,890 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:51:32,891 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_users_for_dropdown
+2025-07-08 03:51:32,893 - grc.rbac.utils - INFO - [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+2025-07-08 03:51:32,893 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_all_compliances_for_dropdown
+2025-07-08 03:51:32,894 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/risks-for-dropdown/
+2025-07-08 03:51:32,894 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_business_impacts
+2025-07-08 03:51:32,896 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:51:32,898 - grc.rbac.utils - INFO - [RBAC] Endpoint: get_risk_categories
+2025-07-08 03:51:32,898 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:51:32,900 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:51:32,901 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:51:32,902 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/users-for-dropdown/
+2025-07-08 03:51:32,903 - grc.rbac.utils - INFO - [RBAC] Required Permission: view_all_risk
+2025-07-08 03:51:32,904 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/compliances-for-dropdown/
+2025-07-08 03:51:32,906 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/business-impacts/
+2025-07-08 03:51:32,907 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:51:32,908 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:51:32,909 - grc.rbac.utils - INFO - [RBAC] Request Path: /api/risk-categories/
+2025-07-08 03:51:32,909 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:51:32,910 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:51:32,911 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:51:32,912 - grc.rbac.utils - INFO - [RBAC] Request Method: GET
+2025-07-08 03:51:32,912 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_all_risks_for_dropdown
+2025-07-08 03:51:32,913 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:51:32,914 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_all_risks_for_dropdown: No user ID found in session
+2025-07-08 03:51:32,915 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:51:32,916 - django.request - WARNING - Forbidden: /api/risks-for-dropdown/
+2025-07-08 03:51:32,918 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_all_compliances_for_dropdown
+2025-07-08 03:51:32,919 - grc.rbac.utils - WARNING - [RBAC] No user_id found in session
+2025-07-08 03:51:32,919 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_users_for_dropdown
+2025-07-08 03:51:32,920 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_business_impacts
+2025-07-08 03:51:32,922 - grc.rbac.utils - WARNING - [RBAC] Access DENIED - No user_id in session for endpoint: get_risk_categories
+2025-07-08 03:51:32,920 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_all_compliances_for_dropdown: No user ID found in session
+2025-07-08 03:51:32,923 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_users_for_dropdown: No user ID found in session
+2025-07-08 03:51:32,924 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_business_impacts: No user ID found in session
+2025-07-08 03:51:32,925 - django.request - WARNING - Forbidden: /api/compliances-for-dropdown/
+2025-07-08 03:51:32,924 - grc.rbac.decorators - WARNING - [RBAC DECORATOR] Access denied to get_risk_categories: No user ID found in session
+2025-07-08 03:51:32,926 - django.request - WARNING - Forbidden: /api/users-for-dropdown/
+2025-07-08 03:51:32,927 - django.request - WARNING - Forbidden: /api/business-impacts/
+2025-07-08 03:51:32,927 - django.request - WARNING - Forbidden: /api/risk-categories/
+2025-07-08 03:52:33,079 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:52:36,451 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:52:37,226 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:52:37,227 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:52:37,227 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:54:43,234 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:54:45,472 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:54:46,044 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:54:46,045 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:54:46,046 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:55:29,114 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:55:31,413 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:55:31,896 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:55:31,897 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:55:31,897 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:55:47,170 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:55:49,570 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:55:50,121 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:55:50,122 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:55:50,122 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:56:07,965 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:56:10,242 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:56:10,743 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:56:10,744 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:56:10,745 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:56:32,241 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:56:34,622 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:56:35,148 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:56:35,148 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:56:35,148 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 03:56:49,223 - django.utils.autoreload - INFO - C:\Users\puttu\Videos\demo_2\backend\grc\risk_views.py changed, reloading.
+2025-07-08 03:56:51,714 - numexpr.utils - INFO - NumExpr defaulting to 8 threads.
+2025-07-08 03:56:52,260 - mysql.connector - INFO - package: mysql.connector.plugins
+2025-07-08 03:56:52,260 - mysql.connector - INFO - plugin_name: caching_sha2_password
+2025-07-08 03:56:52,261 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin

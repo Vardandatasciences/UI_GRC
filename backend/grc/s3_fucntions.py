@@ -1,477 +1,915 @@
+#!/usr/bin/env python3
+"""
+S3 Microservice Client for Render Deployment with Local MySQL Database
+Render URL: https://aws-microservice.onrender.com
+Local MySQL Database for operation tracking
+"""
+
 import requests
 import os
-import mimetypes
-from typing import Dict, List, Optional, Union, BinaryIO
 import json
+import mimetypes
+from typing import Dict, List, Optional, Union, Any
+import datetime
+import mysql.connector
+from mysql.connector import pooling
 
-class S3Client:
-    """Client for interacting with the S3 microservice API."""
+class RenderS3Client:
+    """
+    Python client for S3 microservice deployed on Render
+    With local MySQL database for operation tracking
+    """
     
-    def __init__(self, base_url: str = "http://localhost:5000"):
+    def __init__(self, 
+                 api_base_url: str = "https://aws-microservice.onrender.com",
+                 mysql_config: Optional[Dict] = None):
         """
-        Initialize the S3 client.
+        Initialize the Render S3 client with local MySQL
         
         Args:
-            base_url: Base URL of the S3 microservice API
+            api_base_url: Your Render deployment URL
+            mysql_config: MySQL database configuration
         """
-        self.base_url = base_url.rstrip('/')
+        self.api_base_url = api_base_url.rstrip('/')
+        self.db_pool = None
         
-        # Initialize mimetypes
-        mimetypes.init()
-        
-        # Add common extensions that might be missing
-        self._add_missing_mimetypes()
+        # Initialize MySQL connection if config provided
+        if mysql_config:
+            self._setup_mysql_database(mysql_config)
+        else:
+            self._setup_default_mysql()
     
-    def check_health(self) -> Dict[str, bool]:
-        """
-        Check if the S3 microservice is running.
-        
-        Returns:
-            Dict with status of the microservice
-        """
+    def _setup_default_mysql(self):
+        """Setup MySQL with default/environment configuration"""
         try:
-            url = f"{self.base_url}/api/health"
-            response = requests.get(url, timeout=5)
-            return {
-                "is_running": response.status_code == 200,
-                "status_code": response.status_code,
-                "message": response.json().get("message", "") if response.status_code == 200 else "Service not responding correctly"
+            mysql_config = {
+                'host': os.environ.get('DB_HOST', 'localhost'),
+                'user': os.environ.get('DB_USER', 'root'),
+                'password': os.environ.get('DB_PASSWORD', 'root'),
+                'database': os.environ.get('DB_NAME', 'grc'),
+                'port': int(os.environ.get('DB_PORT', 3306)),
+                'autocommit': True,
+                'charset': 'utf8mb4',
+                'collation': 'utf8mb4_unicode_ci'
             }
-        except requests.RequestException as e:
-            return {
-                "is_running": False,
-                "status_code": None,
-                "message": f"Connection error: {str(e)}"
-            }
+            
+            self._setup_mysql_database(mysql_config)
+            
+        except Exception as e:
+            print(f"MySQL setup with defaults failed: {str(e)}")
+            self.db_pool = None
     
-    def _add_missing_mimetypes(self):
-        """Add common MIME types that might be missing from the system."""
-        types_map = {
-            '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            '.xls': 'application/vnd.ms-excel',
-            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            '.doc': 'application/msword',
-            '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            '.ppt': 'application/vnd.ms-powerpoint',
-            '.csv': 'text/csv',
-            '.pdf': 'application/pdf',
-            '.zip': 'application/zip',
-            '.rar': 'application/x-rar-compressed',
-            '.7z': 'application/x-7z-compressed',
-        }
-        
-        for ext, mime_type in types_map.items():
-            mimetypes.add_type(mime_type, ext)
-    
-    def _detect_file_type(self, file_path: str) -> Dict[str, str]:
-        """
-        Detect file type based on file extension.
-        
-        Args:
-            file_path: Path to the file
-            
-        Returns:
-            Dict containing file_type (extension) and content_type (MIME type)
-        """
-        # Get file extension (without the dot)
-        file_extension = os.path.splitext(file_path)[1].lower()
-        if file_extension.startswith('.'):
-            file_extension = file_extension[1:]
-        
-        # Get MIME type
-        mime_type, encoding = mimetypes.guess_type(file_path)
-        if not mime_type:
-            mime_type = 'application/octet-stream'  # Default to binary
-        
-        # Get document category
-        document_category = self._categorize_document(file_extension, mime_type)
-        
-        return {
-            'file_type': file_extension,
-            'content_type': mime_type,
-            'document_category': document_category
-        }
-    
-    def _categorize_document(self, extension: str, mime_type: str) -> str:
-        """
-        Categorize document based on extension and MIME type.
-        
-        Args:
-            extension: File extension
-            mime_type: MIME type
-            
-        Returns:
-            Document category string
-        """
-        # Spreadsheets
-        if extension in ['xlsx', 'xls', 'csv'] or 'spreadsheet' in mime_type:
-            return 'spreadsheet'
-            
-        # Documents
-        if extension in ['doc', 'docx', 'odt', 'rtf', 'txt'] or 'document' in mime_type:
-            return 'document'
-            
-        # Presentations
-        if extension in ['ppt', 'pptx', 'odp'] or 'presentation' in mime_type:
-            return 'presentation'
-            
-        # PDFs
-        if extension == 'pdf' or mime_type == 'application/pdf':
-            return 'pdf'
-            
-        # Images
-        if extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp'] or mime_type.startswith('image/'):
-            return 'image'
-            
-        # Videos
-        if extension in ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'] or mime_type.startswith('video/'):
-            return 'video'
-            
-        # Audio
-        if extension in ['mp3', 'wav', 'ogg', 'flac', 'aac'] or mime_type.startswith('audio/'):
-            return 'audio'
-            
-        # Archives
-        if extension in ['zip', 'rar', '7z', 'tar', 'gz'] or 'compressed' in mime_type:
-            return 'archive'
-            
-        # Default
-        return 'other'
-    
-    def upload_file(self, 
-                   file_path: str, 
-                   user_id: str = "default-user", 
-                   file_name: Optional[str] = None, 
-                   **params) -> Dict:
-        """
-        Upload a file to S3 via the microservice.
-        
-        Args:
-            file_path: Path to the file to upload
-            user_id: User ID for file ownership
-            file_name: Custom file name (defaults to original file name)
-            **params: Additional parameters to include in the file metadata
-            
-        Returns:
-            Response from the API containing file info
-        """
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"File not found: {file_path}")
-            
-        url = f"{self.base_url}/api/upload"
-        
-        # If file_name not provided, use the original file name
-        if not file_name:
-            file_name = os.path.basename(file_path)
-        
-        # Detect file type and add to params
-        file_info = self._detect_file_type(file_path)
-        
-        # Prepare form data
-        form_data = {
-            "userId": user_id,
-            "fileName": file_name,
-        }
-        
-        # Add file type information to params if not explicitly provided
-        if 'document_type' not in params:
-            params['document_type'] = file_info['document_category']
-        
-        if 'file_type' not in params:
-            params['file_type'] = file_info['file_type']
-            
-        # Add additional parameters
-        form_data.update(params)
-        
-        # Prepare file data
-        with open(file_path, 'rb') as file:
-            files = {'file': (file_name, file, file_info['content_type'])}
-            response = requests.post(url, data=form_data, files=files)
-            
-        # Check if request was successful
-        response.raise_for_status()
-        
-        return response.json()
-    
-    def get_user_files(self, user_id: str, **filters) -> Dict:
-        """
-        Get all files uploaded by a user, with optional filtering.
-        
-        Args:
-            user_id: User ID to fetch files for
-            **filters: Optional filters for metadata
-            
-        Returns:
-            List of files matching the criteria
-        """
-        url = f"{self.base_url}/api/files/{user_id}"
-        
-        # Add filters as query parameters
-        response = requests.get(url, params=filters)
-        response.raise_for_status()
-        
-        return response.json()
-    
-    def get_file_metadata(self, file_id: str) -> Dict:
-        """
-        Get metadata for a specific file.
-        
-        Args:
-            file_id: ID of the file
-            
-        Returns:
-            File metadata
-        """
-        url = f"{self.base_url}/api/file/{file_id}"
-        
-        response = requests.get(url)
-        response.raise_for_status()
-        
-        return response.json()
-    
-    def get_download_url(self, file_id: str, expires_in: int = 3600) -> Dict:
-        """
-        Get a pre-signed URL for downloading a file.
-        
-        Args:
-            file_id: ID of the file
-            expires_in: URL expiration time in seconds
-            
-        Returns:
-            Download URL information
-        """
-        url = f"{self.base_url}/api/download/{file_id}"
-        
-        params = {"expiresIn": expires_in}
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        
-        return response.json()
-    
-    def download_file(self, file_id: str, destination_path: str) -> str:
-        """
-        Download a file to a local destination.
-        
-        Args:
-            file_id: ID of the file to download
-            destination_path: Path where the file should be saved
-            
-        Returns:
-            Path to the downloaded file
-        """
+    def _setup_mysql_database(self, mysql_config: Dict):
+        """Setup MySQL connection pool"""
         try:
-            # Get the download URL
-            download_info = self.get_download_url(file_id)
+            # Test connection first
+            test_conn = mysql.connector.connect(**mysql_config)
+            test_conn.close()
+            
+            # Create connection pool
+            self.db_pool = mysql.connector.pooling.MySQLConnectionPool(
+                pool_name="render_s3_pool",
+                pool_size=5,
+                pool_reset_session=True,
+                **mysql_config
+            )
+            
+            print("✅ MySQL connection pool initialized successfully")
+            
+            # Create table if it doesn't exist
+            self._create_table_if_not_exists()
+            
+        except mysql.connector.Error as e:
+            print(f"❌ MySQL connection failed: {str(e)}")
+            print("💡 Make sure MySQL is running and credentials are correct")
+            self.db_pool = None
+        except Exception as e:
+            print(f"❌ Database setup error: {str(e)}")
+            self.db_pool = None
+    
+    def _create_table_if_not_exists(self):
+        """Create the file_operations table if it doesn't exist"""
+        if not self.db_pool:
+            return
+        
+        conn = self._get_db_connection()
+        if not conn:
+            return
+        
+        cursor = conn.cursor()
+        
+        try:
+            # Create unified file_operations table
+            create_table_query = """
+            CREATE TABLE IF NOT EXISTS file_operations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                operation_type ENUM('upload', 'download', 'export') NOT NULL,
+                user_id VARCHAR(255) NOT NULL,
+                file_name VARCHAR(500) NOT NULL,
+                original_name VARCHAR(500),
+                stored_name VARCHAR(500),
+                s3_url TEXT,
+                s3_key VARCHAR(1000),
+                s3_bucket VARCHAR(255),
+                file_type VARCHAR(50),
+                file_size BIGINT,
+                content_type VARCHAR(255),
+                export_format VARCHAR(20),
+                record_count INT,
+                status ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
+                error TEXT,
+                metadata JSON,
+                platform VARCHAR(50) DEFAULT 'Render',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                completed_at TIMESTAMP NULL,
+                
+                INDEX idx_user_id (user_id),
+                INDEX idx_operation_type (operation_type),
+                INDEX idx_status (status),
+                INDEX idx_created_at (created_at),
+                INDEX idx_file_type (file_type),
+                INDEX idx_platform (platform),
+                INDEX idx_s3_key (s3_key(255))
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """
+            
+            cursor.execute(create_table_query)
+            conn.commit()
+            print("✅ Database table verified/created successfully")
+            
+        except mysql.connector.Error as e:
+            print(f"❌ Table creation error: {str(e)}")
+        except Exception as e:
+            print(f"❌ Unexpected error creating table: {str(e)}")
+        finally:
+            cursor.close()
+            conn.close()
+    
+    def _get_db_connection(self):
+        """Get database connection from pool"""
+        if not self.db_pool:
+            return None
+        
+        try:
+            return self.db_pool.get_connection()
+        except Exception as e:
+            print(f"❌ Failed to get DB connection: {str(e)}")
+            return None
+    
+    def _save_operation_record(self, operation_type: str, operation_data: Dict) -> Optional[int]:
+        """Save operation record to MySQL database"""
+        if not self.db_pool:
+            return None
+        
+        conn = self._get_db_connection()
+        if not conn:
+            return None
+        
+        cursor = conn.cursor()
+        
+        try:
+            query = """
+            INSERT INTO file_operations 
+            (operation_type, user_id, file_name, original_name, stored_name, s3_url, s3_key, s3_bucket,
+             file_type, file_size, content_type, export_format, record_count, status, metadata, platform,
+             created_at, updated_at) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            
+            now = datetime.datetime.now()
+            
+            params = (
+                operation_type,
+                operation_data.get('user_id'),
+                operation_data.get('file_name'),
+                operation_data.get('original_name'),
+                operation_data.get('stored_name'),
+                operation_data.get('s3_url', ''),
+                operation_data.get('s3_key', ''),
+                operation_data.get('s3_bucket', ''),
+                operation_data.get('file_type'),
+                operation_data.get('file_size'),
+                operation_data.get('content_type'),
+                operation_data.get('export_format'),
+                operation_data.get('record_count'),
+                operation_data.get('status', 'pending'),
+                json.dumps(operation_data.get('metadata', {})),
+                'Render',
+                now,
+                now
+            )
+            
+            cursor.execute(query, params)
+            conn.commit()
+            operation_id = cursor.lastrowid
+            
+            print(f"📝 Operation recorded in MySQL: ID {operation_id}")
+            return operation_id
+            
+        except mysql.connector.Error as e:
+            print(f"❌ MySQL save error: {str(e)}")
+            return None
+        except Exception as e:
+            print(f"❌ Database save error: {str(e)}")
+            return None
+        finally:
+            cursor.close()
+            conn.close()
+    
+    def _update_operation_record(self, operation_id: int, operation_data: Dict):
+        """Update operation record with complete information"""
+        if not self.db_pool or not operation_id:
+            return
+        
+        conn = self._get_db_connection()
+        if not conn:
+            return
+        
+        cursor = conn.cursor()
+        
+        try:
+            # Build dynamic update query
+            update_fields = []
+            update_values = []
+            
+            field_mapping = {
+                'stored_name': 'stored_name',
+                's3_url': 's3_url', 
+                's3_key': 's3_key',
+                's3_bucket': 's3_bucket',
+                'file_type': 'file_type',
+                'file_size': 'file_size',
+                'content_type': 'content_type',
+                'export_format': 'export_format',
+                'record_count': 'record_count',
+                'status': 'status',
+                'error': 'error'
+            }
+            
+            for key, db_field in field_mapping.items():
+                if key in operation_data:
+                    update_fields.append(f"{db_field} = %s")
+                    update_values.append(operation_data[key])
+            
+            # Always update metadata and timestamp
+            if 'metadata' in operation_data:
+                update_fields.append("metadata = %s")
+                update_values.append(json.dumps(operation_data['metadata']))
+            
+            update_fields.append("updated_at = %s")
+            update_values.append(datetime.datetime.now())
+            
+            # Add completed_at if status is completed
+            if operation_data.get('status') == 'completed':
+                update_fields.append("completed_at = %s")
+                update_values.append(datetime.datetime.now())
+            
+            # Add operation_id at the end
+            update_values.append(operation_id)
+            
+            query = f"UPDATE file_operations SET {', '.join(update_fields)} WHERE id = %s"
+            cursor.execute(query, update_values)
+            conn.commit()
+            
+            print(f"📝 Operation {operation_id} updated in MySQL")
+            
+        except mysql.connector.Error as e:
+            print(f"❌ MySQL update error: {str(e)}")
+        except Exception as e:
+            print(f"❌ Database update error: {str(e)}")
+        finally:
+            cursor.close()
+            conn.close()
+    
+    def get_operation_history(self, user_id: Optional[str] = None, limit: int = 10) -> List[Dict]:
+        """Get recent operation history from MySQL"""
+        if not self.db_pool:
+            return []
+        
+        conn = self._get_db_connection()
+        if not conn:
+            return []
+        
+        cursor = conn.cursor(dictionary=True)
+        
+        try:
+            if user_id:
+                query = """
+                SELECT * FROM file_operations 
+                WHERE user_id = %s 
+                ORDER BY created_at DESC 
+                LIMIT %s
+                """
+                cursor.execute(query, (user_id, limit))
+            else:
+                query = """
+                SELECT * FROM file_operations 
+                ORDER BY created_at DESC 
+                LIMIT %s
+                """
+                cursor.execute(query, (limit,))
+            
+            results = cursor.fetchall()
+            
+            # Convert datetime objects to strings for JSON serialization
+            for result in results:
+                for key, value in result.items():
+                    if isinstance(value, datetime.datetime):
+                        result[key] = value.isoformat()
+            
+            return results
+            
+        except mysql.connector.Error as e:
+            print(f"❌ MySQL query error: {str(e)}")
+            return []
+        except Exception as e:
+            print(f"❌ Database query error: {str(e)}")
+            return []
+        finally:
+            cursor.close()
+            conn.close()
+    
+    def get_operation_stats(self) -> Dict:
+        """Get operation statistics from MySQL"""
+        if not self.db_pool:
+            return {}
+        
+        conn = self._get_db_connection()
+        if not conn:
+            return {}
+        
+        cursor = conn.cursor(dictionary=True)
+        
+        try:
+            # Get overall stats
+            cursor.execute("""
+                SELECT 
+                    operation_type,
+                    COUNT(*) as total_count,
+                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count,
+                    SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_count,
+                    AVG(file_size) as avg_file_size,
+                    SUM(file_size) as total_file_size
+                FROM file_operations 
+                GROUP BY operation_type
+            """)
+            
+            stats = {
+                'operations_by_type': cursor.fetchall(),
+                'total_operations': 0,
+                'total_completed': 0,
+                'total_failed': 0
+            }
+            
+            # Calculate totals
+            for op_stat in stats['operations_by_type']:
+                stats['total_operations'] += op_stat['total_count']
+                stats['total_completed'] += op_stat['completed_count']
+                stats['total_failed'] += op_stat['failed_count']
+            
+            # Get recent activity
+            cursor.execute("""
+                SELECT DATE(created_at) as date, COUNT(*) as operations
+                FROM file_operations 
+                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                GROUP BY DATE(created_at)
+                ORDER BY date DESC
+            """)
+            
+            stats['recent_activity'] = cursor.fetchall()
+            
+            return stats
+            
+        except mysql.connector.Error as e:
+            print(f"❌ MySQL stats query error: {str(e)}")
+            return {}
+        except Exception as e:
+            print(f"❌ Database stats error: {str(e)}")
+            return {}
+        finally:
+            cursor.close()
+            conn.close()
+    
+    def test_connection(self) -> Dict:
+        """Test connection to Render microservice and MySQL database"""
+        result = {
+            'render_status': 'unknown',
+            'mysql_status': 'unknown',
+            'overall_success': False
+        }
+        
+        # Test Render microservice
+        try:
+            print("🧪 Testing Render microservice connection...")
+            response = requests.get(f"{self.api_base_url}/health", timeout=30)
+            response.raise_for_status()
+            
+            health_info = response.json()
+            result['render_status'] = 'connected'
+            result['render_info'] = health_info
+            print("✅ Render microservice: Connected")
+            
+        except requests.exceptions.Timeout:
+            result['render_status'] = 'timeout'
+            result['render_error'] = 'Connection timed out (Render may be spinning up)'
+            print("⏳ Render microservice: Timeout (may be waking up)")
+        except Exception as e:
+            result['render_status'] = 'failed'
+            result['render_error'] = str(e)
+            print(f"❌ Render microservice: Failed - {str(e)}")
+        
+        # Test MySQL database
+        try:
+            print("🧪 Testing MySQL database connection...")
+            if self.db_pool:
+                conn = self._get_db_connection()
+                if conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT 1")
+                    cursor.fetchone()
+                    cursor.close()
+                    conn.close()
+                    
+                    result['mysql_status'] = 'connected'
+                    print("✅ MySQL database: Connected")
+                else:
+                    result['mysql_status'] = 'failed'
+                    result['mysql_error'] = 'Failed to get connection from pool'
+                    print("❌ MySQL database: Connection pool failed")
+            else:
+                result['mysql_status'] = 'not_configured'
+                result['mysql_error'] = 'Database pool not initialized'
+                print("⚠️  MySQL database: Not configured")
+                
+        except mysql.connector.Error as e:
+            result['mysql_status'] = 'failed'
+            result['mysql_error'] = str(e)
+            print(f"❌ MySQL database: Failed - {str(e)}")
+        except Exception as e:
+            result['mysql_status'] = 'failed'
+            result['mysql_error'] = str(e)
+            print(f"❌ MySQL database: Error - {str(e)}")
+        
+        # Overall success
+        result['overall_success'] = (
+            result['render_status'] == 'connected' and 
+            result['mysql_status'] in ['connected', 'not_configured']
+        )
+        
+        return result
+    
+    def upload(self, file_path: str, user_id: str = "default-user", 
+               custom_file_name: Optional[str] = None) -> Dict:
+        """Upload a file to S3 via Render microservice with MySQL tracking"""
+        operation_id = None
+        
+        try:
+            # Validate file exists
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"File not found: {file_path}")
+            
+            file_name = custom_file_name or os.path.basename(file_path)
+            file_size = os.path.getsize(file_path)
+            
+            print(f"📤 Uploading {file_name} ({file_size} bytes) via Render...")
+            
+            # Save initial operation record
+            operation_data = {
+                'user_id': user_id,
+                'file_name': file_name,
+                'original_name': os.path.basename(file_path),
+                'file_type': os.path.splitext(file_name)[1][1:].lower() if '.' in file_name else '',
+                'file_size': file_size,
+                'content_type': mimetypes.guess_type(file_path)[0],
+                'status': 'pending',
+                'metadata': {
+                    'original_path': file_path,
+                    'platform': 'Render',
+                    'render_url': self.api_base_url
+                }
+            }
+            operation_id = self._save_operation_record('upload', operation_data)
+            
+            # Upload to Render
+            url = f"{self.api_base_url}/api/upload/{user_id}/{file_name}"
+            
+            with open(file_path, 'rb') as file:
+                files = {'file': (file_name, file, mimetypes.guess_type(file_path)[0])}
+                response = requests.post(url, files=files, timeout=300)
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            if result.get('success'):
+                file_info = result['file']
+                
+                # Update MySQL with success
+                if operation_id:
+                    update_data = {
+                        'stored_name': file_info['storedName'],
+                        's3_url': file_info['url'],
+                        's3_key': file_info['s3Key'],
+                        's3_bucket': file_info.get('bucket', ''),
+                        'status': 'completed',
+                        'metadata': {
+                            'original_path': file_path,
+                            'platform': 'Render',
+                            'render_url': self.api_base_url,
+                            'upload_response': file_info
+                        }
+                    }
+                    self._update_operation_record(operation_id, update_data)
+                
+                print(f"✅ Upload successful! File: {file_info['storedName']}")
+                
+                return {
+                    'success': True,
+                    'operation_id': operation_id,
+                    'file_info': file_info,
+                    'platform': 'Render',
+                    'database': 'MySQL',
+                    'message': 'File uploaded successfully to Render/S3'
+                }
+            else:
+                # Update MySQL with failure
+                if operation_id:
+                    self._update_operation_record(operation_id, {
+                        'status': 'failed', 
+                        'error': result.get('error')
+                    })
+                
+                return result
+                
+        except Exception as e:
+            error_msg = str(e)
+            print(f"❌ Upload failed: {error_msg}")
+            
+            if operation_id:
+                self._update_operation_record(operation_id, {
+                    'status': 'failed',
+                    'error': error_msg
+                })
+            
+            return {
+                'success': False,
+                'operation_id': operation_id,
+                'error': error_msg
+            }
+    
+    def download(self, s3_key: str, file_name: str, 
+                 destination_path: str = "./downloads", 
+                 user_id: str = "default-user") -> Dict:
+        """Download a file from S3 via Render with MySQL tracking"""
+        operation_id = None
+        
+        try:
+            print(f"⬇️  Downloading {file_name} via Render...")
+            
+            # Save initial operation record
+            operation_data = {
+                'user_id': user_id,
+                'file_name': file_name,
+                'original_name': file_name,
+                's3_key': s3_key,
+                'status': 'pending',
+                'metadata': {
+                    'destination_path': destination_path,
+                    'platform': 'Render',
+                    'render_url': self.api_base_url
+                }
+            }
+            operation_id = self._save_operation_record('download', operation_data)
+            
+            # Get download URL from Render
+            url = f"{self.api_base_url}/api/download/{s3_key}/{file_name}"
+            response = requests.get(url, timeout=60)
+            response.raise_for_status()
+            
+            download_info = response.json()
             
             if not download_info.get('success'):
-                raise Exception(f"Failed to get download URL: {download_info}")
+                raise Exception(f"Failed to get download URL: {download_info.get('error')}")
             
-            # Get the file content - use the URL as-is without any modification
+            # Download file
             download_url = download_info['downloadUrl']
-            print(f"Attempting to download from: {download_url}")
+            file_response = requests.get(download_url, timeout=300)
+            file_response.raise_for_status()
             
-            # Simple direct download attempt using the pre-signed URL directly
-            response = requests.get(download_url)
+            # Save locally
+            os.makedirs(destination_path, exist_ok=True)
+            local_file_path = os.path.join(destination_path, file_name) if os.path.isdir(destination_path) else destination_path
             
-            if response.status_code == 200:
-                # Determine the filename
-                file_name = download_info.get('fileName', f"download_{file_id}")
-                
-                # If destination_path is a directory, append the filename
-                if os.path.isdir(destination_path):
-                    full_path = os.path.join(destination_path, file_name)
-                else:
-                    full_path = destination_path
-                
-                # Write the file
-                with open(full_path, 'wb') as f:
-                    f.write(response.content)
-                
-                print(f"File successfully downloaded to: {full_path}")
-                return full_path
-            else:
-                # If the direct download failed, try using the original URL
-                metadata = self.get_file_metadata(file_id)
-                original_url = metadata['file']['url']
-                
-                print(f"Pre-signed URL download failed with status {response.status_code}, trying direct URL")
-                print(f"Attempting direct download from: {original_url}")
-                
-                direct_response = requests.get(original_url)
-                
-                if direct_response.status_code == 200:
-                    # If destination_path is a directory, append the filename
-                    file_name = download_info.get('fileName', f"download_{file_id}")
-                    if os.path.isdir(destination_path):
-                        full_path = os.path.join(destination_path, file_name)
-                    else:
-                        full_path = destination_path
-                    
-                    # Write the file
-                    with open(full_path, 'wb') as f:
-                        f.write(direct_response.content)
-                    
-                    print(f"File successfully downloaded to: {full_path}")
-                    return full_path
-                else:
-                    raise Exception(f"Both pre-signed and direct URL downloads failed with status codes {response.status_code} and {direct_response.status_code}")
-        
+            with open(local_file_path, 'wb') as f:
+                f.write(file_response.content)
+            
+            # Update MySQL with success
+            if operation_id:
+                self._update_operation_record(operation_id, {
+                    'status': 'completed',
+                    'file_size': len(file_response.content),
+                    'metadata': {
+                        'destination_path': destination_path,
+                        'local_file_path': local_file_path,
+                        'platform': 'Render',
+                        'render_url': self.api_base_url,
+                        'download_info': download_info
+                    }
+                })
+            
+            print(f"✅ Download successful! Saved to: {local_file_path}")
+            
+            return {
+                'success': True,
+                'operation_id': operation_id,
+                'file_path': local_file_path,
+                'file_size': len(file_response.content),
+                'platform': 'Render',
+                'database': 'MySQL',
+                'message': 'File downloaded successfully from Render/S3'
+            }
+            
         except Exception as e:
-            print(f"Download error: {str(e)}")
-            raise Exception(f"Failed to download file: {str(e)}")
-    
-    def extract_bucket_name(self, url: str) -> str:
-        """Extract the bucket name from an S3 URL."""
-        # Parse the URL
-        parsed_url = requests.utils.urlparse(url)
-        
-        # Extract hostname which will be something like bucket-name.s3.region.amazonaws.com
-        hostname = parsed_url.netloc
-        
-        # Extract the bucket name
-        if '.s3.' in hostname:
-            return hostname.split('.s3.')[0]
-        
-        # Alternative format: s3.region.amazonaws.com/bucket-name/
-        if hostname.startswith('s3.') and parsed_url.path.startswith('/'):
-            path_parts = parsed_url.path.split('/')
-            if len(path_parts) > 1:
-                return path_parts[1]
-        
-        # If we can't determine the bucket name, return the hostname
-        return hostname
-    
-    def delete_file(self, file_id: str) -> Dict:
-        """
-        Delete a file from S3 and database.
-        
-        Args:
-            file_id: ID of the file to delete
+            error_msg = str(e)
+            print(f"❌ Download failed: {error_msg}")
             
-        Returns:
-            Result of the deletion operation
-        """
-        url = f"{self.base_url}/api/file/{file_id}"
-        
-        response = requests.delete(url)
-        response.raise_for_status()
-        
-        return response.json()
-    
-    def search_files(self, user_id: str, **search_params) -> List[Dict]:
-        """
-        Search for files with specific metadata parameters.
-        
-        Args:
-            user_id: User ID to search files for
-            **search_params: Search parameters for metadata fields
+            if operation_id:
+                self._update_operation_record(operation_id, {
+                    'status': 'failed',
+                    'error': error_msg
+                })
             
-        Returns:
-            List of matching files
-        """
+            return {
+                'success': False,
+                'operation_id': operation_id,
+                'error': error_msg
+            }
+    
+    def export(self, data: Union[List[Dict], Dict], export_format: str, 
+               file_name: str, user_id: str = "default-user") -> Dict:
+        """Export data via Render microservice with MySQL tracking"""
+        operation_id = None
+        
         try:
-            # Get all files for the user
-            result = self.get_user_files(user_id)
+            # Validate format
+            supported_formats = ['json', 'csv', 'xml', 'txt']
+            if export_format.lower() not in supported_formats:
+                raise ValueError(f"Unsupported format: {export_format}. Supported: {supported_formats}")
             
-            if not result.get('success'):
-                return []
+            record_count = len(data) if isinstance(data, list) else 1
+            print(f"📊 Exporting {record_count} records as {export_format.upper()} via Render...")
             
-            # Filter files client-side based on metadata
-            if search_params:
-                files = result.get('files', [])
-                filtered_files = []
+            # Save initial operation record
+            operation_data = {
+                'user_id': user_id,
+                'file_name': file_name,
+                'original_name': file_name,
+                'export_format': export_format,
+                'record_count': record_count,
+                'status': 'pending',
+                'metadata': {
+                    'export_format': export_format,
+                    'data_size': len(str(data)),
+                    'platform': 'Render',
+                    'render_url': self.api_base_url
+                }
+            }
+            operation_id = self._save_operation_record('export', operation_data)
+            
+            # Export via Render
+            url = f"{self.api_base_url}/api/export/{export_format}/{user_id}/{file_name}"
+            payload = {'data': data}
+            
+            response = requests.post(url, json=payload, timeout=300)
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            if result.get('success'):
+                export_info = result['export']
                 
-                for file in files:
-                    file_metadata = file.get('metadata', {})
-                    match = True
-                    
-                    # Check if all search parameters match
-                    for key, value in search_params.items():
-                        if key not in file_metadata or str(file_metadata[key]) != str(value):
-                            match = False
-                            break
-                    
-                    if match:
-                        filtered_files.append(file)
-                        
-                return filtered_files
+                # Update MySQL with success
+                if operation_id:
+                    update_data = {
+                        'stored_name': export_info['storedName'],
+                        's3_url': export_info['url'],
+                        's3_key': export_info['s3Key'],
+                        's3_bucket': export_info.get('bucket', ''),
+                        'file_size': export_info.get('size'),
+                        'content_type': export_info.get('contentType'),
+                        'status': 'completed',
+                        'metadata': {
+                            'export_format': export_format,
+                            'data_size': len(str(data)),
+                            'platform': 'Render',
+                            'render_url': self.api_base_url,
+                            'export_response': export_info
+                        }
+                    }
+                    self._update_operation_record(operation_id, update_data)
+                
+                print(f"✅ Export successful! File: {export_info['storedName']}")
+                
+                return {
+                    'success': True,
+                    'operation_id': operation_id,
+                    'export_info': export_info,
+                    'platform': 'Render',
+                    'database': 'MySQL',
+                    'message': f'Data exported successfully as {export_format.upper()} via Render'
+                }
             else:
-                return result.get('files', [])
+                # Update MySQL with failure
+                if operation_id:
+                    self._update_operation_record(operation_id, {
+                        'status': 'failed',
+                        'error': result.get('error')
+                    })
+                
+                return result
+                
         except Exception as e:
-            print(f"Error searching files: {str(e)}")
-            return []
-    
-    def simple_upload(self, file_name: str, user_id: str = "default-user") -> Dict:
-        """
-        Upload a file to S3 using just the file name.
-        
-        Args:
-            file_name: Name of the file to upload
-            user_id: User ID for file ownership
+            error_msg = str(e)
+            print(f"❌ Export failed: {error_msg}")
             
-        Returns:
-            Response from the API containing file info
-        """
-        if not os.path.exists(file_name):
-            raise FileNotFoundError(f"File not found: {file_name}")
+            if operation_id:
+                self._update_operation_record(operation_id, {
+                    'status': 'failed',
+                    'error': error_msg
+                })
             
-        url = f"{self.base_url}/api/upload"
+            return {
+                'success': False,
+                'operation_id': operation_id,
+                'error': error_msg
+            }
+
+# Helper functions for easy usage
+def create_render_mysql_client(mysql_config: Optional[Dict] = None) -> RenderS3Client:
+    """Create RenderS3Client with your Render URL and local MySQL - Enhanced with error handling"""
+    try:
+        if not mysql_config:
+            # Use environment variables or defaults
+            mysql_config = {
+                'host': os.environ.get('DB_HOST', 'localhost'),
+                'user': os.environ.get('DB_USER', 'root'),
+                'password': os.environ.get('DB_PASSWORD', 'root'),
+                'database': os.environ.get('DB_NAME', 'grc'),
+                'port': int(os.environ.get('DB_PORT', 3306))
+            }
         
-        # Detect file type and add to params
-        file_info = self._detect_file_type(file_name)
+        print(f"🔧 Creating S3 client with MySQL config: {mysql_config['host']}:{mysql_config['port']}/{mysql_config['database']}")
+        client = RenderS3Client("https://aws-microservice.onrender.com", mysql_config)
+        print("✅ S3 client created successfully")
+        return client
         
-        # Prepare form data
-        form_data = {
-            "userId": user_id,
-            "fileName": os.path.basename(file_name),
-            "document_type": file_info['document_category'],
-            "file_type": file_info['file_type']
-        }
-        
-        # Prepare file data
-        with open(file_name, 'rb') as file:
-            files = {'file': (os.path.basename(file_name), file, file_info['content_type'])}
-            response = requests.post(url, data=form_data, files=files)
-            
-        # Check if request was successful
-        response.raise_for_status()
-        
-        return response.json()
-    
-    def simple_download(self, file_name: str, destination_folder: str = "./downloads") -> str:
-        """
-        Download a file by its name to a local destination.
-        
-        Args:
-            file_name: Name of the file to download
-            destination_folder: Folder where the file should be saved
-            
-        Returns:
-            Path to the downloaded file
-        """
+    except ImportError as import_e:
+        print(f"❌ Import error creating S3 client: {import_e}")
+        print("💡 Trying to create client without MySQL...")
         try:
-            # First get all files to find the one with matching name
-            all_files = self.get_user_files("default-user")
-            
-            if not all_files.get('success'):
-                raise Exception("Failed to get user files")
-            
-            # Find file with matching name
-            file_id = None
-            for file in all_files.get('files', []):
-                if file.get('name') == file_name or file.get('originalName') == file_name:
-                    file_id = file.get('id')
-                    break
-            
-            if not file_id:
-                raise Exception(f"File with name '{file_name}' not found")
-            
-            # Make sure destination folder exists
-            os.makedirs(destination_folder, exist_ok=True)
-            
-            # Download using existing method
-            return self.download_file(file_id, destination_folder)
-            
-        except Exception as e:
-            print(f"Download error: {str(e)}")
-            raise Exception(f"Failed to download file: {str(e)}")
+            client = RenderS3Client("https://aws-microservice.onrender.com", None)
+            print("⚠️  S3 client created without MySQL (fallback mode)")
+            return client
+        except Exception as fallback_e:
+            print(f"❌ Fallback S3 client creation failed: {fallback_e}")
+            raise Exception(f"S3 client creation failed: {import_e}, Fallback failed: {fallback_e}")
+    
+    except mysql.connector.Error as mysql_e:
+        print(f"❌ MySQL connection error: {mysql_e}")
+        print("💡 Creating S3 client without MySQL...")
+        try:
+            client = RenderS3Client("https://aws-microservice.onrender.com", None)
+            print("⚠️  S3 client created without MySQL (fallback mode)")
+            return client
+        except Exception as fallback_e:
+            print(f"❌ Fallback S3 client creation failed: {fallback_e}")
+            raise Exception(f"MySQL error: {mysql_e}, Fallback failed: {fallback_e}")
+    
+    except Exception as e:
+        print(f"❌ General error creating S3 client: {e}")
+        print("💡 Trying to create client without MySQL...")
+        try:
+            client = RenderS3Client("https://aws-microservice.onrender.com", None)
+            print("⚠️  S3 client created without MySQL (fallback mode)")
+            return client
+        except Exception as fallback_e:
+            print(f"❌ Fallback S3 client creation failed: {fallback_e}")
+            raise Exception(f"S3 client creation failed: {e}, Fallback failed: {fallback_e}")
+
+def quick_test():
+    """Quick test function"""
+    print("🚀 Quick Test: Render S3 Client with Local MySQL")
+    print("=" * 60)
+    
+    # Create client
+    client = create_render_mysql_client()
+    
+    # Test connections
+    result = client.test_connection()
+    
+    if result['overall_success']:
+        print("✅ All systems operational!")
+        
+        # Show operation stats
+        stats = client.get_operation_stats()
+        if stats:
+            print(f"\n📊 Database Stats:")
+            print(f"   Total operations: {stats.get('total_operations', 0)}")
+            print(f"   Completed: {stats.get('total_completed', 0)}")
+            print(f"   Failed: {stats.get('total_failed', 0)}")
+    else:
+        print("❌ Some systems need attention")
+        if result['render_status'] != 'connected':
+            print(f"   Render: {result.get('render_error', 'Unknown error')}")
+        if result['mysql_status'] != 'connected':
+            print(f"   MySQL: {result.get('mysql_error', 'Unknown error')}")
+
+# Example usage
+def main():
+    """Example usage of Render S3 Client with Local MySQL"""
+    
+    print("🚀 Render S3 Microservice Client with Local MySQL")
+    print("🌐 Render URL: https://aws-microservice.onrender.com")
+    print("🗄️  Database: Local MySQL")
+    print("=" * 60)
+    
+    # Configure MySQL (adjust these settings for your local MySQL)
+    mysql_config = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'root',  # Change this
+        'database': 'grc',
+        'port': 3306
+    }
+    
+    # Create client
+    client = RenderS3Client("https://aws-microservice.onrender.com", mysql_config)
+    
+    # Test connections
+    print("1. Testing connections...")
+    result = client.test_connection()
+    
+    if not result['overall_success']:
+        print("❌ Cannot proceed - fix connection issues first")
+        return
+    
+    # Example operations
+    sample_data = [
+        {"id": 1, "name": "MySQL Test", "platform": "Render", "status": "active"},
+        {"id": 2, "name": "S3 Integration", "platform": "AWS", "status": "deployed"},
+        {"id": 3, "name": "Database Tracking", "platform": "MySQL", "status": "operational"}
+    ]
+    
+    print("\n2. Testing export functionality...")
+    export_result = client.export(sample_data, 'json', 'mysql_render_test', 'test_user')
+    
+    if export_result['success']:
+        print(f"✅ Export successful!")
+        print(f"   Operation ID: {export_result['operation_id']}")
+        print(f"   File: {export_result['export_info']['storedName']}")
+        print(f"   URL: {export_result['export_info']['url']}")
+        
+        # Test download
+        print("\n3. Testing download functionality...")
+        s3_key = export_result['export_info']['s3Key']
+        file_name = export_result['export_info']['storedName']
+        
+        download_result = client.download(s3_key, file_name, './mysql_downloads', 'test_user')
+        
+        if download_result['success']:
+            print(f"✅ Download successful!")
+            print(f"   Operation ID: {download_result['operation_id']}")
+            print(f"   File saved: {download_result['file_path']}")
+        else:
+            print(f"❌ Download failed: {download_result['error']}")
+    else:
+        print(f"❌ Export failed: {export_result['error']}")
+    
+    # Show operation history
+    print("\n4. Operation history from MySQL:")
+    history = client.get_operation_history('test_user', 5)
+    
+    if history:
+        for i, op in enumerate(history, 1):
+            print(f"   {i}. {op['operation_type']} - {op['file_name']} - {op['status']} ({op['created_at']})")
+    else:
+        print("   No operations found in database")
+    
+    # Show statistics
+    print("\n5. Database statistics:")
+    stats = client.get_operation_stats()
+    
+    if stats:
+        print(f"   Total operations: {stats.get('total_operations', 0)}")
+        print(f"   Completed: {stats.get('total_completed', 0)}")
+        print(f"   Failed: {stats.get('total_failed', 0)}")
+        
+        if stats.get('operations_by_type'):
+            print("   Operations by type:")
+            for op_stat in stats['operations_by_type']:
+                print(f"     - {op_stat['operation_type']}: {op_stat['total_count']} total")
+    
+    print("\n🎉 Render + MySQL integration test completed!")
+
+if __name__ == "__main__":
+    main()

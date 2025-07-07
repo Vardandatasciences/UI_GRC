@@ -849,7 +849,16 @@ export default {
       // API endpoint for fetching risks for dropdown
       const API_ENDPOINT = 'http://127.0.0.1:8000/api/risks-for-dropdown/';
       
-      fetch(API_ENDPOINT)
+      // Create request with session cookie
+      const requestOptions = {
+        method: 'GET',
+        credentials: 'include', // Include cookies in the request
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      };
+      
+      fetch(API_ENDPOINT, requestOptions)
         .then(response => {
           if (!response.ok) {
             throw new Error(`API Error: ${response.status}`);
@@ -1148,7 +1157,15 @@ export default {
         headers['X-CSRF-TOKEN'] = csrfToken;
       }
 
-      axios.post('http://localhost:8000/api/risk-instances/', submissionData, { headers })
+      // Set default user ID if not already set
+      if (!submissionData.UserId) {
+        submissionData.UserId = 1; // Default user ID
+      }
+
+      axios.post('http://localhost:8000/api/risk-instances/', submissionData, { 
+        headers,
+        withCredentials: true // Include cookies in the request
+      })
         .then(response => {
           console.log('Risk instance created successfully:', response.data);
           this.$popup.success('Risk instance created successfully!');
@@ -1237,7 +1254,16 @@ export default {
       // API endpoint for fetching users for dropdown
       const API_ENDPOINT = 'http://127.0.0.1:8000/api/users-for-dropdown/';
       
-      fetch(API_ENDPOINT)
+      // Create request with session cookie
+      const requestOptions = {
+        method: 'GET',
+        credentials: 'include', // Include cookies in the request
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      };
+      
+      fetch(API_ENDPOINT, requestOptions)
         .then(response => {
           if (!response.ok) {
             throw new Error(`API Error: ${response.status}`);
@@ -1294,7 +1320,16 @@ export default {
       // API endpoint for fetching compliances for dropdown
       const API_ENDPOINT = 'http://127.0.0.1:8000/api/compliances-for-dropdown/';
       
-      fetch(API_ENDPOINT)
+      // Create request with session cookie
+      const requestOptions = {
+        method: 'GET',
+        credentials: 'include', // Include cookies in the request
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      };
+      
+      fetch(API_ENDPOINT, requestOptions)
         .then(response => {
           if (!response.ok) {
             throw new Error(`API Error: ${response.status}`);
@@ -1351,7 +1386,16 @@ export default {
     // Business Impact Methods
     async fetchBusinessImpacts() {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/business-impacts/');
+        // Create request with session cookie
+        const requestOptions = {
+          method: 'GET',
+          credentials: 'include', // Include cookies in the request
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        };
+        
+        const response = await fetch('http://127.0.0.1:8000/api/business-impacts/', requestOptions);
         if (!response.ok) {
           throw new Error(`API Error: ${response.status}`);
         }
@@ -1413,6 +1457,7 @@ export default {
         
         const response = await fetch('http://127.0.0.1:8000/api/business-impacts/add/', {
           method: 'POST',
+          credentials: 'include', // Include cookies in the request
           headers: {
             'Content-Type': 'application/json',
           },
@@ -1444,7 +1489,16 @@ export default {
     // Category Methods
     async fetchCategories() {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/risk-categories/');
+        // Create request with session cookie
+        const requestOptions = {
+          method: 'GET',
+          credentials: 'include', // Include cookies in the request
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        };
+        
+        const response = await fetch('http://127.0.0.1:8000/api/risk-categories/', requestOptions);
         if (!response.ok) {
           throw new Error(`API Error: ${response.status}`);
         }
@@ -1487,6 +1541,7 @@ export default {
         
         const response = await fetch('http://127.0.0.1:8000/api/risk-categories/add/', {
           method: 'POST',
+          credentials: 'include', // Include cookies in the request
           headers: {
             'Content-Type': 'application/json',
           },
@@ -1558,6 +1613,7 @@ export default {
  
         const response = await fetch('http://localhost:8000/api/push-notification/', {
           method: 'POST',
+          credentials: 'include', // Include cookies in the request
           headers: {
             'Content-Type': 'application/json',
           },

@@ -38,7 +38,7 @@ import base64
 import tempfile
 import os
 from datetime import date, time
-from .s3_fucntions import S3Client
+
 from .validation import SecureValidator, ValidationError, IncidentValidator, QuestionnaireValidator
 from contextlib import contextmanager
 import logging
@@ -1512,7 +1512,7 @@ import base64
 import tempfile
 import os
 from datetime import date, time
-from .s3_fucntions import S3Client
+
 from .validation import SecureValidator, ValidationError, IncidentValidator, QuestionnaireValidator
 from contextlib import contextmanager
 import logging
@@ -4474,7 +4474,7 @@ import base64
 import tempfile
 import os
 from datetime import date, time
-from .s3_fucntions import S3Client
+
 from .validation import SecureValidator, ValidationError, IncidentValidator, QuestionnaireValidator
 from contextlib import contextmanager
 import logging
@@ -5948,7 +5948,7 @@ import base64
 import tempfile
 import os
 from datetime import date, time
-from .s3_fucntions import S3Client
+
 from .validation import SecureValidator, ValidationError, IncidentValidator, QuestionnaireValidator
 from contextlib import contextmanager
 import logging
@@ -12738,40 +12738,20 @@ php_flag engine off
         except Exception as e:
             print(f"[SECURITY] ClamAV scan error: {e}")
             return False  # Fail secure
-    
-    def _categorize_document(self, extension, mime_type):
-        """
-        Categorize document based on extension and MIME type.
-        
-        Args:
-            extension: File extension (without dot)
-            mime_type: MIME type
-            
-        Returns:
-            Document category string
-        """
-        # Remove dot if present
-        if extension.startswith('.'):
-            extension = extension[1:]
-        
-        # Spreadsheets
-        if extension in ['xlsx', 'xls', 'csv'] or 'spreadsheet' in mime_type:
-            return 'spreadsheet'
-            
-        # Documents
-        if extension in ['doc', 'docx', 'odt', 'rtf', 'txt'] or 'document' in mime_type:
-            return 'document'
-            
-        # PDFs
-        if extension == 'pdf' or mime_type == 'application/pdf':
-            return 'pdf'
-            
-        # Images
-        if extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff'] or mime_type.startswith('image/'):
-            return 'image'
-            
-        # Default
-        return 'other'
+
+# Helper function to get S3 client
+def get_s3_client():
+    """Get S3 client with error handling"""
+    try:
+        from .s3_fucntions import RenderS3Client, create_render_mysql_client
+        print("✅ S3 microservice client imported successfully")
+        return create_render_mysql_client()
+    except ImportError as e:
+        print(f"❌ Failed to import S3 microservice client: {e}")
+        raise Exception(f"S3 microservice client not available: {e}")
+    except Exception as e:
+        print(f"❌ Failed to create S3 client: {e}")
+        raise Exception(f"Failed to initialize S3 client: {e}")
 
 @method_decorator(csrf_exempt, name='dispatch')
 class FileUploadView(View):
@@ -12823,19 +12803,12 @@ class FileUploadView(View):
             file = request.FILES['file']
             incident_id = request.POST.get('incidentId')
             mitigation_number = request.POST.get('mitigationNumber')
-            user_id_from_form = request.POST.get('userId')
-            item_type = request.POST.get('itemType', 'incident')
-            upload_type = request.POST.get('uploadType', 'mitigation_evidence')
-            
-            # Use user ID from form if available
-            if user_id_from_form and user_id_from_form.isdigit():
-                user_id = int(user_id_from_form)
             
             # Log file details
             send_log(
                 module="File",
                 actionType="UPLOAD_FILE_DETAILS",
-                description=f"File upload details - filename: {file.name}, size: {file.size}, incident: {incident_id}, type: {item_type}",
+                description=f"File upload details - filename: {file.name}, size: {file.size}, incident: {incident_id}",
                 userId=user_id,
                 userName=username,
                 entityType="File",
@@ -12844,9 +12817,7 @@ class FileUploadView(View):
                     'filename': file.name,
                     'file_size': file.size,
                     'incident_id': incident_id,
-                    'mitigation_number': mitigation_number,
-                    'item_type': item_type,
-                    'upload_type': upload_type
+                    'mitigation_number': mitigation_number
                 }
             )
             
@@ -13002,69 +12973,79 @@ class FileUploadView(View):
                     'error': 'File failed security scan and has been quarantined'
                 }, status=400)
             
-            # Upload to S3 with secure metadata
+            # Upload to S3 via Render microservice with enhanced metadata
             try:
-                s3_client = S3Client()
+                # Create RenderS3Client instance
+                s3_client = get_s3_client()
                 
-                # Check S3 service health before upload
-                health_check = s3_client.check_health()
-                if not health_check.get('is_running'):
-                    raise Exception(f"S3 service is not available: {health_check.get('message', 'Unknown error')}")
+                # Create a custom filename for S3 that includes incident and mitigation info
+                custom_s3_filename = f"incident_{incident_id}_mitigation_{mitigation_number}_{secure_filename}"
                 
-                upload_result = s3_client.upload_file(
+                print(f"[S3] Uploading file to Render microservice: {custom_s3_filename}")
+                
+                # Upload file using RenderS3Client
+                upload_result = s3_client.upload(
                     file_path=str(secure_path),
-                    file_name=secure_filename,  # Use secure filename, not original
-                    user_id=str(user_id),
-                    incident_id=str(incident_id),
-                    mitigation_number=str(mitigation_number),
-                    original_filename=file_name,  # Store original name as metadata
-                    mime_type=mime_result,
-                    upload_timestamp=timezone.now().isoformat(),
-                    security_validated=True,
-                    item_type=item_type,
-                    upload_type=upload_type,
-                    document_type=handler._categorize_document(file_ext[1:] if file_ext.startswith('.') else file_ext, mime_result)
+                    user_id=f"user_{user_id}",
+                    custom_file_name=custom_s3_filename
                 )
                 
-                # Clean up local file after successful S3 upload
-                secure_path.unlink(missing_ok=True)
-                print(f"[SECURITY] File successfully uploaded to S3 and local file cleaned up")
-                
-                # Log successful upload
-                send_log(
-                    module="File",
-                    actionType="UPLOAD_SUCCESS",
-                    description=f"File successfully uploaded: {file.name}",
-                    userId=user_id,
-                    userName=username,
-                    entityType="File",
-                    ipAddress=get_client_ip(request),
-                    additionalInfo={
-                        'filename': file.name,
+                if upload_result.get('success'):
+                    file_info = upload_result['file_info']
+                    
+                    # Clean up local file after successful S3 upload
+                    secure_path.unlink(missing_ok=True)
+                    print(f"[SECURITY] File successfully uploaded to Render/S3 and local file cleaned up")
+                    
+                    # Log successful upload with enhanced info
+                    send_log(
+                        module="File",
+                        actionType="UPLOAD_SUCCESS",
+                        description=f"File successfully uploaded via Render microservice: {file.name}",
+                        userId=user_id,
+                        userName=username,
+                        entityType="File",
+                        ipAddress=get_client_ip(request),
+                        additionalInfo={
+                            'filename': file.name,
+                            'secure_filename': secure_filename,
+                            'stored_name': file_info.get('storedName'),
+                            'incident_id': incident_id,
+                            'mitigation_number': mitigation_number,
+                            'file_size': file.size,
+                            'mime_type': mime_result,
+                            's3_url': file_info.get('url'),
+                            's3_key': file_info.get('s3Key'),
+                            'platform': 'Render',
+                            'operation_id': upload_result.get('operation_id'),
+                            'microservice_url': 'https://aws-microservice.onrender.com'
+                        }
+                    )
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'file_url': file_info.get('url'),
+                        's3_url': file_info.get('url'),
+                        'aws-file_link': file_info.get('url'),  # Added for compatibility with Vue component
+                        'fileName': file.name,  # Original filename for display
+                        'stored_name': file_info.get('storedName'),
+                        's3_key': file_info.get('s3Key'),
                         'secure_filename': secure_filename,
-                        'incident_id': incident_id,
-                        'mitigation_number': mitigation_number,
-                        'file_size': file.size,
                         'mime_type': mime_result,
-                        's3_url': upload_result['file']['url']
-                    }
-                )
-                
-                return JsonResponse({
-                    'success': True,
-                    'file_url': upload_result['file']['url'],
-                    's3_url': upload_result['file']['url'],
-                    'file_id': upload_result['file']['id'],
-                    'secure_filename': secure_filename,
-                    'mime_type': mime_result
-                })
+                        'operation_id': upload_result.get('operation_id'),
+                        'platform': 'Render'
+                    })
+                else:
+                    # Handle Render microservice upload failure
+                    error_msg = upload_result.get('error', 'Unknown upload error')
+                    raise Exception(f"Render microservice upload failed: {error_msg}")
             
             except Exception as e:
-                # Log S3 upload failure
+                # Log S3 upload failure with enhanced details
                 send_log(
                     module="File",
                     actionType="UPLOAD_S3_FAILED",
-                    description=f"S3 upload failed for file: {file.name}",
+                    description=f"Render microservice S3 upload failed for file: {file.name}",
                     userId=user_id,
                     userName=username,
                     entityType="File",
@@ -13073,18 +13054,22 @@ class FileUploadView(View):
                     additionalInfo={
                         'filename': file.name,
                         'error': str(e),
-                        'incident_id': incident_id
+                        'incident_id': incident_id,
+                        'mitigation_number': mitigation_number,
+                        'platform': 'Render',
+                        'microservice_url': 'https://aws-microservice.onrender.com'
                     }
                 )
                 
                 # Clean up on S3 upload failure
                 secure_path.unlink(missing_ok=True)
-                print(f"[SECURITY] S3 upload failed, local file cleaned up: {str(e)}")
+                print(f"[SECURITY] Render microservice S3 upload failed, local file cleaned up: {str(e)}")
                 # SECURE: Sanitize upload error message
-                safe_error = SecureOutputEncoder.sanitize_error_message(f'Upload failed: {str(e)}')
+                safe_error = SecureOutputEncoder.sanitize_error_message(f'Upload to cloud storage failed: {str(e)}')
                 return JsonResponse({
                     'success': False,
-                    'error': safe_error
+                    'error': safe_error,
+                    'platform': 'Render'
                 }, status=500)
             
         except Exception as e:
@@ -13226,6 +13211,53 @@ def add_business_unit(request):
         print(f"Error adding business unit: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def test_s3_integration(request):
+    """Test S3 microservice integration"""
+    try:
+        # Test S3 client connection
+        s3_client = get_s3_client()
+        
+        # Test the connection
+        test_result = s3_client.test_connection()
+        
+        response_data = {
+            'success': True,
+            'message': 'S3 microservice integration test completed',
+            'test_results': test_result,
+            'microservice_url': 'https://aws-microservice.onrender.com',
+            'platform': 'Render',
+            'database': 'MySQL'
+        }
+        
+        # Get operation stats if available
+        try:
+            stats = s3_client.get_operation_stats()
+            if stats:
+                response_data['operation_stats'] = stats
+        except Exception as stats_e:
+            response_data['stats_error'] = str(stats_e)
+        
+        # Get recent operations if available
+        try:
+            history = s3_client.get_operation_history(limit=5)
+            if history:
+                response_data['recent_operations'] = history
+        except Exception as history_e:
+            response_data['history_error'] = str(history_e)
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        print(f"S3 integration test failed: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'message': 'S3 microservice integration test failed',
+            'platform': 'Render'
+        }, status=500)
+
 @api_view(['POST'])
 
 @permission_classes([AllowAny])  # ADD THIS LINE
@@ -13301,27 +13333,6 @@ def debug_category_data(request):
     except Exception as e:
         print(f"Error fetching debug data: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def check_s3_service_health(request):
-    """Check if S3 microservice is available"""
-    try:
-        s3_client = S3Client()
-        health_check = s3_client.check_health()
-        
-        return Response({
-            'success': True,
-            'is_running': health_check.get('is_running', False),
-            'message': health_check.get('message', 'Unknown status'),
-            'status_code': health_check.get('status_code')
-        })
-    except Exception as e:
-        return Response({
-            'success': False,
-            'is_running': False,
-            'message': f"S3 service error: {str(e)}"
-        }, status=500)
 
 @api_view(['POST'])
 @permission_classes([IncidentCreatePermission])

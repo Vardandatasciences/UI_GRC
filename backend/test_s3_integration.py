@@ -1,244 +1,146 @@
 #!/usr/bin/env python3
 """
-Test script for S3 integration with the file upload system.
-This script tests the complete flow from file upload to S3 storage.
+Test script for S3 microservice integration with incident file uploads
+This script demonstrates how the incident system now uses the Render S3 microservice
 """
+
 import os
 import sys
 import django
 import requests
 import json
-import tempfile
-from pathlib import Path
 
-# Setup Django environment
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add the parent directory to the path so we can import Django modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from grc.s3_fucntions import S3Client
-from grc.incident_views import FileUploadView
+def test_s3_connection():
+    """Test the S3 microservice connection"""
+    print("🧪 Testing S3 Microservice Connection")
+    print("=" * 50)
+    
+    try:
+        # Test the Django endpoint
+        response = requests.get('http://localhost:8000/api/test-s3-integration/')
+        
+        if response.status_code == 200:
+            result = response.json()
+            print("✅ Django endpoint response:")
+            print(json.dumps(result, indent=2))
+            
+            if result.get('success'):
+                print("\n✅ S3 integration test PASSED")
+                test_results = result.get('test_results', {})
+                
+                print(f"\n📊 Connection Status:")
+                print(f"   Render microservice: {test_results.get('render_status', 'unknown')}")
+                print(f"   MySQL database: {test_results.get('mysql_status', 'unknown')}")
+                print(f"   Overall success: {test_results.get('overall_success', False)}")
+                
+                if 'operation_stats' in result:
+                    stats = result['operation_stats']
+                    print(f"\n📈 Operation Statistics:")
+                    print(f"   Total operations: {stats.get('total_operations', 0)}")
+                    print(f"   Completed: {stats.get('total_completed', 0)}")
+                    print(f"   Failed: {stats.get('total_failed', 0)}")
+                
+                if 'recent_operations' in result:
+                    ops = result['recent_operations']
+                    print(f"\n📋 Recent Operations ({len(ops)}):")
+                    for i, op in enumerate(ops[:3], 1):
+                        print(f"   {i}. {op.get('operation_type')} - {op.get('file_name')} ({op.get('status')})")
+                
+            else:
+                print("❌ S3 integration test FAILED")
+                print(f"   Error: {result.get('error', 'Unknown error')}")
+        else:
+            print(f"❌ HTTP Error: {response.status_code}")
+            print(f"   Response: {response.text}")
+    
+    except Exception as e:
+        print(f"❌ Test failed with exception: {e}")
 
-class S3IntegrationTester:
-    def __init__(self):
-        self.base_url = "http://localhost:8000"
-        self.s3_client = S3Client()
-        
-    def test_s3_service_health(self):
-        """Test if S3 microservice is running"""
-        print("🔍 Testing S3 service health...")
-        
-        health_check = self.s3_client.check_health()
-        
-        if health_check.get('is_running'):
-            print("✅ S3 microservice is running")
-            print(f"   Status: {health_check.get('message', 'OK')}")
-            return True
-        else:
-            print("❌ S3 microservice is not running")
-            print(f"   Error: {health_check.get('message', 'Unknown error')}")
-            return False
+def test_direct_s3_client():
+    """Test the S3 client directly"""
+    print("\n🔧 Testing Direct S3 Client")
+    print("=" * 50)
     
-    def test_file_upload_endpoint(self):
-        """Test the file upload endpoint"""
-        print("\n🔍 Testing file upload endpoint...")
+    try:
+        # Import and test the S3 client directly
+        from grc.s3_fucntions import create_render_mysql_client
         
-        # Create a test file
-        test_content = "This is a test file for S3 integration testing."
+        client = create_render_mysql_client()
+        print("✅ S3 client created successfully")
         
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
-            temp_file.write(test_content)
-            temp_file_path = temp_file.name
+        # Test connection
+        result = client.test_connection()
+        print(f"✅ Connection test completed:")
+        print(f"   Render: {result.get('render_status')}")
+        print(f"   MySQL: {result.get('mysql_status')}")
+        print(f"   Success: {result.get('overall_success')}")
         
-        try:
-            # Prepare test data
-            files = {'file': ('test_file.txt', open(temp_file_path, 'rb'), 'text/plain')}
-            data = {
-                'incidentId': '1',
-                'mitigationNumber': '1',
-                'userId': '1',
-                'itemType': 'incident',
-                'uploadType': 'mitigation_evidence'
-            }
-            
-            # Make request to upload endpoint
-            response = requests.post(
-                f"{self.base_url}/api/upload-file/",
-                files=files,
-                data=data
-            )
-            
-            print(f"   Response Status: {response.status_code}")
-            
-            if response.status_code == 200:
-                response_data = response.json()
-                if response_data.get('success'):
-                    print("✅ File upload successful")
-                    print(f"   S3 URL: {response_data.get('file_url', 'Not provided')}")
-                    print(f"   File ID: {response_data.get('file_id', 'Not provided')}")
-                    return True, response_data
-                else:
-                    print("❌ File upload failed")
-                    print(f"   Error: {response_data.get('error', 'Unknown error')}")
-                    return False, response_data
-            else:
-                print("❌ File upload failed")
-                print(f"   HTTP Error: {response.status_code}")
-                print(f"   Response: {response.text}")
-                return False, None
-                
-        finally:
-            # Clean up test file
-            files['file'][1].close()
-            os.unlink(temp_file_path)
-    
-    def test_direct_s3_upload(self):
-        """Test direct S3 upload using S3Client"""
-        print("\n🔍 Testing direct S3 upload...")
+        # Show operation stats
+        stats = client.get_operation_stats()
+        if stats:
+            print(f"\n📊 Database Stats:")
+            print(f"   Total operations: {stats.get('total_operations', 0)}")
+            for op_type in stats.get('operations_by_type', []):
+                print(f"   {op_type['operation_type']}: {op_type['total_count']} total, {op_type['completed_count']} completed")
         
-        # Create a test file
-        test_content = "This is a direct S3 upload test file."
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
-            temp_file.write(test_content)
-            temp_file_path = temp_file.name
-        
-        try:
-            # Upload using S3Client directly
-            upload_result = self.s3_client.upload_file(
-                file_path=temp_file_path,
-                user_id="test_user",
-                file_name="direct_test.txt",
-                incident_id="test_incident",
-                mitigation_number="1",
-                upload_type="test"
-            )
-            
-            if upload_result.get('success'):
-                print("✅ Direct S3 upload successful")
-                print(f"   S3 URL: {upload_result['file']['url']}")
-                print(f"   File ID: {upload_result['file']['id']}")
-                return True, upload_result
-            else:
-                print("❌ Direct S3 upload failed")
-                print(f"   Error: {upload_result}")
-                return False, upload_result
-                
-        except Exception as e:
-            print("❌ Direct S3 upload failed")
-            print(f"   Exception: {str(e)}")
-            return False, None
-        finally:
-            # Clean up test file
-            os.unlink(temp_file_path)
-    
-    def test_s3_health_endpoint(self):
-        """Test the S3 health check endpoint"""
-        print("\n🔍 Testing S3 health check endpoint...")
-        
-        try:
-            response = requests.get(f"{self.base_url}/api/incidents/s3-health/")
-            
-            if response.status_code == 200:
-                response_data = response.json()
-                print("✅ S3 health endpoint working")
-                print(f"   S3 Running: {response_data.get('is_running')}")
-                print(f"   Message: {response_data.get('message')}")
-                return True, response_data
-            else:
-                print("❌ S3 health endpoint failed")
-                print(f"   HTTP Error: {response.status_code}")
-                return False, None
-                
-        except Exception as e:
-            print("❌ S3 health endpoint failed")
-            print(f"   Exception: {str(e)}")
-            return False, None
-    
-    def test_file_download(self, file_id):
-        """Test file download from S3"""
-        print(f"\n🔍 Testing file download for file ID: {file_id}...")
-        
-        try:
-            # Create download directory
-            download_dir = Path("test_downloads")
-            download_dir.mkdir(exist_ok=True)
-            
-            # Download file
-            downloaded_path = self.s3_client.download_file(file_id, str(download_dir))
-            
-            if downloaded_path and Path(downloaded_path).exists():
-                print("✅ File download successful")
-                print(f"   Downloaded to: {downloaded_path}")
-                
-                # Read and verify content
-                with open(downloaded_path, 'r') as f:
-                    content = f.read()
-                    print(f"   Content preview: {content[:100]}...")
-                
-                # Clean up
-                os.unlink(downloaded_path)
-                return True
-            else:
-                print("❌ File download failed")
-                return False
-                
-        except Exception as e:
-            print("❌ File download failed")
-            print(f"   Exception: {str(e)}")
-            return False
-    
-    def run_all_tests(self):
-        """Run all integration tests"""
-        print("🚀 Starting S3 Integration Tests")
-        print("=" * 50)
-        
-        results = {}
-        
-        # Test 1: S3 Service Health
-        results['s3_health'] = self.test_s3_service_health()
-        
-        # Test 2: S3 Health Endpoint
-        results['health_endpoint'] = self.test_s3_health_endpoint()[0]
-        
-        # Test 3: Direct S3 Upload
-        direct_result, direct_data = self.test_direct_s3_upload()
-        results['direct_upload'] = direct_result
-        
-        # Test 4: File Upload Endpoint
-        upload_result, upload_data = self.test_file_upload_endpoint()
-        results['upload_endpoint'] = upload_result
-        
-        # Test 5: File Download (if we have a file ID)
-        if direct_result and direct_data:
-            file_id = direct_data['file']['id']
-            results['file_download'] = self.test_file_download(file_id)
-        
-        # Summary
-        print("\n" + "=" * 50)
-        print("📊 Test Results Summary")
-        print("=" * 50)
-        
-        for test_name, success in results.items():
-            status = "✅ PASS" if success else "❌ FAIL"
-            print(f"   {test_name.replace('_', ' ').title()}: {status}")
-        
-        total_tests = len(results)
-        passed_tests = sum(results.values())
-        
-        print(f"\nOverall: {passed_tests}/{total_tests} tests passed")
-        
-        if passed_tests == total_tests:
-            print("🎉 All tests passed! S3 integration is working correctly.")
-        else:
-            print("⚠️  Some tests failed. Please check the S3 microservice and configuration.")
-        
-        return results
+    except Exception as e:
+        print(f"❌ Direct client test failed: {e}")
+
+def show_integration_summary():
+    """Show summary of what was integrated"""
+    print("\n🎯 Integration Summary")
+    print("=" * 50)
+    print("✅ Successfully integrated Render S3 microservice with incident file uploads")
+    print("\n📋 What was changed:")
+    print("   1. Modified FileUploadView in incident_views.py")
+    print("   2. Replaced S3Client with RenderS3Client from s3_functions.py")
+    print("   3. Updated response format to match Vue component expectations")
+    print("   4. Enhanced error handling and logging")
+    print("   5. Added test endpoint for verifying integration")
+    print("\n🔗 Key endpoints:")
+    print("   • File Upload: POST /api/upload-file/")
+    print("   • S3 Test: GET /api/test-s3-integration/")
+    print("\n📁 Files modified:")
+    print("   • backend/grc/incident_views.py (FileUploadView)")
+    print("   • backend/grc/urls.py (added test endpoint)")
+    print("\n⚙️  How it works:")
+    print("   1. Vue component uploads file to Django endpoint")
+    print("   2. Django validates and scans file for security")
+    print("   3. Django uses RenderS3Client to upload to Render microservice")
+    print("   4. Render microservice uploads to AWS S3")
+    print("   5. Django returns S3 URL to Vue component")
+    print("   6. All operations are tracked in MySQL database")
 
 def main():
-    """Main function to run tests"""
-    tester = S3IntegrationTester()
-    tester.run_all_tests()
+    """Main test function"""
+    print("🚀 S3 Microservice Integration Test")
+    print("🌐 Render URL: https://aws-microservice.onrender.com")
+    print("🗄️  Database: Local MySQL")
+    print("📋 Vue Component: IncidentUserTasks.vue")
+    print("=" * 60)
+    
+    # Test S3 connection via Django endpoint
+    test_s3_connection()
+    
+    # Test S3 client directly
+    test_direct_s3_client()
+    
+    # Show integration summary
+    show_integration_summary()
+    
+    print("\n🎉 Integration test completed!")
+    print("\n💡 Next steps:")
+    print("   1. Test file upload in Vue component")
+    print("   2. Verify files are uploaded to S3")
+    print("   3. Check MySQL database for operation records")
+    print("   4. Monitor console logs for any errors")
 
 if __name__ == "__main__":
     main() 

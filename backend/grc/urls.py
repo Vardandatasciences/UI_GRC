@@ -635,7 +635,6 @@ incident_urlpatterns = [
     path('submit-incident-assessment/', incident_views.submit_incident_assessment, name='submit-incident-assessment'),
     path('incident-approval-data/<int:incident_id>/', incident_views.incident_approval_data, name='incident-approval-data'),
     path('incidents/generate-analysis/', incident_views.generate_analysis, name='generate-analysis'),
-    path('incidents/s3-health/', incident_views.check_s3_service_health, name='s3-health-check'),
     
     # Audit Finding User Tasks
     path('user-audit-findings/<int:user_id>/', incident_views.user_audit_findings, name='user-audit-findings'),
@@ -659,6 +658,7 @@ incident_urlpatterns = [
     # Test and Debug endpoints
     path('api/test-notification/', incident_views.test_notification, name='test-notification'),
     path('api/test-logging/', incident_views.test_logging, name='test-logging'),
+    path('api/test-s3-integration/', incident_views.test_s3_integration, name='test-s3-integration'),
     path('seed-sample-data/', incident_views.seed_sample_data, name='seed-sample-data'),
     path('debug-category-data/', incident_views.debug_category_data, name='debug-category-data'),
 ]

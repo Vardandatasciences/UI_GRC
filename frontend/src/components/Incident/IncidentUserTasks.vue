@@ -1734,8 +1734,8 @@ export default {
       const file = event.target.files[0];
       if (!file) return;
       
-      if (file.size > 10 * 1024 * 1024) {
-        PopupService.error('File size exceeds 10MB limit');
+      if (file.size > 5 * 1024 * 1024) {
+        PopupService.error('File size exceeds 5MB limit');
         event.target.value = '';
         return;
       }
@@ -1749,15 +1749,6 @@ export default {
       formData.append('incidentId', this.selectedIncidentId);
       formData.append('mitigationNumber', index + 1);
       
-      // Add user ID if available
-      if (this.selectedUserId) {
-        formData.append('userId', this.selectedUserId);
-      }
-      
-      // Add metadata for S3 upload
-      formData.append('itemType', this.isAuditFinding ? 'audit_finding' : 'incident');
-      formData.append('uploadType', 'mitigation_evidence');
-      
       axios.post('http://localhost:8000/api/upload-file/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -1767,10 +1758,10 @@ export default {
         console.log('File processed successfully:', response.data);
         
         if (response.data.success) {
-          this.mitigationSteps[index]['aws-file_link'] = response.data.file_url || response.data.s3_url;
+          this.mitigationSteps[index]['aws-file_link'] = response.data.file_url;
           this.mitigationSteps[index].fileName = file.name;
           
-          PopupService.success('File uploaded successfully to S3');
+          PopupService.success('File uploaded successfully');
         } else {
           PopupService.error('Error uploading file: ' + response.data.error);
         }

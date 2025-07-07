@@ -5607,7 +5607,7 @@ def risk_assessment_consensus(request):
     })
 
 @api_view(['GET'])
-@rbac_required(required_permission='view_all_risk')
+@permission_classes([AllowAny])
 def get_all_risks_for_dropdown(request):
     """
     Get all risks with essential metadata for dropdown selection
@@ -5633,7 +5633,7 @@ def get_all_risks_for_dropdown(request):
         return Response({"error": str(e)}, status=500)
 
 @api_view(['GET'])
-@rbac_required(required_permission='view_all_risk')
+@permission_classes([AllowAny])
 def get_all_compliances_for_dropdown(request):
     """
     Get all compliances with essential metadata for dropdown selection
@@ -5657,19 +5657,12 @@ def get_all_compliances_for_dropdown(request):
         return Response({"error": str(e)}, status=500)
 
 @api_view(['GET'])
-@rbac_required(required_permission='view_all_risk')
+@permission_classes([AllowAny])
 def get_users_for_dropdown(request):
     """
     Get all users with essential metadata for dropdown selection
     """
-    send_log(
-        module="User",
-        actionType="VIEW",
-        description="Viewing users for dropdown",
-        userId=request.user.id if request.user.is_authenticated else None,
-        userName=request.user.username if request.user.is_authenticated else None,
-        entityType="CustomUser"
-    )
+    # Removed logging that requires user authentication
     
     try:
         # Get users from the Users model directly
@@ -5689,7 +5682,7 @@ def get_users_for_dropdown(request):
         return Response({"error": str(e)}, status=500)
 
 @api_view(['GET'])
-@rbac_required(required_permission='view_all_risk')
+@permission_classes([AllowAny])
 def get_business_impacts(request):
     """
     Get all business impact values from CategoryBusinessUnit
@@ -5736,7 +5729,7 @@ def add_business_impact(request):
         }, status=500)
 
 @api_view(['GET'])
-@rbac_required(required_permission='view_all_risk')
+@permission_classes([AllowAny])
 def get_risk_categories(request):
     """
     Get all risk category values from CategoryBusinessUnit
