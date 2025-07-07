@@ -9,9 +9,12 @@ from django.utils import timezone
 from django.db.models import Sum, Avg, Count, F, ExpressionWrapper, DurationField, FloatField, Q, Case, When, Value
 from django.db.models.functions import Cast
 from django.http import JsonResponse
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
+
+# RBAC imports
+from .rbac.permissions import RiskAnalyticsPermission, RiskViewPermission
 
 # Import models
 from .models import RiskInstance, Risk, Incident
@@ -28,6 +31,7 @@ def decimal_to_float(obj):
         return obj
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_kpi_data(request):
     """Return all KPI data for the risk dashboard"""
     
@@ -114,6 +118,7 @@ def risk_kpi_data(request):
 
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_exposure_trend(request):
     """Return data for risk exposure trend over time using real database values"""
     print("==== RISK EXPOSURE TREND ENDPOINT CALLED ====")
@@ -210,6 +215,7 @@ def risk_exposure_trend(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_reduction_trend(request):
     print("==== RISK REDUCTION TREND ENDPOINT CALLED ====")
     
@@ -314,6 +320,7 @@ def risk_reduction_trend(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def high_criticality_risks(request):
     """Return data for high criticality risks from the database"""
     print("==== HIGH CRITICALITY RISKS ENDPOINT CALLED ====")
@@ -408,6 +415,7 @@ def high_criticality_risks(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_identification_rate(request):
     """
     Calculate the risk identification rate (number of new risks identified per period)
@@ -548,6 +556,7 @@ def risk_identification_rate(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def due_mitigation(request):
     """
     Calculate percentage of mitigation tasks that are past due date and incomplete
@@ -701,6 +710,7 @@ def due_mitigation(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def classification_accuracy(request):
     """Return data for risk classification accuracy"""
     
@@ -748,6 +758,7 @@ def classification_accuracy(request):
     })
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def improvement_initiatives(request):
     """Return data for improvement initiatives KPI"""
     try:
@@ -824,6 +835,7 @@ def improvement_initiatives(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_impact(request):
     """Return data for risk impact on operations and finances"""
     print("==== RISK IMPACT ON OPERATIONS AND FINANCES ENDPOINT CALLED ====")
@@ -1012,6 +1024,7 @@ def risk_impact(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_severity(request):
     """Return data for risk severity based on potential consequences"""
     print("==== RISK SEVERITY ENDPOINT CALLED ====")
@@ -1243,6 +1256,7 @@ def risk_severity(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_exposure_score(request):
     """Return data for risk exposure score using real data from risk_instance table"""
     from django.db import connection
@@ -1310,6 +1324,7 @@ def risk_exposure_score(request):
     return Response(response)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_resilience(request):
     """
     Return data for risk resilience to absorb shocks from real database values
@@ -1427,6 +1442,7 @@ def get_risk_resilience_by_category():
     }
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_assessment_frequency(request):
     """Return data for frequency of risk assessment review"""
     
@@ -1477,6 +1493,7 @@ def risk_assessment_frequency(request):
     }, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_approval_rate_cycle(request):
     """
     Return data for risk approval rate and review cycles
@@ -1529,6 +1546,7 @@ def risk_approval_rate_cycle(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_register_update_frequency(request):
     """Return data for frequency of risk register updates"""
     print("==== RISK REGISTER UPDATE FREQUENCY ENDPOINT CALLED ====")
@@ -1604,6 +1622,7 @@ def risk_register_update_frequency(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_recurrence_probability(request):
     """Return data for risk recurrence probability KPI"""
     try:
@@ -1695,6 +1714,7 @@ def risk_recurrence_probability(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def active_risks_kpi(request):
     """
     Get the active risks KPI data from the database
@@ -1795,6 +1815,7 @@ def active_risks_kpi(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def mitigation_completion_rate(request):
     """Return data for mitigation completion rate KPI"""
     try:
@@ -1936,6 +1957,7 @@ def mitigation_completion_rate(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def avg_remediation_time(request):
     """
     Get average time to remediate critical risks
@@ -2075,6 +2097,7 @@ def avg_remediation_time(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def recurrence_rate(request):
     """
     Calculate and return the rate of risk recurrence 
@@ -2241,6 +2264,7 @@ def recurrence_rate(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def avg_incident_response_time(request):
     """
     Calculate the average time between incident detection and response start
@@ -2421,6 +2445,7 @@ def avg_incident_response_time(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def mitigation_cost(request):
     """
     Calculate and return the cost of mitigation for risks
@@ -2637,6 +2662,7 @@ def mitigation_cost(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_assessment_consensus(request):
     """Return data for risk assessment consensus"""
     
@@ -2686,6 +2712,7 @@ def risk_assessment_consensus(request):
 
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_tolerance_thresholds(request):
     """Return data for organizational risk tolerance thresholds"""
     
@@ -2769,6 +2796,7 @@ def risk_tolerance_thresholds(request):
 
 
 @api_view(['GET'])
+@permission_classes([RiskAnalyticsPermission])
 def risk_appetite(request):
     """Return risk appetite data for the organization based on risk instances"""
     try:

@@ -1269,6 +1269,4442 @@ def validate_json_request_body(request, validation_rules):
     return validated_data
 
 @api_view(['GET', 'PUT', 'PATCH'])
+@permission_classes([IncidentViewPermission])
+def incident_by_id(request, incident_id):
+    """
+    Get or update a specific incident by ID
+    """
+    # Get user info for logging
+    user_id = getattr(request.user, 'id', None)
+    username = getattr(request.user, 'username', 'Unknown')
+    
+    try:
+        # Validate path parameter
+        try:
+            validated_incident_id = validate_path_parameter(incident_id, 'incident_id', 'integer')
+        except ValidationError as e:
+            send_log(
+                module="Incident",
+                actionType="INCIDENT_VALIDATION_ERROR",
+                description=f"Invalid incident ID parameter: {incident_id}",
+                userId=user_id,
+                userName=username,
+                entityType="Incident",
+                logLevel="WARN",
+                ipAddress=get_client_ip(request)
+            )
+            return Response({'success': False, 'message': str(e)}, status=400)
+        
+        # Get the incident
+        incident = Incident.objects.get(IncidentId=validated_incident_id)
+        
+        if request.method == 'GET':
+            # RBAC Debug - Log user access attempt
+            debug_info = debug_user_permissions(request, "VIEW_INCIDENT", "incident", validated_incident_id)
+            
+            # Log incident view
+            send_log(
+                module="Incident",
+                actionType="VIEW_INCIDENT",
+                description=f"User viewing incident: {incident.IncidentTitle}",
+                userId=user_id,
+                userName=username,
+                entityType="Incident",
+                entityId=str(validated_incident_id),
+                ipAddress=get_client_ip(request)
+            )
+            
+            # Use the serializer to convert the model to JSON-serializable data
+            serializer = IncidentSerializer(incident)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data
+            })
+        
+        elif request.method in ['PUT', 'PATCH']:
+            # RBAC Debug - Log user access attempt  
+            debug_info = debug_user_permissions(request, "EDIT_INCIDENT", "incident", validated_incident_id)
+            
+            # Log incident update attempt
+            send_log(
+                module="Incident",
+                actionType="UPDATE_INCIDENT_ATTEMPT",
+                description=f"User attempting to update incident: {incident.IncidentTitle}",
+                userId=user_id,
+                userName=username,
+                entityType="Incident",
+                entityId=str(validated_incident_id),
+                ipAddress=get_client_ip(request)
+            )
+            
+            # Store original data for audit trail
+            original_data = IncidentSerializer(incident).data
+            
+            # Use the serializer to update the incident
+            serializer = IncidentSerializer(incident, data=request.data, partial=(request.method == 'PATCH'))
+            
+            if serializer.is_valid():
+                serializer.save()
+                
+                # Log successful update
+                send_log(
+                    module="Incident",
+                    actionType="UPDATE_INCIDENT_SUCCESS",
+                    description=f"Successfully updated incident: {incident.IncidentTitle}",
+                    userId=user_id,
+                    userName=username,
+                    entityType="Incident",
+                    entityId=str(validated_incident_id),
+                    ipAddress=get_client_ip(request),
+                    additionalInfo={
+                        'original_data': original_data,
+                        'updated_data': serializer.data,
+                        'update_type': request.method
+                    }
+                )
+                
+                return Response({
+                    'success': True,
+                    'message': 'Incident updated successfully',
+                    'data': serializer.data
+                })
+            else:
+                # Log validation failure
+                send_log(
+                    module="Incident",
+                    actionType="UPDATE_INCIDENT_VALIDATION_FAILED",
+                    description=f"Validation failed for incident update: {incident.IncidentTitle}",
+                    userId=user_id,
+                    userName=username,
+                    entityType="Incident",
+                    entityId=str(validated_incident_id),
+                    logLevel="WARN",
+                    ipAddress=get_client_ip(request),
+                    additionalInfo={'validation_errors': serializer.errors}
+                )
+                
+                return Response({
+                    'success': False,
+                    'message': 'Invalid data',
+                    'errors': serializer.errors
+                }, status=400)
+        
+    except Incident.DoesNotExist:
+        send_log(
+            module="Incident",
+            actionType="INCIDENT_NOT_FOUND",
+            description=f"Incident not found: {validated_incident_id}",
+            userId=user_id,
+            userName=username,
+            entityType="Incident",
+            entityId=str(validated_incident_id),
+            logLevel="WARN",
+            ipAddress=get_client_ip(request)
+        )
+        return Response({
+            'success': False,
+            'message': 'Incident not found'
+        }, status=404)
+    except Exception as e:
+        send_log(
+            module="Incident",
+            actionType="INCIDENT_ERROR",
+            description=f"Error handling incident {validated_incident_id}: {str(e)}",
+            userId=user_id,
+            userName=username,
+            entityType="Incident",
+            entityId=str(validated_incident_id),
+            logLevel="ERROR",
+            ipAddress=get_client_ip(request)
+        )
+        print(f"Error with incident: {str(e)}")
+        return Response({
+            'success': False,
+            'message': f'Error with incident: {str(e)}'
+        }, status=500)
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IncidentEditPermission])
+def update_incident_by_id(request, incident_id):
+    """
+    Update a specific incident by ID
+    """
+    try:
+        # Validate path parameter
+        try:
+            validated_incident_id = validate_path_parameter(incident_id, 'incident_id', 'integer')
+        except ValidationError as e:
+            return Response({'success': False, 'message': str(e)}, status=400)
+        
+        # RBAC Debug - Log user access attempt
+        debug_info = debug_user_permissions(request, "EDIT_INCIDENT", "incident", validated_incident_id)
+        
+        # Get the incident
+        incident = Incident.objects.get(IncidentId=validated_incident_id)
+        
+        # Use the serializer to update the incident
+        serializer = IncidentSerializer(incident, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'success': True,
+                'message': 'Incident updated successfully',
+                'data': serializer.data
+            })
+        else:
+            return Response({
+                'success': False,
+                'message': 'Invalid data',
+                'errors': serializer.errors
+            }, status=400)
+            
+    except Incident.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Incident not found'
+        }, status=404)
+    except Exception as e:
+        print(f"Error updating incident: {str(e)}")
+        return Response({
+            'success': False,
+            'message': f'Error updating incident: {str(e)}'
+        }, status=500)
+
+from django.shortcuts import render, redirect, get_object_or_404
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.contrib.auth import authenticate, login as auth_login
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import (
+    UserSerializer, IncidentSerializer, AuditFindingSerializer, 
+    PolicySerializer, SubPolicySerializer, ComplianceCreateSerializer, PolicyAllocationSerializer, FrameworkSerializer,
+    PolicyApprovalSerializer, LastChecklistItemVerifiedSerializer, RiskInstanceSerializer  # Add RiskInstanceSerializer
+)
+from .models import Incident, AuditFinding, Users, Workflow, Compliance, Framework, PolicyVersion, PolicyApproval, Policy, SubPolicy, RiskInstance, LastChecklistItemVerified, IncidentApproval, ExportTask, ExportTask,CategoryBusinessUnit, GRCLog
+from .notification_service import NotificationService
+# Import KPI functions from separate module
+from .kpis_incidents import (
+    incident_mttd, incident_mttr, incident_mttc, incident_mttrv,
+    incident_volume, incidents_by_severity, incident_root_causes,
+    incident_types, incident_origins, escalation_rate, repeat_rate,
+    incident_cost, first_response_time, false_positive_rate,
+    detection_accuracy, incident_closure_rate, incident_reopened_count,
+    incident_count, incident_metrics, get_incident_counts,
+    to_aware_datetime, safe_combine_date_time
+)
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.db import transaction
+from django.db.models import Q
+import traceback
+import datetime
+from django.db import connection
+import json
+import uuid
+import re
+import base64
+import tempfile
+import os
+from datetime import date, time
+from .s3_fucntions import S3Client
+from .validation import SecureValidator, ValidationError, IncidentValidator, QuestionnaireValidator
+from contextlib import contextmanager
+import logging
+import requests
+
+# Logging Configuration
+LOGGING_SERVICE_URL = None  # Disabled external logging service
+
+def send_log(module, actionType, description=None, userId=None, userName=None,
+             userRole=None, entityType=None, logLevel='INFO', ipAddress=None,
+             additionalInfo=None, entityId=None):
+   
+    # Debug print to console
+    print(f"[DEBUG LOGGING] send_log called: module={module}, actionType={actionType}, userId={userId}")
+   
+    # Create log entry in database
+    try:
+        # Prepare data for GRCLog model
+        log_data = {
+            'Module': module,
+            'ActionType': actionType,
+            'Description': description,
+            'UserId': str(userId) if userId is not None else None,
+            'UserName': userName,
+            'EntityType': entityType,
+            'EntityId': str(entityId) if entityId is not None else None,
+            'LogLevel': logLevel,
+            'IPAddress': ipAddress,
+            'AdditionalInfo': additionalInfo
+        }
+       
+        # Remove None values
+        log_data = {k: v for k, v in log_data.items() if v is not None}
+        
+        print(f"[DEBUG LOGGING] Prepared log_data: {log_data}")
+       
+        # Create and save the log entry
+        log_entry = GRCLog(**log_data)
+        print(f"[DEBUG LOGGING] Created GRCLog instance: {log_entry}")
+        
+        log_entry.save()
+        print(f"[DEBUG LOGGING] Successfully saved log with ID: {log_entry.LogId}")
+       
+        # Optionally still send to logging service if needed
+        try:
+            if LOGGING_SERVICE_URL:
+                # Format for external service (matches expected format in loggingservice.js)
+                api_log_data = {
+                    "module": module,
+                    "actionType": actionType,  # This is exactly what the service expects
+                    "description": description,
+                    "userId": userId,
+                    "userName": userName,
+                    "userRole": userRole,
+                    "entityType": entityType,
+                    "logLevel": logLevel,
+                    "ipAddress": ipAddress,
+                    "additionalInfo": additionalInfo
+                }
+                # Clean out None values
+                api_log_data = {k: v for k, v in api_log_data.items() if v is not None}
+               
+                response = requests.post(LOGGING_SERVICE_URL, json=api_log_data)
+                if response.status_code != 200:
+                    print(f"Failed to send log to service: {response.text}")
+        except Exception as e:
+            print(f"Error sending log to service: {str(e)}")
+           
+        return log_entry.LogId  # Return the ID of the created log
+    except Exception as e:
+        print(f"[ERROR LOGGING] Error saving log to database: {str(e)}")
+        print(f"[ERROR LOGGING] Exception type: {type(e)}")
+        import traceback
+        print(f"[ERROR LOGGING] Traceback: {traceback.format_exc()}")
+        
+        # Try to capture the error itself
+        try:
+            error_log = GRCLog(
+                Module=module,
+                ActionType='LOG_ERROR',
+                Description=f"Error logging {actionType} on {module}: {str(e)}",
+                LogLevel='ERROR'
+            )
+            error_log.save()
+            print(f"[ERROR LOGGING] Saved error log with ID: {error_log.LogId}")
+        except Exception as error_save_exception:
+            print(f"[ERROR LOGGING] Could not even save error log: {str(error_save_exception)}")
+        return None
+
+def get_client_ip(request):
+    """Helper function to get client IP address"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+
+
+
+
+
+# Add these imports at the top of your incident_views.py file
+from rest_framework.permissions import IsAuthenticated
+from grc.rbac.permissions import (
+    # Incident permissions
+    IncidentCreatePermission,
+    IncidentEditPermission,
+    IncidentAssignPermission,
+    IncidentEvaluatePermission,
+    IncidentEscalatePermission,
+    IncidentViewPermission,
+    IncidentAnalyticsPermission,
+    
+    # Audit permissions (for audit findings)
+    AuditViewPermission,
+    AuditConductPermission,
+    AuditReviewPermission,
+    AuditAssignPermission,
+    AuditAnalyticsPermission
+)
+
+# Add RBAC debug logging
+import logging
+logger = logging.getLogger(__name__)
+
+def debug_user_permissions(request, action, resource_type=None, resource_id=None):
+    """Debug function to log user permissions and access attempts using RBACUtils"""
+    try:
+        from grc.rbac.utils import RBACUtils
+        
+        # Extract user ID using RBACUtils
+        user_id = RBACUtils.get_user_id_from_request(request)
+        ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+        
+        if not user_id:
+            logger.info(f"[RBAC DEBUG] User Access Attempt:")
+            logger.info(f"   User ID: None (could not extract from request)")
+            logger.info(f"   Action: {action}")
+            logger.info(f"   Resource: {resource_type} (ID: {resource_id})")
+            logger.info(f"   IP Address: {ip_address}")
+            logger.info(f"   Status: FAILED - No user ID")
+            logger.info(f"   " + "=" * 60)
+            return None
+        
+        # Get detailed permissions from database
+        detailed_permissions = get_user_detailed_permissions(user_id)
+        
+        # Log comprehensive access attempt
+        logger.info(f"[RBAC DEBUG] User Access Attempt:")
+        logger.info(f"   User ID: {user_id}")
+        logger.info(f"   Action: {action}")
+        logger.info(f"   Resource: {resource_type} (ID: {resource_id})")
+        logger.info(f"   IP Address: {ip_address}")
+        
+        # Display detailed permissions
+        logger.info(f"   === DETAILED PERMISSIONS FROM DATABASE ===")
+        if detailed_permissions:
+            for module, permissions in detailed_permissions.items():
+                logger.info(f"   Module '{module}':")
+                for perm_name, has_perm in permissions.items():
+                    status = "✓ YES" if has_perm else "✗ NO"
+                    logger.info(f"      {perm_name}: {status}")
+        else:
+            logger.info(f"   No specific permissions found in database")
+        
+        # Check module permissions if resource_type maps to a module
+        module_permissions = {}
+        if resource_type:
+            # Map resource_type to module name
+            module_map = {
+                'incident': 'Incident',
+                'audit': 'Audit', 
+                'risk': 'Risk',
+                'policy': 'Policy',
+                'compliance': 'Compliance',
+                'framework': 'Framework'
+            }
+            
+            module = module_map.get(resource_type.lower())
+            if module:
+                # Check basic permissions for this module
+                permissions_to_check = ['view', 'create', 'edit', 'approve', 'assign']
+                for perm in permissions_to_check:
+                    has_perm = RBACUtils.has_permission(user_id, module, perm)
+                    module_permissions[perm] = has_perm
+                    # Debug each permission check
+                    debug_permission_check(user_id, module, perm, has_perm)
+                
+                logger.info(f"   Module Permissions for {module}:")
+                for perm, has_perm in module_permissions.items():
+                    status = "YES" if has_perm else "NO"
+                    logger.info(f"      {perm.capitalize()}: {status}")
+        
+        logger.info(f"   Timestamp: {timezone.now()}")
+        logger.info(f"   " + "=" * 60)
+        
+        return {
+            'user_id': user_id,
+            'module_permissions': module_permissions,
+            'detailed_permissions': detailed_permissions
+        }
+        
+    except Exception as e:
+        logger.error(f"[RBAC DEBUG ERROR]: {str(e)}")
+        import traceback
+        logger.error(f"[RBAC DEBUG TRACEBACK]: {traceback.format_exc()}")
+        return None
+
+
+def get_user_detailed_permissions(user_id):
+    """Get detailed permissions for a user from all RBAC tables"""
+    try:
+        from .models import RBAC, RBACModulePermission, RBACUserPermission, RBACDepartmentAccess
+        
+        # Get user's RBAC info
+        rbac_info = RBAC.objects.filter(UserId=user_id).first()
+        if not rbac_info:
+            logger.warning(f"[RBAC] No RBAC info found for user {user_id}")
+            return None
+        
+        permissions = {}
+        
+        # 1. Get role-based module permissions
+        role_permissions = RBACModulePermission.objects.filter(Role=rbac_info.Role)
+        for perm in role_permissions:
+            module = perm.Module
+            if module not in permissions:
+                permissions[module] = {}
+            permissions[module][perm.Permission] = perm.IsAllowed
+        
+        # 2. Get user-specific permission overrides
+        user_permissions = RBACUserPermission.objects.filter(UserId=user_id)
+        for perm in user_permissions:
+            module = perm.Module
+            if module not in permissions:
+                permissions[module] = {}
+            # User permissions override role permissions
+            permissions[module][perm.Permission] = perm.IsAllowed
+        
+        # 3. Get department access info
+        dept_access = RBACDepartmentAccess.objects.filter(
+            Department=rbac_info.Department
+        )
+        
+        if dept_access.exists():
+            permissions['Department_Access'] = {}
+            for access in dept_access:
+                permissions['Department_Access'][f"access_{access.ResourceType}"] = access.CanAccess
+        
+        logger.info(f"[RBAC] Retrieved detailed permissions for user {user_id}: {permissions}")
+        return permissions
+        
+    except Exception as e:
+        logger.error(f"[RBAC] Error getting detailed permissions for user {user_id}: {str(e)}")
+        return None
+
+
+def log_user_login_permissions(user_id, username=None):
+    """Log all permissions when user logs in"""
+    try:
+        logger.info(f"[RBAC LOGIN] ===== USER LOGIN PERMISSIONS DEBUG =====")
+        logger.info(f"[RBAC LOGIN] User ID: {user_id}")
+        logger.info(f"[RBAC LOGIN] Username: {username}")
+        logger.info(f"[RBAC LOGIN] Login Time: {timezone.now()}")
+        
+        # Get detailed permissions
+        detailed_permissions = get_user_detailed_permissions(user_id)
+        
+        if detailed_permissions:
+            logger.info(f"[RBAC LOGIN] === USER PERMISSIONS FROM DATABASE ===")
+            for module, permissions in detailed_permissions.items():
+                logger.info(f"[RBAC LOGIN] Module: {module}")
+                for perm_name, has_perm in permissions.items():
+                    status = "✓ GRANTED" if has_perm else "✗ DENIED"
+                    logger.info(f"[RBAC LOGIN]    {perm_name}: {status}")
+        else:
+            logger.warning(f"[RBAC LOGIN] No permissions found for user {user_id}")
+        
+        # Get RBAC basic info
+        from .models import RBAC
+        rbac_info = RBAC.objects.filter(UserId=user_id).first()
+        if rbac_info:
+            logger.info(f"[RBAC LOGIN] === BASIC RBAC INFO ===")
+            logger.info(f"[RBAC LOGIN] Role: {rbac_info.Role}")
+            logger.info(f"[RBAC LOGIN] Department: {rbac_info.Department}")
+            logger.info(f"[RBAC LOGIN] Entity: {rbac_info.Entity}")
+            logger.info(f"[RBAC LOGIN] Active: {rbac_info.IsActive}")
+        else:
+            logger.warning(f"[RBAC LOGIN] No RBAC configuration found for user {user_id}")
+        
+        logger.info(f"[RBAC LOGIN] ============================================")
+        
+        return detailed_permissions
+        
+    except Exception as e:
+        logger.error(f"[RBAC LOGIN] Error logging user permissions: {str(e)}")
+        return None
+
+
+def debug_permission_check(user_id, module, permission, result):
+    """Debug individual permission checks"""
+    try:
+        logger.info(f"[RBAC PERM CHECK] User {user_id} checking {module}.{permission} = {result}")
+        
+        # Get the actual database values
+        from .models import RBACModulePermission, RBACUserPermission, RBAC
+        
+        # Get user's role
+        rbac_info = RBAC.objects.filter(UserId=user_id).first()
+        if rbac_info:
+            logger.info(f"[RBAC PERM CHECK] User Role: {rbac_info.Role}")
+            
+            # Check role permission
+            role_perm = RBACModulePermission.objects.filter(
+                Role=rbac_info.Role,
+                Module=module,
+                Permission=permission
+            ).first()
+            
+            if role_perm:
+                logger.info(f"[RBAC PERM CHECK] Role Permission in DB: {role_perm.IsAllowed}")
+            else:
+                logger.info(f"[RBAC PERM CHECK] No role permission found in DB")
+            
+            # Check user override
+            user_perm = RBACUserPermission.objects.filter(
+                UserId=user_id,
+                Module=module,
+                Permission=permission
+            ).first()
+            
+            if user_perm:
+                logger.info(f"[RBAC PERM CHECK] User Override in DB: {user_perm.IsAllowed}")
+            else:
+                logger.info(f"[RBAC PERM CHECK] No user override found in DB")
+        
+    except Exception as e:
+        logger.error(f"[RBAC PERM CHECK] Error debugging permission check: {str(e)}")
+
+
+
+# Input validation utilities
+class ValidationError(Exception):
+    """Custom exception for validation errors"""
+    def __init__(self, field, message):
+        self.field = field
+        self.message = message
+        super().__init__(f"{field}: {message}")
+
+def validate_string(value, field_name, max_length=255, min_length=0, required=False, allowed_pattern=None):
+    """Validate a string value with allow-list validation"""
+    # Check if required
+    if required and (value is None or value == ''):
+        raise ValidationError(field_name, "This field is required")
+    
+    # Skip validation if not required and value is None or empty
+    if not required and (value is None or value == ''):
+        return value
+    
+    # Validate type
+    if not isinstance(value, str):
+        raise ValidationError(field_name, f"Must be a string, got {type(value).__name__}")
+    
+    # Validate length
+    if len(value) < min_length:
+        raise ValidationError(field_name, f"Must be at least {min_length} characters")
+    
+    if len(value) > max_length:
+        raise ValidationError(field_name, f"Must be no more than {max_length} characters")
+    
+    # Validate pattern if provided
+    if allowed_pattern and not re.match(allowed_pattern, value):
+        raise ValidationError(field_name, "Contains invalid characters")
+    
+    return value
+
+def validate_date(value, field_name, required=False):
+    """Validate a date value"""
+    # Check if required
+    if required and (value is None or value == ''):
+        raise ValidationError(field_name, "This field is required")
+    
+    # Skip validation if not required and value is None or empty
+    if not required and (value is None or value == ''):
+        return value
+    
+    # If already a date object, return as is
+    if isinstance(value, date):
+        return value
+    
+    # Try to parse the date
+    try:
+        # Handle different date formats
+        if isinstance(value, str):
+            # Try ISO format YYYY-MM-DD
+            parts = value.split('-')
+            if len(parts) == 3:
+                year, month, day = map(int, parts)
+                return date(year, month, day)
+        
+        raise ValidationError(field_name, "Invalid date format, expected YYYY-MM-DD")
+    except (ValueError, TypeError):
+        raise ValidationError(field_name, "Invalid date format, expected YYYY-MM-DD")
+
+def validate_time(value, field_name, required=False):
+    """Validate a time value"""
+    # Check if required
+    if required and (value is None or value == ''):
+        raise ValidationError(field_name, "This field is required")
+    
+    # Skip validation if not required and value is None or empty
+    if not required and (value is None or value == ''):
+        return value
+    
+    # If already a time object, return as is
+    if isinstance(value, time):
+        return value
+    
+    # Try to parse the time
+    try:
+        # Handle different time formats
+        if isinstance(value, str):
+            # Try ISO format HH:MM or HH:MM:SS
+            parts = value.split(':')
+            if len(parts) >= 2:
+                hour = int(parts[0])
+                minute = int(parts[1])
+                second = int(parts[2]) if len(parts) > 2 else 0
+                return time(hour, minute, second)
+        
+        raise ValidationError(field_name, "Invalid time format, expected HH:MM or HH:MM:SS")
+    except (ValueError, TypeError):
+        raise ValidationError(field_name, "Invalid time format, expected HH:MM or HH:MM:SS")
+
+def validate_boolean(value, field_name):
+    """Validate a boolean value"""
+    if value is None:
+        return None
+    
+    if isinstance(value, bool):
+        return value
+    
+    if isinstance(value, str):
+        value_lower = value.lower()
+        if value_lower in ('true', 't', 'yes', 'y', '1'):
+            return True
+        elif value_lower in ('false', 'f', 'no', 'n', '0'):
+            return False
+    
+    if isinstance(value, int):
+        if value == 1:
+            return True
+        elif value == 0:
+            return False
+    
+    raise ValidationError(field_name, "Must be a boolean value")
+
+def validate_choice(value, field_name, choices, required=False):
+    """Validate that a value is one of the allowed choices"""
+    # Check if required
+    if required and (value is None or value == ''):
+        raise ValidationError(field_name, "This field is required")
+    
+    # Skip validation if not required and value is None or empty
+    if not required and (value is None or value == ''):
+        return value
+    
+    # Validate that value is in choices
+    if value not in choices:
+        raise ValidationError(field_name, f"Must be one of: {', '.join(choices)}")
+    
+    return value
+
+def validate_incident_data(data):
+    """
+    Validate incident data with strict allow-list validation
+    Returns cleaned data or raises ValidationError
+    """
+    validated_data = {}
+    
+    # Define allowed patterns for enhanced security
+    ALPHANUMERIC_WITH_SPACES = r'^[a-zA-Z0-9\s\-_.,!?()]+$'
+    BUSINESS_TEXT_PATTERN = r'^[a-zA-Z0-9\s\-_.,!?():;/\\@#$%&*+=<>[\]{}|~`"\']+$'
+    CURRENCY_PATTERN = r'^[$£€]?[0-9]+(\.[0-9]{1,2})?$'
+    
+    # Required fields
+    validated_data['IncidentTitle'] = validate_string(
+        data.get('IncidentTitle'), 'IncidentTitle', 
+        max_length=255, min_length=3, required=True,
+        allowed_pattern=BUSINESS_TEXT_PATTERN
+    )
+    
+    validated_data['Description'] = validate_string(
+        data.get('Description'), 'Description', 
+        max_length=2000, min_length=10, required=True,
+        allowed_pattern=BUSINESS_TEXT_PATTERN
+    )
+    
+    validated_data['Date'] = validate_date(
+        data.get('Date'), 'Date', 
+        required=True
+    )
+    
+    validated_data['Time'] = validate_time(
+        data.get('Time'), 'Time', 
+        required=True
+    )
+    
+    validated_data['RiskPriority'] = validate_choice(
+        data.get('RiskPriority'), 'RiskPriority',
+        choices=['High', 'Medium', 'Low'], 
+        required=True
+    )
+    
+    # Optional fields with strict validation
+    if 'Origin' in data and data.get('Origin'):
+        validated_data['Origin'] = validate_choice(
+            data.get('Origin'), 'Origin',
+            choices=['Manual', 'Audit Finding', 'System Generated'], 
+            required=False
+        )
+    
+    if 'Mitigation' in data and data.get('Mitigation'):
+        validated_data['Mitigation'] = validate_string(
+            data.get('Mitigation'), 'Mitigation', 
+            max_length=2000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'Comments' in data and data.get('Comments'):
+        validated_data['Comments'] = validate_string(
+            data.get('Comments'), 'Comments', 
+            max_length=1000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'RiskCategory' in data and data.get('RiskCategory'):
+        validated_data['RiskCategory'] = validate_string(
+            data.get('RiskCategory'), 'RiskCategory', 
+            max_length=500, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'Status' in data and data.get('Status'):
+        validated_data['Status'] = validate_choice(
+            data.get('Status'), 'Status',
+            choices=['Open', 'Closed', 'In Progress', 'Scheduled', 'Under Review', 'Pending Review', 'Rejected', 'Assigned', 'New', 'Active', 'Resolved', 'Pending'], 
+            required=False
+        )
+    
+    if 'AffectedBusinessUnit' in data and data.get('AffectedBusinessUnit'):
+        validated_data['AffectedBusinessUnit'] = validate_string(
+            data.get('AffectedBusinessUnit'), 'AffectedBusinessUnit', 
+            max_length=100, required=False,
+            allowed_pattern=ALPHANUMERIC_WITH_SPACES
+        )
+    
+    if 'SystemsAssetsInvolved' in data and data.get('SystemsAssetsInvolved'):
+        validated_data['SystemsAssetsInvolved'] = validate_string(
+            data.get('SystemsAssetsInvolved'), 'SystemsAssetsInvolved', 
+            max_length=500, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'GeographicLocation' in data and data.get('GeographicLocation'):
+        validated_data['GeographicLocation'] = validate_string(
+            data.get('GeographicLocation'), 'GeographicLocation', 
+            max_length=100, required=False,
+            allowed_pattern=ALPHANUMERIC_WITH_SPACES
+        )
+    
+    if 'Criticality' in data and data.get('Criticality'):
+        validated_data['Criticality'] = validate_choice(
+            data.get('Criticality'), 'Criticality',
+            choices=['Critical', 'High', 'Medium', 'Low'], 
+            required=False
+        )
+    
+    if 'InitialImpactAssessment' in data and data.get('InitialImpactAssessment'):
+        validated_data['InitialImpactAssessment'] = validate_string(
+            data.get('InitialImpactAssessment'), 'InitialImpactAssessment', 
+            max_length=2000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'InternalContacts' in data and data.get('InternalContacts'):
+        validated_data['InternalContacts'] = validate_string(
+            data.get('InternalContacts'), 'InternalContacts', 
+            max_length=500, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'ExternalPartiesInvolved' in data and data.get('ExternalPartiesInvolved'):
+        validated_data['ExternalPartiesInvolved'] = validate_string(
+            data.get('ExternalPartiesInvolved'), 'ExternalPartiesInvolved', 
+            max_length=500, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'RegulatoryBodies' in data and data.get('RegulatoryBodies'):
+        validated_data['RegulatoryBodies'] = validate_string(
+            data.get('RegulatoryBodies'), 'RegulatoryBodies', 
+            max_length=500, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'RelevantPoliciesProceduresViolated' in data and data.get('RelevantPoliciesProceduresViolated'):
+        validated_data['RelevantPoliciesProceduresViolated'] = validate_string(
+            data.get('RelevantPoliciesProceduresViolated'), 'RelevantPoliciesProceduresViolated', 
+            max_length=1000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'ControlFailures' in data and data.get('ControlFailures'):
+        validated_data['ControlFailures'] = validate_string(
+            data.get('ControlFailures'), 'ControlFailures', 
+            max_length=1000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'PossibleDamage' in data and data.get('PossibleDamage'):
+        validated_data['PossibleDamage'] = validate_string(
+            data.get('PossibleDamage'), 'PossibleDamage', 
+            max_length=1000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'CostOfIncident' in data and data.get('CostOfIncident'):
+        cost_value = str(data.get('CostOfIncident')).strip()
+        if cost_value and not re.match(CURRENCY_PATTERN, cost_value):
+            raise ValidationError('CostOfIncident', 'Must be a valid currency amount (e.g., $100.50, 250.75)')
+        validated_data['CostOfIncident'] = cost_value if cost_value else None
+    
+    if 'IncidentClassification' in data and data.get('IncidentClassification'):
+        validated_data['IncidentClassification'] = validate_choice(
+            data.get('IncidentClassification'), 'IncidentClassification',
+            choices=['NonConformance', 'Control GAP', 'Risk', 'Issue'], 
+            required=False
+        )
+    
+    # Handle ComplianceId - must be a valid integer if provided
+    if 'ComplianceId' in data and data.get('ComplianceId'):
+        try:
+            compliance_id = int(data.get('ComplianceId'))
+            if compliance_id <= 0:
+                raise ValidationError('ComplianceId', 'Must be a positive integer')
+            validated_data['ComplianceId'] = compliance_id
+        except (ValueError, TypeError):
+            raise ValidationError('ComplianceId', 'Must be a valid integer')
+    
+    return validated_data
+
+
+LOGIN_REDIRECT_URL = '/incidents/'  # or the URL pattern for your incident page
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login(request):
+    email = request.data.get('email')
+    password = request.data.get('password')
+    client_ip = get_client_ip(request)
+    
+    # Log login attempt
+    send_log(
+        module="Incident",
+        actionType="LOGIN_ATTEMPT",
+        description="User login attempt",
+        userId=None,
+        userName=email,
+        entityType="User",
+        ipAddress=client_ip
+    )
+    
+    # Log login attempt
+    send_log(
+        module="Incident_Auth",
+        actionType="LOGIN",
+        description=f"User login attempt for email: {email}",
+        userId=None,
+        userName=email,
+        entityType="User",
+        ipAddress=get_client_ip(request)
+    )
+    
+    # Hardcoded credentials
+    if email == "admin@example.com" and password == "password123":
+        # Log successful login
+        send_log(
+            module="Incident",
+            actionType="LOGIN_SUCCESS",
+            description="User login successful",
+            userId="admin",
+            userName=email,
+            entityType="User",
+            entityId="admin",
+            ipAddress=client_ip
+        )
+        
+        # DEBUG: Log user permissions on login
+        try:
+            # Find the user ID for RBAC lookup (use hardcoded for demo)
+            from .models import Users
+            user = Users.objects.filter(Email=email).first()
+            if user:
+                user_id = user.UserId
+                log_user_login_permissions(user_id, email)
+            else:
+                logger.warning(f"[RBAC LOGIN] User not found in database for email: {email}")
+        except Exception as e:
+            logger.error(f"[RBAC LOGIN] Error during login permissions debug: {str(e)}")
+        
+        return Response({
+            'success': True,
+            'message': 'Login successful',
+            'user': {
+                'email': email,
+                'name': 'Admin User'
+            }
+        })
+    else:
+        # Log failed login
+        send_log(
+            module="Incident",
+            actionType="LOGIN_FAILED",
+            description="User login failed - invalid credentials",
+            userId=None,
+            userName=email,
+            entityType="User",
+            logLevel="WARNING",
+            ipAddress=client_ip
+        )
+        
+        return Response({
+            'success': False,
+            'message': 'Invalid credentials'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    client_ip = get_client_ip(request)
+    email = request.data.get('Email', 'Unknown')
+    
+    # Log registration attempt
+    send_log(
+        module="Incident",
+        actionType="REGISTER_ATTEMPT",
+        description="User registration attempt",
+        userId=None,
+        userName=email,
+        entityType="User",
+        ipAddress=client_ip
+    )
+    
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        
+        # Log successful registration
+        send_log(
+            module="Incident",
+            actionType="REGISTER_SUCCESS",
+            description="User registration successful",
+            userId=str(user.UserId),
+            userName=user.UserName,
+            entityType="User",
+            entityId=str(user.UserId),
+            ipAddress=client_ip
+        )
+        
+        return Response({
+            'token': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': serializer.data
+        })
+    
+    # Log failed registration
+    send_log(
+        module="Incident",
+        actionType="REGISTER_FAILED",
+        description=f"User registration failed: {serializer.errors}",
+        userId=None,
+        userName=email,
+        entityType="User",
+        logLevel="WARNING",
+        ipAddress=client_ip,
+        additionalInfo=serializer.errors
+    )
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# RBAC API Endpoints
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_user_permissions(request):
+    """Get current user's permissions for frontend"""
+    try:
+        # RBAC Debug - Log user access attempt
+        debug_info = debug_user_permissions(request, "GET_USER_PERMISSIONS", "rbac", None)
+        
+        user_id = getattr(request.user, 'id', None)
+        if not user_id:
+            return Response({'error': 'User not authenticated'}, status=401)
+        
+        from .models import RBAC, RBACDepartmentAccess, RBACResourceAccess, RBACUserPermission
+        
+        # Get user's RBAC info
+        rbac_info = RBAC.objects.filter(UserId=user_id).first()
+        
+        if not rbac_info:
+            logger.warning(f"No RBAC info found for user {user_id}")
+            return Response({
+                'permissions': {},
+                'role': None,
+                'department': None,
+                'entity': None,
+                'message': 'No RBAC configuration found for user'
+            })
+        
+        # Get detailed permissions from database
+        detailed_permissions = get_user_detailed_permissions(user_id)
+        
+        # Build permissions based on role (you'll need to implement this based on your RBAC matrix)
+        permissions = {
+            'incident': {
+                'create': True,  # This should be based on role/permissions
+                'edit': True,
+                'view': True,
+                'assign': True,
+                'escalate': True,
+                'analytics': True
+            },
+            'audit': {
+                'view': True,
+                'conduct': True,
+                'review': True,
+                'assign': True,
+                'analytics': True
+            }
+        }
+        
+        # Get user-specific permission overrides
+        user_overrides = RBACUserPermission.objects.filter(UserId=user_id)
+        for override in user_overrides:
+            if override.Module not in permissions:
+                permissions[override.Module] = {}
+            permissions[override.Module][override.Permission] = override.IsAllowed
+        
+        # Log detailed permissions debug
+        logger.info(f"[RBAC GET_PERMISSIONS] === DETAILED PERMISSIONS FOR USER {user_id} ===")
+        logger.info(f"[RBAC GET_PERMISSIONS] Role: {rbac_info.Role}")
+        logger.info(f"[RBAC GET_PERMISSIONS] Department: {rbac_info.Department}")
+        logger.info(f"[RBAC GET_PERMISSIONS] Entity: {rbac_info.Entity}")
+        
+        if detailed_permissions:
+            logger.info(f"[RBAC GET_PERMISSIONS] Database Permissions:")
+            for module, perms in detailed_permissions.items():
+                logger.info(f"[RBAC GET_PERMISSIONS]   {module}:")
+                for perm, value in perms.items():
+                    status = "✓ GRANTED" if value else "✗ DENIED"
+                    logger.info(f"[RBAC GET_PERMISSIONS]     {perm}: {status}")
+        else:
+            logger.warning(f"[RBAC GET_PERMISSIONS] No detailed permissions found in database")
+        
+        logger.info(f"✅ User {user_id} permissions retrieved successfully")
+        
+        return Response({
+            'permissions': permissions,
+            'detailed_permissions': detailed_permissions,
+            'role': rbac_info.Role,
+            'department': rbac_info.Department,
+            'entity': rbac_info.Entity,
+            'user_id': user_id
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting user permissions: {str(e)}")
+        return Response({'error': 'Failed to retrieve permissions'}, status=500)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_user_role(request):
+    """Get current user's role"""
+    try:
+        user_id = getattr(request.user, 'id', None)
+        if not user_id:
+            return Response({'error': 'User not authenticated'}, status=401)
+        
+        from .models import RBAC
+        rbac_info = RBAC.objects.filter(UserId=user_id).first()
+        
+        if rbac_info:
+            return Response({
+                'role': rbac_info.Role,
+                'department': rbac_info.Department,
+                'entity': rbac_info.Entity
+            })
+        else:
+            return Response({'role': None, 'department': None, 'entity': None})
+            
+    except Exception as e:
+        logger.error(f"❌ Error getting user role: {str(e)}")
+        return Response({'error': 'Failed to retrieve role'}, status=500)
+
+
+@api_view(['GET'])  
+@permission_classes([AllowAny])
+def debug_user_permissions_endpoint(request):
+    """Endpoint to debug user permissions on demand"""
+    try:
+        from grc.rbac.utils import RBACUtils
+        
+        # Get user ID from request
+        user_id = RBACUtils.get_user_id_from_request(request)
+        if not user_id:
+            return Response({'error': 'Could not extract user ID from request'}, status=400)
+        
+        # Log comprehensive permissions debug
+        detailed_permissions = get_user_detailed_permissions(user_id)
+        
+        # Get RBAC info
+        rbac_info = RBACUtils.get_user_rbac_info(user_id)
+        
+        # Test specific module permissions
+        test_modules = ['Incident', 'Audit', 'Risk', 'Policy', 'Compliance', 'Framework']
+        test_permissions = ['view', 'create', 'edit', 'approve', 'assign']
+        
+        permission_tests = {}
+        for module in test_modules:
+            permission_tests[module] = {}
+            for perm in test_permissions:
+                has_perm = RBACUtils.has_permission(user_id, module, perm)
+                permission_tests[module][perm] = has_perm
+                # Debug each check
+                debug_permission_check(user_id, module, perm, has_perm)
+        
+        # Log the debug info
+        logger.info(f"[RBAC ENDPOINT DEBUG] === USER PERMISSIONS ENDPOINT DEBUG ===")
+        logger.info(f"[RBAC ENDPOINT DEBUG] User ID: {user_id}")
+        logger.info(f"[RBAC ENDPOINT DEBUG] Time: {timezone.now()}")
+        
+        if rbac_info:
+            logger.info(f"[RBAC ENDPOINT DEBUG] Role: {rbac_info.get('role')}")
+            logger.info(f"[RBAC ENDPOINT DEBUG] Department: {rbac_info.get('department')}")
+            logger.info(f"[RBAC ENDPOINT DEBUG] Entity: {rbac_info.get('entity')}")
+        
+        logger.info(f"[RBAC ENDPOINT DEBUG] === PERMISSION TEST RESULTS ===")
+        for module, perms in permission_tests.items():
+            logger.info(f"[RBAC ENDPOINT DEBUG] {module}:")
+            for perm, has_perm in perms.items():
+                status = "✓ GRANTED" if has_perm else "✗ DENIED"
+                logger.info(f"[RBAC ENDPOINT DEBUG]   {perm}: {status}")
+        
+        # Return detailed response
+        return Response({
+            'success': True,
+            'user_id': user_id,
+            'rbac_info': rbac_info,
+            'detailed_permissions': detailed_permissions,
+            'permission_tests': permission_tests,
+            'message': 'Debug information logged to console and database'
+        })
+        
+    except Exception as e:
+        logger.error(f"[RBAC ENDPOINT DEBUG] Error: {str(e)}")
+        import traceback
+        logger.error(f"[RBAC ENDPOINT DEBUG] Traceback: {traceback.format_exc()}")
+        return Response({'error': f'Debug failed: {str(e)}'}, status=500)
+
+
+@api_view(['GET'])  
+@permission_classes([AllowAny])
+def test_user_permissions_comprehensive(request):
+    """Comprehensive test of user permissions against all RBAC tables"""
+    try:
+        from grc.rbac.utils import RBACUtils
+        
+        # Get user ID from request
+        user_id = RBACUtils.get_user_id_from_request(request)
+        if not user_id:
+            return Response({'error': 'Could not extract user ID from request'}, status=400)
+        
+        # Test results structure
+        test_results = {
+            'user_id': user_id,
+            'timestamp': timezone.now().isoformat(),
+            'rbac_info': {},
+            'database_permissions': {},
+            'permission_tests': {},
+            'endpoint_access_tests': {},
+            'summary': {'total_tests': 0, 'passed': 0, 'failed': 0}
+        }
+        
+        # 1. Get basic RBAC info
+        rbac_info = RBACUtils.get_user_rbac_info(user_id)
+        test_results['rbac_info'] = rbac_info if rbac_info else {}
+        
+        # 2. Get database permissions
+        detailed_permissions = get_user_detailed_permissions(user_id)
+        test_results['database_permissions'] = detailed_permissions if detailed_permissions else {}
+        
+        # 3. Test specific module permissions using RBACUtils
+        modules_to_test = ['Incident', 'Audit', 'Risk', 'Policy', 'Compliance', 'Framework']
+        permissions_to_test = ['view', 'create', 'edit', 'approve', 'assign', 'delete']
+        
+        for module in modules_to_test:
+            test_results['permission_tests'][module] = {}
+            for permission in permissions_to_test:
+                try:
+                    has_permission = RBACUtils.has_permission(user_id, module, permission)
+                    test_results['permission_tests'][module][permission] = {
+                        'result': has_permission,
+                        'status': 'PASS' if has_permission else 'FAIL'
+                    }
+                    test_results['summary']['total_tests'] += 1
+                    if has_permission:
+                        test_results['summary']['passed'] += 1
+                    else:
+                        test_results['summary']['failed'] += 1
+                        
+                    # Debug each permission check
+                    debug_permission_check(user_id, module, permission, has_permission)
+                    
+                except Exception as e:
+                    test_results['permission_tests'][module][permission] = {
+                        'result': False,
+                        'status': 'ERROR',
+                        'error': str(e)
+                    }
+                    test_results['summary']['total_tests'] += 1
+                    test_results['summary']['failed'] += 1
+        
+        # 4. Test department access
+        if rbac_info and rbac_info.get('department'):
+            try:
+                dept_access = RBACUtils.has_department_access(user_id, rbac_info['department'])
+                test_results['department_access'] = {
+                    'department': rbac_info['department'],
+                    'has_access': dept_access,
+                    'status': 'PASS' if dept_access else 'FAIL'
+                }
+            except Exception as e:
+                test_results['department_access'] = {
+                    'department': rbac_info.get('department'),
+                    'has_access': False,
+                    'status': 'ERROR',
+                    'error': str(e)
+                }
+        
+        # 5. Log comprehensive test results
+        logger.info(f"[RBAC COMPREHENSIVE TEST] === USER {user_id} PERMISSION TEST RESULTS ===")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] User: {rbac_info.get('username', 'Unknown') if rbac_info else 'Unknown'}")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] Role: {rbac_info.get('role', 'Unknown') if rbac_info else 'Unknown'}")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] Department: {rbac_info.get('department', 'Unknown') if rbac_info else 'Unknown'}")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] Total Tests: {test_results['summary']['total_tests']}")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] Passed: {test_results['summary']['passed']}")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] Failed: {test_results['summary']['failed']}")
+        
+        # Log detailed results
+        for module, permissions in test_results['permission_tests'].items():
+            logger.info(f"[RBAC COMPREHENSIVE TEST] {module}:")
+            for perm, result in permissions.items():
+                status_symbol = "✓" if result['status'] == 'PASS' else "✗" if result['status'] == 'FAIL' else "⚠"
+                logger.info(f"[RBAC COMPREHENSIVE TEST]   {perm}: {status_symbol} {result['status']}")
+        
+        return Response({
+            'success': True,
+            'test_results': test_results,
+            'message': 'Comprehensive permission test completed - check logs for detailed results'
+        })
+        
+    except Exception as e:
+        logger.error(f"[RBAC COMPREHENSIVE TEST] Error: {str(e)}")
+        import traceback
+        logger.error(f"[RBAC COMPREHENSIVE TEST] Traceback: {traceback.format_exc()}")
+        return Response({'error': f'Comprehensive test failed: {str(e)}'}, status=500)
+
+# Add GET parameter validation helper
+def validate_get_parameters(request, allowed_params):
+    """
+    Validate GET parameters using strict allow-list validation
+    SECURITY: Rejects requests with ANY unknown parameters to prevent parameter pollution
+    """
+    validator = SecureValidator()
+    validated_params = {}
+    
+    # SECURITY: Check for unknown parameters first - reject any request with unknown params
+    provided_params = set(request.GET.keys())
+    allowed_param_names = set(allowed_params.keys())
+    unknown_params = provided_params - allowed_param_names
+    
+    if unknown_params:
+        # SECURITY: Log the attempt for monitoring
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Security: Unknown parameters detected: {list(unknown_params)} from IP: {request.META.get('REMOTE_ADDR', 'unknown')}")
+        
+        return None, f"Unknown parameters not allowed: {', '.join(sorted(unknown_params))}"
+    
+    # Validate each allowed parameter
+    for param_name, param_config in allowed_params.items():
+        value = request.GET.get(param_name)
+        
+        if value is not None:
+            try:
+                if param_config.get('type') == 'choice':
+                    validated_params[param_name] = validator.validate_choice(
+                        value, param_name, param_config['choices']
+                    )
+                elif param_config.get('type') == 'string':
+                    validated_params[param_name] = validator.validate_string(
+                        value, param_name, 
+                        max_length=param_config.get('max_length', 255),
+                        allowed_pattern=param_config.get('pattern')
+                    )
+                elif param_config.get('type') == 'integer':
+                    validated_params[param_name] = validator.validate_integer(
+                        value, param_name,
+                        min_value=param_config.get('min_value'),
+                        max_value=param_config.get('max_value')
+                    )
+            except ValidationError as e:
+                return None, f"Invalid parameter {param_name}: {e.message}"
+    
+    return validated_params, None
+
+def validate_path_parameter(param_value, param_name, param_type='integer', min_value=1):
+    """
+    Validate path parameters (like user_id, incident_id) using SecureValidator
+    Returns validated value or raises ValidationError
+    """
+    validator = SecureValidator()
+    try:
+        if param_type == 'integer':
+            return validator.validate_integer(
+                param_value, param_name, min_value=min_value, required=True
+            )
+        elif param_type == 'string':
+            return validator.validate_string(
+                param_value, param_name, max_length=255, min_length=1, 
+                required=True, allowed_pattern=validator.ALPHANUMERIC_ONLY
+            )
+        else:
+            raise ValidationError(param_name, f"Unsupported parameter type: {param_type}")
+    except ValidationError as e:
+        raise e
+
+def validate_json_request_body(request, validation_rules):
+    """
+    Validate JSON request body using SecureValidator and defined rules
+    Returns validated data or raises ValidationError
+    """
+    validator = SecureValidator()
+    
+    # Parse JSON safely
+    try:
+        if hasattr(request, 'data') and request.data:
+            # DRF parsed data (preferred)
+            data = request.data
+        elif request.body:
+            # Raw JSON body
+            data = json.loads(request.body)
+        else:
+            data = {}
+    except json.JSONDecodeError:
+        raise ValidationError('request_body', 'Invalid JSON format')
+    
+    validated_data = {}
+    
+    for field_name, rules in validation_rules.items():
+        value = data.get(field_name)
+        required = rules.get('required', False)
+        
+        # Skip validation if field is not provided and not required
+        if value is None and not required:
+            continue
+            
+        try:
+            if rules.get('type') == 'choice':
+                validated_data[field_name] = validator.validate_choice(
+                    value, field_name, rules['choices'], required=required
+                )
+            elif rules.get('type') == 'string':
+                validated_data[field_name] = validator.validate_string(
+                    value, field_name,
+                    max_length=rules.get('max_length', 255),
+                    min_length=rules.get('min_length', 0),
+                    required=required,
+                    allowed_pattern=rules.get('pattern')
+                )
+            elif rules.get('type') == 'integer':
+                validated_data[field_name] = validator.validate_integer(
+                    value, field_name,
+                    min_value=rules.get('min_value'),
+                    max_value=rules.get('max_value'),
+                    required=required
+                )
+            elif rules.get('type') == 'date':
+                validated_data[field_name] = validator.validate_date(
+                    value, field_name, required=required
+                )
+            elif rules.get('type') == 'time':
+                validated_data[field_name] = validator.validate_time(
+                    value, field_name, required=required
+                )
+            elif rules.get('type') == 'currency':
+                validated_data[field_name] = validator.validate_currency(
+                    value, field_name, required=required
+                )
+            elif rules.get('type') == 'boolean':
+                # Import the standalone validate_boolean function
+                from .validation import validate_boolean
+                validated_data[field_name] = validate_boolean(
+                    value, field_name
+                )
+            else:
+                # Default to string validation
+                validated_data[field_name] = validator.validate_string(
+                    value, field_name, required=required
+                )
+        except ValidationError as e:
+            raise e
+    
+    return validated_data
+
+@api_view(['GET', 'PUT', 'PATCH'])
+@permission_classes([IncidentViewPermission])
+def incident_by_id(request, incident_id):
+    """
+    Get or update a specific incident by ID
+    """
+    # Get user info for logging
+    user_id = getattr(request.user, 'id', None)
+    username = getattr(request.user, 'username', 'Unknown')
+    
+    try:
+        # Validate path parameter
+        try:
+            validated_incident_id = validate_path_parameter(incident_id, 'incident_id', 'integer')
+        except ValidationError as e:
+            send_log(
+                module="Incident",
+                actionType="INCIDENT_VALIDATION_ERROR",
+                description=f"Invalid incident ID parameter: {incident_id}",
+                userId=user_id,
+                userName=username,
+                entityType="Incident",
+                logLevel="WARN",
+                ipAddress=get_client_ip(request)
+            )
+            return Response({'success': False, 'message': str(e)}, status=400)
+        
+        # Get the incident
+        incident = Incident.objects.get(IncidentId=validated_incident_id)
+        
+        if request.method == 'GET':
+            # RBAC Debug - Log user access attempt
+            debug_info = debug_user_permissions(request, "VIEW_INCIDENT", "incident", validated_incident_id)
+            
+            # Log incident view
+            send_log(
+                module="Incident",
+                actionType="VIEW_INCIDENT",
+                description=f"User viewing incident: {incident.IncidentTitle}",
+                userId=user_id,
+                userName=username,
+                entityType="Incident",
+                entityId=str(validated_incident_id),
+                ipAddress=get_client_ip(request)
+            )
+            
+            # Use the serializer to convert the model to JSON-serializable data
+            serializer = IncidentSerializer(incident)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data
+            })
+        
+        elif request.method in ['PUT', 'PATCH']:
+            # RBAC Debug - Log user access attempt  
+            debug_info = debug_user_permissions(request, "EDIT_INCIDENT", "incident", validated_incident_id)
+            
+            # Log incident update attempt
+            send_log(
+                module="Incident",
+                actionType="UPDATE_INCIDENT_ATTEMPT",
+                description=f"User attempting to update incident: {incident.IncidentTitle}",
+                userId=user_id,
+                userName=username,
+                entityType="Incident",
+                entityId=str(validated_incident_id),
+                ipAddress=get_client_ip(request)
+            )
+            
+            # Store original data for audit trail
+            original_data = IncidentSerializer(incident).data
+            
+            # Use the serializer to update the incident
+            serializer = IncidentSerializer(incident, data=request.data, partial=(request.method == 'PATCH'))
+            
+            if serializer.is_valid():
+                serializer.save()
+                
+                # Log successful update
+                send_log(
+                    module="Incident",
+                    actionType="UPDATE_INCIDENT_SUCCESS",
+                    description=f"Successfully updated incident: {incident.IncidentTitle}",
+                    userId=user_id,
+                    userName=username,
+                    entityType="Incident",
+                    entityId=str(validated_incident_id),
+                    ipAddress=get_client_ip(request),
+                    additionalInfo={
+                        'original_data': original_data,
+                        'updated_data': serializer.data,
+                        'update_type': request.method
+                    }
+                )
+                
+                return Response({
+                    'success': True,
+                    'message': 'Incident updated successfully',
+                    'data': serializer.data
+                })
+            else:
+                # Log validation failure
+                send_log(
+                    module="Incident",
+                    actionType="UPDATE_INCIDENT_VALIDATION_FAILED",
+                    description=f"Validation failed for incident update: {incident.IncidentTitle}",
+                    userId=user_id,
+                    userName=username,
+                    entityType="Incident",
+                    entityId=str(validated_incident_id),
+                    logLevel="WARN",
+                    ipAddress=get_client_ip(request),
+                    additionalInfo={'validation_errors': serializer.errors}
+                )
+                
+                return Response({
+                    'success': False,
+                    'message': 'Invalid data',
+                    'errors': serializer.errors
+                }, status=400)
+        
+    except Incident.DoesNotExist:
+        send_log(
+            module="Incident",
+            actionType="INCIDENT_NOT_FOUND",
+            description=f"Incident not found: {validated_incident_id}",
+            userId=user_id,
+            userName=username,
+            entityType="Incident",
+            entityId=str(validated_incident_id),
+            logLevel="WARN",
+            ipAddress=get_client_ip(request)
+        )
+        return Response({
+            'success': False,
+            'message': 'Incident not found'
+        }, status=404)
+    except Exception as e:
+        send_log(
+            module="Incident",
+            actionType="INCIDENT_ERROR",
+            description=f"Error handling incident {validated_incident_id}: {str(e)}",
+            userId=user_id,
+            userName=username,
+            entityType="Incident",
+            entityId=str(validated_incident_id),
+            logLevel="ERROR",
+            ipAddress=get_client_ip(request)
+        )
+        print(f"Error with incident: {str(e)}")
+        return Response({
+            'success': False,
+            'message': f'Error with incident: {str(e)}'
+        }, status=500)
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IncidentEditPermission])
+def update_incident_by_id(request, incident_id):
+    """
+    Update a specific incident by ID
+    """
+    try:
+        # Validate path parameter
+        try:
+            validated_incident_id = validate_path_parameter(incident_id, 'incident_id', 'integer')
+        except ValidationError as e:
+            return Response({'success': False, 'message': str(e)}, status=400)
+        
+        # RBAC Debug - Log user access attempt
+        debug_info = debug_user_permissions(request, "EDIT_INCIDENT", "incident", validated_incident_id)
+        
+        # Get the incident
+        incident = Incident.objects.get(IncidentId=validated_incident_id)
+        
+        # Use the serializer to update the incident
+        serializer = IncidentSerializer(incident, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'success': True,
+                'message': 'Incident updated successfully',
+                'data': serializer.data
+            })
+        else:
+            return Response({
+                'success': False,
+                'message': 'Invalid data',
+                'errors': serializer.errors
+            }, status=400)
+            
+    except Incident.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Incident not found'
+        }, status=404)
+    except Exception as e:
+        print(f"Error updating incident: {str(e)}")
+        return Response({
+            'success': False,
+            'message': f'Error updating incident: {str(e)}'
+        }, status=500)
+
+@api_view(['GET'])
+@permission_classes([IncidentViewPermission])
+def list_incidents(request):
+    # DEBUG: Check if permission was called
+    print(f"[DEBUG] list_incidents function called - Permission should have been checked")
+    print(f"[DEBUG] Request user: {request.user}")
+    print(f"[DEBUG] Request authenticated: {request.user.is_authenticated if hasattr(request.user, 'is_authenticated') else 'No auth attr'}")
+    
+    client_ip = get_client_ip(request)
+    user_id = request.GET.get('userId')
+    
+    # Log list incidents request
+    send_log(
+        module="Incident",
+        actionType="LIST_INCIDENTS_REQUEST",
+        description="User requesting incident list",
+        userId=str(user_id) if user_id else None,
+        userName=request.GET.get('userName', 'Unknown'),
+        entityType="Incident",
+        ipAddress=client_ip
+    )
+    # RBAC Debug - Log user access attempt
+    debug_info = debug_user_permissions(request, "LIST_INCIDENTS", "incident", None)
+    
+    # Define allowed GET parameters with validation rules
+    allowed_params = {
+        'status': {
+            'type': 'choice',
+            'choices': ['all'] + SecureValidator.INCIDENT_STATUSES
+        },
+        'timeRange': {
+            'type': 'choice',
+            'choices': ['all', '7days', '30days', '90days', '1year']
+        },
+        'category': {
+            'type': 'string',
+            'max_length': 100,
+            'pattern': SecureValidator.ALPHANUMERIC_WITH_SPACES
+        },
+        'priority': {
+            'type': 'choice',
+            'choices': ['all'] + SecureValidator.INCIDENT_PRIORITIES
+        },
+        'search': {
+            'type': 'string',
+            'max_length': 255,
+            'pattern': SecureValidator.BUSINESS_TEXT_PATTERN
+        },
+        'sort_field': {
+            'type': 'choice',
+            'choices': ['IncidentId', 'IncidentTitle', 'Origin', 'RiskPriority', 'Date', 'Status', 'CreatedAt']
+        },
+        'sort_order': {
+            'type': 'choice',
+            'choices': ['asc', 'desc']
+        },
+        'limit': {
+            'type': 'integer',
+            'min_value': 1,
+            'max_value': 1000
+        },
+        'offset': {
+            'type': 'integer',
+            'min_value': 0
+        }
+    }
+    
+    # Validate GET parameters
+    validated_params, error = validate_get_parameters(request, allowed_params)
+    if error:
+        # Log validation error
+        send_log(
+            module="Incident",
+            actionType="LIST_ERROR",
+            description=f"Parameter validation failed: {error}",
+            userId=request.user.id if request.user.is_authenticated else None,
+            userName=request.user.username if request.user.is_authenticated else None,
+            entityType="Incident",
+            logLevel="WARNING",
+            ipAddress=get_client_ip(request)
+        )
+        return Response({'error': error}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Get filter parameters (now validated)
+    status_filter = validated_params.get('status', 'all')
+    time_range = validated_params.get('timeRange', 'all')
+    category = validated_params.get('category', 'all') 
+    priority = validated_params.get('priority', 'all')
+    search_query = validated_params.get('search', '')
+    sort_field = validated_params.get('sort_field', '')
+    sort_order = validated_params.get('sort_order', 'asc')
+    limit = validated_params.get('limit', None)
+    offset = validated_params.get('offset', 0)
+
+    print(f"Validated filters: status={status_filter}, timeRange={time_range}, category={category}, priority={priority}")
+    print(f"Validated search: {search_query}, Sort: {sort_field} {sort_order}, Pagination: limit={limit}, offset={offset}")
+
+    # Start with all incidents
+    incidents = Incident.objects.all()
+
+    # Apply search filter if provided
+    if search_query:
+        from django.db.models import Q
+        incidents = incidents.filter(
+            Q(IncidentTitle__icontains=search_query) |
+            Q(Description__icontains=search_query) |
+            Q(Origin__icontains=search_query) |
+            Q(RiskPriority__icontains=search_query) |
+            Q(RiskCategory__icontains=search_query) |
+            Q(Status__icontains=search_query) |
+            Q(IncidentId__icontains=search_query)
+        )
+        print(f"After search filter: {incidents.count()} incidents")
+
+    # Apply time range filter
+    if time_range != 'all':
+        from datetime import datetime, timedelta
+        today = timezone.now().date()
+        
+        if time_range == '7days':
+            start_date = today - timedelta(days=7)
+        elif time_range == '30days':
+            start_date = today - timedelta(days=30)
+        elif time_range == '90days':
+            start_date = today - timedelta(days=90)
+        elif time_range == '1year':
+            start_date = today - timedelta(days=365)
+            
+        incidents = incidents.filter(Date__gte=start_date)
+        print(f"After time filter: {incidents.count()} incidents")
+
+    # Apply category filter
+    if category != 'all':
+        incidents = incidents.filter(RiskCategory__iexact=category)
+        print(f"After category filter: {incidents.count()} incidents")
+
+    # Apply priority filter
+    if priority != 'all':
+        incidents = incidents.filter(RiskPriority__iexact=priority)
+        print(f"After priority filter: {incidents.count()} incidents")
+
+    # Apply status filter
+    if status_filter != 'all':
+        incidents = incidents.filter(Status__iexact=status_filter)
+        print(f"After status filter: {incidents.count()} incidents")
+
+    # Apply sorting if provided
+    if sort_field:
+        # Map frontend field names to model field names
+        field_mapping = {
+            'IncidentId': 'IncidentId',
+            'IncidentTitle': 'IncidentTitle',
+            'Origin': 'Origin',
+            'RiskPriority': 'RiskPriority',
+            'Date': 'Date',
+            'Status': 'Status',
+            'CreatedAt': 'CreatedAt'
+        }
+        
+        if sort_field in field_mapping:
+            order_field = field_mapping[sort_field]
+            if sort_order == 'desc':
+                order_field = f'-{order_field}'
+            incidents = incidents.order_by(order_field)
+            print(f"Applied sorting: {order_field}")
+    else:
+        # Default sorting by IncidentId descending (newest first)
+        incidents = incidents.order_by('-IncidentId')
+
+    # Add debug information
+    print(f"Final query: {incidents.query}")
+    total_count = incidents.count()
+    print(f"Total incidents after filtering: {total_count}")
+
+    # Apply pagination if limit is specified
+    if limit:
+        incidents = incidents[offset:offset + limit]
+        print(f"Applied pagination: offset={offset}, limit={limit}")
+
+    serializer = IncidentSerializer(incidents, many=True)
+    serialized_data = serializer.data
+    
+    # Add debug logging for status field
+    if serialized_data:
+        print(f"Sample incident data with status: {[(incident.get('IncidentId'), incident.get('Status')) for incident in serialized_data[:3]]}")
+    
+    # Log successful incident list retrieval
+    send_log(
+        module="Incident",
+        actionType="LIST_INCIDENTS_SUCCESS",
+        description=f"Successfully retrieved {len(serialized_data)} incidents",
+        userId=str(user_id) if user_id else None,
+        userName=request.GET.get('userName', 'Unknown'),
+        entityType="Incident",
+        ipAddress=client_ip,
+        additionalInfo={
+            "total_count": total_count,
+            "returned_count": len(serialized_data),
+            "filters": {
+                "status": status_filter,
+                "time_range": time_range,
+                "category": category,
+                "priority": priority,
+                "search": search_query
+            }
+        }
+    )
+    
+    # Return paginated response if limit was applied
+    if limit:
+        return Response({
+            'incidents': serialized_data,
+            'total_count': total_count,
+            'limit': limit,
+            'offset': offset,
+            'has_more': (offset + limit) < total_count
+        })
+    else:
+        return Response(serialized_data)
+
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Incident
+import json
+
+# Add this endpoint for updating incident status
+@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IncidentEditPermission])
+def update_incident_status(request, incident_id):
+    client_ip = get_client_ip(request)
+    user_id = request.data.get('UserId')
+    
+    # Log status update attempt
+    send_log(
+        module="Incident",
+        actionType="UPDATE_INCIDENT_STATUS_ATTEMPT",
+        description=f"User attempting to update incident status for incident {incident_id}",
+        userId=str(user_id) if user_id else None,
+        userName=request.data.get('userName', 'Unknown'),
+        entityType="Incident",
+        entityId=str(incident_id),
+        ipAddress=client_ip
+    )
+    try:
+        # Skip RBAC permission check since we're using AllowAny
+        
+        # Validate path parameter
+        try:
+            validated_incident_id = validate_path_parameter(incident_id, 'incident_id', 'integer')
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=400)
+        
+        # Define validation rules for JSON body
+        validation_rules = {
+            'status': {
+                'type': 'choice',
+                'choices': SecureValidator.INCIDENT_STATUSES,
+                'required': True
+            },
+            'rejection_source': {
+                'type': 'string',
+                'max_length': 500,
+                'pattern': SecureValidator.BUSINESS_TEXT_PATTERN,
+                'required': False
+            }
+        }
+        
+        # Validate JSON request body
+        try:
+            validated_data = validate_json_request_body(request, validation_rules)
+            print(f"DEBUG: Validated data: {validated_data}")
+            print(f"DEBUG: Status value received: '{validated_data.get('status')}'")
+            print(f"DEBUG: Status type: {type(validated_data.get('status'))}")
+        except ValidationError as e:
+            print(f"DEBUG: Validation error: {str(e)}")
+            return Response({'error': str(e)}, status=400)
+        
+        # Get the incident
+        incident = Incident.objects.get(IncidentId=validated_incident_id)
+        
+        # Get validated data
+        new_status = validated_data.get('status')
+        rejection_source = validated_data.get('rejection_source')
+        
+        print(f"Updating incident {validated_incident_id} status to: {new_status}")
+        
+        # Log status update attempt
+        send_log(
+            module="Incident",
+            actionType="UPDATE_STATUS",
+            description=f"User updating incident {validated_incident_id} status from {incident.Status} to {new_status}",
+            userId=request.user.id if request.user.is_authenticated else None,
+            userName=request.user.username if request.user.is_authenticated else None,
+            entityType="Incident",
+            entityId=validated_incident_id,
+            ipAddress=get_client_ip(request),
+            additionalInfo={"old_status": incident.Status, "new_status": new_status, "rejection_source": rejection_source}
+        )
+        
+        # If status is being set to "Scheduled" (escalated to risk), create RiskInstance
+        if new_status == 'Scheduled':
+            try:
+                # Check if RiskInstance already exists for this incident
+                existing_risk = RiskInstance.objects.filter(IncidentId=validated_incident_id).first()
+                
+                if not existing_risk:
+                    # Handle ComplianceId - only include if it's not null/empty
+                    compliance_id = incident.ComplianceId
+                    if compliance_id == '' or compliance_id == 'null' or compliance_id is None:
+                        compliance_id = None
+                    elif hasattr(compliance_id, 'ComplianceId'):
+                        # If it's a Compliance object, extract the ID
+                        compliance_id = compliance_id.ComplianceId
+                    elif isinstance(compliance_id, str) and compliance_id.isdigit():
+                        # If it's a string number, convert to int
+                        compliance_id = int(compliance_id)
+                        
+                    # Use CreatedAt and ensure it's timezone-aware
+                    from django.utils import timezone
+                    incident_datetime = incident.CreatedAt
+                    if incident_datetime and not timezone.is_aware(incident_datetime):
+                        incident_datetime = timezone.make_aware(incident_datetime)
+                    
+                    risk_instance_data = {
+                        'IncidentId': incident.IncidentId,  # Pass the incident instance (not just ID)
+                        'RiskTitle': incident.IncidentTitle or '',
+                        'Criticality': incident.Criticality if incident.Criticality else None,  # Convert empty string to None
+                        'Category': incident.RiskCategory or '',
+                        'RiskDescription': incident.Description or '',
+                        'PossibleDamage': incident.PossibleDamage if incident.PossibleDamage else None,  # Convert empty string to None
+                        'RiskPriority': incident.RiskPriority or '',
+                        'CreatedAt': incident_datetime,  # Combined datetime instead of just date
+                        'Origin': incident.Origin or '',
+                        'RiskStatus': 'Open',  # Default status
+                        'ReportedBy': incident.UserId.UserId if incident.UserId else 1,   # Save UserId in ReportedBy column
+                        'ComplianceId': compliance_id  # Include ComplianceId only if provided and not null
+                    }
+                    
+                    print(f"Creating RiskInstance for escalated incident {validated_incident_id}")
+                    print(f"RiskInstance data: {risk_instance_data}")
+                    
+                    # Create RiskInstance directly using the model to avoid serializer timezone issues
+                    try:
+                        risk_instance = RiskInstance.objects.create(**risk_instance_data)
+                        print(f"RiskInstance created successfully with ID: {risk_instance.RiskInstanceId}")
+                        print(f"Saved data: IncidentId={risk_instance.IncidentId}, RiskTitle={risk_instance.RiskTitle}, Category={risk_instance.Category}")
+                    except Exception as create_error:
+                        print(f"Error creating RiskInstance with model: {create_error}")
+                        # Try with serializer as fallback
+                        risk_instance_serializer = RiskInstanceSerializer(data=risk_instance_data)
+                        if risk_instance_serializer.is_valid():
+                            risk_instance = risk_instance_serializer.save()
+                            print(f"RiskInstance created via serializer with ID: {risk_instance.RiskInstanceId}")
+                        else:
+                            print("RiskInstance serializer errors:", risk_instance_serializer.errors)
+                            # Continue with status update even if RiskInstance creation fails
+                else:
+                    print(f"RiskInstance already exists for incident {validated_incident_id}")
+                    
+            except Exception as e:
+                print(f"Error creating RiskInstance during escalation: {str(e)}")
+                # Continue with status update even if RiskInstance creation fails
+        
+        # Update the incident status
+        incident.Status = new_status
+        print(f"Updated incident status to: {incident.Status}")
+        
+        # Set the rejection source if this is a rejection
+        if new_status == 'Rejected' and rejection_source:
+            incident.RejectionSource = rejection_source
+            print(f"Setting rejection source to: {rejection_source}")
+        
+        # Send notifications based on status change
+        try:
+            notification_service = NotificationService()
+            
+            # Incident escalation notification
+            if new_status == 'Scheduled':
+                if incident.AssignerId:
+                    assignee_email = notification_service.get_user_email(incident.AssignerId)
+                    if assignee_email:
+                        escalation_notification = {
+                            'notification_type': 'incidentEscalated',
+                            'email': assignee_email,
+                            'email_type': 'gmail',
+                            'template_data': [
+                                'Risk Manager',
+                                incident.IncidentTitle,
+                                'System'
+                            ]
+                        }
+                        notification_service.send_multi_channel_notification(escalation_notification)
+            
+            # Incident rejection notification
+            elif new_status == 'Rejected':
+                if incident.AssignerId:
+                    assignee_email = notification_service.get_user_email(incident.AssignerId)
+                    if assignee_email:
+                        rejection_notification = {
+                            'notification_type': 'incidentRejected',
+                            'email': assignee_email,
+                            'email_type': 'gmail',
+                            'template_data': [
+                                notification_service.get_user_name(incident.AssignerId) if incident.AssignerId else 'User',
+                                incident.IncidentTitle,
+                                'System',
+                                f"Rejected from {rejection_source}" if rejection_source else "No reason provided"
+                            ]
+                        }
+                        notification_service.send_multi_channel_notification(rejection_notification)
+                    
+        except Exception as e:
+            print(f"Error sending status update notifications: {str(e)}")
+            # Continue execution even if notification fails
+        
+        incident.save()
+        
+        # Log successful status update
+        send_log(
+            module="Incident",
+            actionType="UPDATE_INCIDENT_STATUS_SUCCESS",
+            description=f"Incident status updated successfully to {incident.Status}",
+            userId=str(user_id) if user_id else None,
+            userName=request.data.get('userName', 'Unknown'),
+            entityType="Incident",
+            entityId=str(incident_id),
+            ipAddress=client_ip,
+            additionalInfo={
+                "new_status": incident.Status,
+                "rejection_source": request.data.get('rejection_source')
+            }
+        )
+        
+        return Response({
+            'success': True,
+            'message': f'Incident status updated to {incident.Status}'
+        })
+    except Incident.DoesNotExist:
+        # Log incident not found error
+        send_log(
+            module="Incident",
+            actionType="UPDATE_INCIDENT_STATUS_ERROR",
+            description=f"Incident not found: {incident_id}",
+            userId=str(user_id) if user_id else None,
+            userName=request.data.get('userName', 'Unknown'),
+            entityType="Incident",
+            entityId=str(incident_id),
+            logLevel="WARNING",
+            ipAddress=client_ip
+        )
+        
+        return Response({
+            'success': False,
+            'message': 'Incident not found'
+        }, status=404)
+    except Exception as e:
+        # Log general error
+        send_log(
+            module="Incident",
+            actionType="UPDATE_INCIDENT_STATUS_ERROR",
+            description=f"Error updating incident status: {str(e)}",
+            userId=str(user_id) if user_id else None,
+            userName=request.data.get('userName', 'Unknown'),
+            entityType="Incident",
+            entityId=str(incident_id),
+            logLevel="ERROR",
+            ipAddress=client_ip,
+            additionalInfo={"error": str(e)}
+        )
+        
+        print(f"Error updating incident status: {str(e)}")
+        return Response({
+            'success': False,
+            'message': str(e)
+        }, status=500)
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IncidentCreatePermission])
+def create_incident(request):
+    # RBAC Debug - Log user access attempt
+    debug_info = debug_user_permissions(request, "CREATE_INCIDENT", "incident", None)
+    
+    print("Received data:", request.data)
+    compliance_id = request.data.get('ComplianceId')
+    user_id = request.data.get('UserId')
+    client_ip = get_client_ip(request)
+    
+    # Log incident creation attempt
+    send_log(
+        module="Incident",
+        actionType="CREATE_INCIDENT_ATTEMPT",
+        description="User attempting to create incident",
+        userId=str(user_id) if user_id else None,
+        userName=request.data.get('userName', 'Unknown'),
+        entityType="Incident",
+        ipAddress=client_ip,
+        additionalInfo={"ComplianceId": compliance_id}
+    )
+    
+    print(f"ComplianceId received: {compliance_id}")
+    
+    # Log incident creation attempt
+    send_log(
+        module="Incident",
+        actionType="CREATE",
+        description="User attempting to create new incident",
+        userId=request.user.id if request.user.is_authenticated else None,
+        userName=request.user.username if request.user.is_authenticated else None,
+        entityType="Incident",
+        ipAddress=get_client_ip(request)
+    )
+    
+    try:
+        # Apply strict allow-list validation using centralized validation function
+        validated_data = validate_incident_data(request.data)
+        
+        # After validation, use the serializer with validated data
+        serializer = IncidentSerializer(data=validated_data)
+        if serializer.is_valid():
+            # Save the incident first - CreatedAt will be auto-set by auto_now_add=True
+            incident = serializer.save()
+            
+            # Ensure CreatedAt is set correctly with current timezone-aware datetime
+            if not incident.CreatedAt:
+                incident.CreatedAt = timezone.now()
+                incident.save()
+            
+            print(f"Incident created with ID: {incident.IncidentId}")
+            print(f"CreatedAt timestamp: {incident.CreatedAt}")
+            if incident.ComplianceId:
+                print(f"Incident linked to ComplianceId: {incident.ComplianceId}")
+            
+            # Log successful incident creation
+            send_log(
+                module="Incident",
+                actionType="CREATE_INCIDENT_SUCCESS",
+                description=f"Incident created successfully: {incident.IncidentTitle}",
+                userId=str(incident.UserId.UserId) if incident.UserId else str(user_id) if user_id else None,
+                userName=incident.UserId.UserName if incident.UserId else request.data.get('userName', 'Unknown'),
+                entityType="Incident",
+                entityId=str(incident.IncidentId),
+                ipAddress=client_ip,
+                additionalInfo={
+                    "IncidentTitle": incident.IncidentTitle,
+                    "ComplianceId": incident.ComplianceId.ComplianceId if incident.ComplianceId else None,
+                    "Status": incident.Status
+                }
+            )
+            
+            # DO NOT create RiskInstance here - only create when escalated to risk
+            print("Incident saved to incidents table only. RiskInstance will be created when escalated to risk.")
+                
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        # Log validation errors
+        send_log(
+            module="Incident",
+            actionType="CREATE_INCIDENT_VALIDATION_ERROR",
+            description="Incident creation failed due to validation errors",
+            userId=str(user_id) if user_id else None,
+            userName=request.data.get('userName', 'Unknown'),
+            entityType="Incident",
+            logLevel="WARNING",
+            ipAddress=client_ip,
+            additionalInfo=serializer.errors
+        )
+        
+        print("Serializer errors:", serializer.errors)
+        
+        # Log serialization errors
+        send_log(
+            module="Incident",
+            actionType="CREATE_ERROR",
+            description=f"Incident creation failed - serializer errors: {serializer.errors}",
+            userId=request.user.id if request.user.is_authenticated else None,
+            userName=request.user.username if request.user.is_authenticated else None,
+            entityType="Incident",
+            logLevel="WARNING",
+            ipAddress=get_client_ip(request)
+        )
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except ValidationError as ve:
+        # Handle centralized validation errors
+        send_log(
+            module="Incident",
+            actionType="CREATE_INCIDENT_VALIDATION_ERROR",
+            description=f"Incident creation validation error: {ve.field} - {ve.message}",
+            userId=str(user_id) if user_id else None,
+            userName=request.data.get('userName', 'Unknown'),
+            entityType="Incident",
+            logLevel="WARNING",
+            ipAddress=client_ip,
+            additionalInfo={"field": ve.field, "message": ve.message}
+        )
+        
+        print(f"Validation error: {ve.field} - {ve.message}")
+        
+        # Log validation errors
+        send_log(
+            module="Incident",
+            actionType="CREATE_ERROR",
+            description=f"Incident creation failed - validation error: {ve.field} - {ve.message}",
+            userId=request.user.id if request.user.is_authenticated else None,
+            userName=request.user.username if request.user.is_authenticated else None,
+            entityType="Incident",
+            logLevel="WARNING",
+            ipAddress=get_client_ip(request)
+        )
+        
+        return Response({ve.field: [ve.message]}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        # Handle unexpected errors
+        send_log(
+            module="Incident",
+            actionType="CREATE_INCIDENT_ERROR",
+            description=f"Incident creation error: {str(e)}",
+            userId=str(user_id) if user_id else None,
+            userName=request.data.get('userName', 'Unknown'),
+            entityType="Incident",
+            logLevel="ERROR",
+            ipAddress=client_ip,
+            additionalInfo={"error": str(e)}
+        )
+        
+        print(f"Error validating incident data: {str(e)}")
+        
+        # Log unexpected errors
+        send_log(
+            module="Incident",
+            actionType="CREATE_ERROR",
+            description=f"Incident creation failed - unexpected error: {str(e)}",
+            userId=request.user.id if request.user.is_authenticated else None,
+            userName=request.user.username if request.user.is_authenticated else None,
+            entityType="Incident",
+            logLevel="ERROR",
+            ipAddress=get_client_ip(request)
+        )
+        
+        return Response({"error": "Invalid input data"}, status=status.HTTP_400_BAD_REQUEST)
+
+def login_view(request):
+    # ... your login logic ...
+    if user_is_authenticated:
+        return redirect('incident_page')  # Use your URL name or path
+
+def incident_page(request):
+    # SECURE: Example of safe HTML rendering with escaped data
+    # If passing user data to template, ensure it's properly escaped:
+    # safe_data = SecureOutputEncoder.escape_html(user_input)
+    # return render(request, 'incidents.html', {'safe_data': safe_data})
+    return render(request, 'incidents.html')
+
+@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IncidentAssignPermission])
+def assign_incident(request, incident_id):
+    client_ip = get_client_ip(request)
+    user_id = request.data.get('userId')
+    
+    # Log incident assignment attempt
+    send_log(
+        module="Incident",
+        actionType="ASSIGN_INCIDENT_ATTEMPT",
+        description=f"User attempting to assign incident {incident_id}",
+        userId=str(user_id) if user_id else None,
+        userName=request.data.get('userName', 'Unknown'),
+        entityType="Incident",
+        entityId=str(incident_id),
+        ipAddress=client_ip
+    )
+    
+    try:
+        # Skip RBAC permission check since we're using AllowAny
+        
+        # Validate path parameter
+        try:
+            validated_incident_id = validate_path_parameter(incident_id, 'incident_id', 'integer')
+        except ValidationError as e:
+            # Log validation error
+            send_log(
+                module="Incident",
+                actionType="ASSIGN_INCIDENT_VALIDATION_ERROR",
+                description=f"Incident assignment validation error: {str(e)}",
+                userId=str(user_id) if user_id else None,
+                userName=request.data.get('userName', 'Unknown'),
+                entityType="Incident",
+                entityId=str(incident_id),
+                logLevel="WARNING",
+                ipAddress=client_ip
+            )
+            return Response({'error': str(e)}, status=400)
+        
+        # Get the incident from the database
+        incident = Incident.objects.get(IncidentId=validated_incident_id)
+        
+        # Log incident assignment attempt
+        send_log(
+            module="Incident",
+            actionType="ASSIGN",
+            description=f"User attempting to assign incident {validated_incident_id}",
+            userId=request.user.id if request.user.is_authenticated else None,
+            userName=request.user.username if request.user.is_authenticated else None,
+            entityType="Incident",
+            entityId=validated_incident_id,
+            ipAddress=get_client_ip(request)
+        )
+        
+        # Define validation rules for JSON body
+        validation_rules = {
+            'status': {
+                'type': 'choice',
+                'choices': SecureValidator.INCIDENT_STATUSES,
+                'required': False
+            },
+            'assigner_id': {
+                'type': 'integer',
+                'min_value': 1,
+                'max_value': 999999,
+                'required': False
+            },
+            'reviewer_id': {
+                'type': 'integer',
+                'min_value': 1,
+                'max_value': 999999,
+                'required': False
+            },
+            'assignment_notes': {
+                'type': 'string',
+                'max_length': 1000,
+                'pattern': SecureValidator.BUSINESS_TEXT_PATTERN,
+                'required': False
+            }
+        }
+        
+        # Validate JSON request body
+        try:
+            validated_data = validate_json_request_body(request, validation_rules)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=400)
+        
+        # Get raw data for additional fields not validated (assigned_date, mitigations, due_date)
+        # Use request.data instead of request.body to avoid re-reading the stream
+        try:
+            if hasattr(request, 'data') and request.data:
+                # DRF parsed data (preferred)
+                data = request.data
+            else:
+                data = {}
+        except Exception:
+            return Response({'error': 'Invalid request data'}, status=400)
+        
+        # Update incident with assignment details (using validated data)
+        incident.Status = validated_data.get('status', 'In Progress')
+        
+        # Save AssignerId and ReviewerId in the new columns
+        incident.AssignerId = validated_data.get('assigner_id')
+        incident.ReviewerId = validated_data.get('reviewer_id')
+        incident.AssignmentNotes = validated_data.get('assignment_notes', '')
+        
+        # Handle assigned date
+        assigned_date = data.get('assigned_date')
+        if assigned_date:
+            from datetime import datetime
+            from django.conf import settings
+            from django.utils import timezone
+            
+            # Parse the datetime
+            if assigned_date.endswith('Z'):
+                # Handle UTC timezone indicator
+                assigned_date = assigned_date.replace('Z', '+00:00')
+            
+            dt = datetime.fromisoformat(assigned_date)
+            
+            # Handle timezone awareness based on Django settings
+            if getattr(settings, 'USE_TZ', True):
+                # If USE_TZ is True, ensure datetime is timezone-aware
+                if dt.tzinfo is None:
+                    dt = timezone.make_aware(dt)
+                incident.AssignedDate = dt
+            else:
+                # If USE_TZ is False, ensure datetime is timezone-naive
+                if dt.tzinfo is not None:
+                    dt = dt.replace(tzinfo=None)
+                incident.AssignedDate = dt
+        
+        # Handle mitigations if provided
+        mitigations = data.get('mitigations')
+        if mitigations:
+            incident.Mitigation = json.dumps(mitigations) if isinstance(mitigations, dict) else mitigations
+        
+        # Handle due date if provided
+        due_date = data.get('due_date')
+        if due_date:
+            from datetime import datetime
+            from django.conf import settings
+            from django.utils import timezone
+            
+            # Parse the date (assuming it's just a date, not datetime)
+            dt = datetime.strptime(due_date, '%Y-%m-%d')
+            
+            # Handle timezone awareness based on Django settings
+            if getattr(settings, 'USE_TZ', True):
+                # If USE_TZ is True, make datetime timezone-aware
+                dt = timezone.make_aware(dt)
+                incident.MitigationDueDate = dt
+            else:
+                # If USE_TZ is False, keep datetime timezone-naive
+                incident.MitigationDueDate = dt
+            
+        incident.save()
+        
+        # Send notification for incident assignment
+        try:
+            notification_service = NotificationService()
+            print(f"DEBUG: Starting notification process for incident {incident_id}")
+            
+            # Get user details for notifications
+            assigner_name = notification_service.get_user_name(incident.AssignerId) if incident.AssignerId else data.get('assigner_name', 'Unknown')
+            reviewer_name = notification_service.get_user_name(incident.ReviewerId) if incident.ReviewerId else data.get('reviewer_name', 'Unknown')
+            
+            # Notify assignee about the incident assignment
+            if incident.AssignerId:
+                assignee_email = notification_service.get_user_email(incident.AssignerId)
+                print(f"DEBUG: Assignee {incident.AssignerId} email: {assignee_email}")
+                if assignee_email:
+                    assignee_notification = {
+                        'notification_type': 'incidentAssigned',
+                        'email': assignee_email,
+                        'email_type': 'gmail',
+                        'template_data': [
+                            assigner_name,
+                            incident.IncidentTitle,
+                            incident.MitigationDueDate.strftime('%Y-%m-%d') if incident.MitigationDueDate else 'Not set'
+                        ]
+                    }
+                    print(f"DEBUG: Sending assignee notification: {assignee_notification}")
+                    result = notification_service.send_multi_channel_notification(assignee_notification)
+                    print(f"DEBUG: Assignee notification result: {result}")
+                else:
+                    print(f"DEBUG: No email found for assignee {incident.AssignerId}")
+            
+            # Notify reviewer about being assigned as reviewer
+            if incident.ReviewerId:
+                reviewer_email = notification_service.get_user_email(incident.ReviewerId)
+                print(f"DEBUG: Reviewer {incident.ReviewerId} email: {reviewer_email}")
+                if reviewer_email:
+                    reviewer_notification = {
+                        'notification_type': 'incidentReviewerAssigned',
+                        'email': reviewer_email,
+                        'email_type': 'gmail',
+                        'template_data': [
+                            reviewer_name,
+                            incident.IncidentTitle,
+                            assigner_name
+                        ]
+                    }
+                    print(f"DEBUG: Sending reviewer notification: {reviewer_notification}")
+                    result = notification_service.send_multi_channel_notification(reviewer_notification)
+                    print(f"DEBUG: Reviewer notification result: {result}")
+                else:
+                    print(f"DEBUG: No email found for reviewer {incident.ReviewerId}")
+                
+        except Exception as e:
+            print(f"Error sending assignment notifications: {str(e)}")
+            # Continue execution even if notification fails
+        
+        # Log successful incident assignment
+        send_log(
+            module="Incident",
+            actionType="ASSIGN_SUCCESS",
+            description=f"Incident {incident_id} assigned successfully to assigner {incident.AssignerId} and reviewer {incident.ReviewerId}",
+            userId=request.user.id if request.user.is_authenticated else None,
+            userName=request.user.username if request.user.is_authenticated else None,
+            entityType="Incident",
+            entityId=incident_id,
+            ipAddress=get_client_ip(request),
+            additionalInfo={
+                "assigner_id": incident.AssignerId,
+                "reviewer_id": incident.ReviewerId,
+                "assigner_name": data.get('assigner_name'),
+                "reviewer_name": data.get('reviewer_name')
+            }
+        )
+        
+        return Response({
+            'success': True,
+            'message': 'Incident assigned successfully',
+            'incident_id': incident_id,
+            'status': incident.Status,
+            'assigner_id': incident.AssignerId,
+            'reviewer_id': incident.ReviewerId,
+            'assigner': data.get('assigner_name'),
+            'reviewer': data.get('reviewer_name')
+        })
+        
+    except Incident.DoesNotExist:
+        # Log incident not found error
+        send_log(
+            module="Incident",
+            actionType="ASSIGN_INCIDENT_NOT_FOUND",
+            description=f"Incident not found for assignment: {incident_id}",
+            userId=str(user_id) if user_id else None,
+            userName=request.data.get('userName', 'Unknown'),
+            entityType="Incident",
+            entityId=str(incident_id),
+            logLevel="WARN",
+            ipAddress=client_ip
+        )
+        return Response({
+            'success': False,
+            'error': 'Incident not found'
+        }, status=404)
+    except Exception as e:
+        # Log assignment error
+        send_log(
+            module="Incident",
+            actionType="ASSIGN_INCIDENT_ERROR",
+            description=f"Error assigning incident {incident_id}: {str(e)}",
+            userId=str(user_id) if user_id else None,
+            userName=request.data.get('userName', 'Unknown'),
+            entityType="Incident",
+            entityId=str(incident_id),
+            logLevel="ERROR",
+            ipAddress=client_ip,
+            additionalInfo={'error': str(e)}
+        )
+        print(f"Error assigning incident: {str(e)}")
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@api_view(['GET'])
+@permission_classes([AuditViewPermission])
+def unchecked_audit_findings(request):
+    findings = LastChecklistItemVerified.objects.filter(Complied__in=[0, 1])
+    serializer = LastChecklistItemVerifiedSerializer(findings, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def list_users(request):
+    # Get user info for logging
+    user_id = getattr(request.user, 'id', None)
+    username = getattr(request.user, 'username', 'Unknown')
+    
+    # Log users list request
+    send_log(
+        module="User",
+        actionType="LIST_USERS",
+        description="User requesting list of all users",
+        userId=user_id,
+        userName=username,
+        entityType="User",
+        ipAddress=get_client_ip(request)
+    )
+    
+    try:
+        print("Listing users")
+        users = Users.objects.all()
+        serializer = UserSerializer(users, many=True)
+        
+        # Log successful user list retrieval
+        send_log(
+            module="User",
+            actionType="LIST_USERS_SUCCESS",
+            description=f"Successfully retrieved {len(users)} users",
+            userId=user_id,
+            userName=username,
+            entityType="User",
+            ipAddress=get_client_ip(request),
+            additionalInfo={'user_count': len(users)}
+        )
+        
+        return Response(serializer.data)
+    
+    except Exception as e:
+        # Log error
+        send_log(
+            module="User",
+            actionType="LIST_USERS_ERROR",
+            description=f"Error retrieving users list: {str(e)}",
+            userId=user_id,
+            userName=username,
+            entityType="User",
+            logLevel="ERROR",
+            ipAddress=get_client_ip(request),
+            additionalInfo={'error': str(e)}
+        )
+        
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IncidentViewPermission])
+def combined_incidents_and_audit_findings(request):
+    # RBAC Debug - Log user access attempt
+    debug_info = debug_user_permissions(request, "VIEW_INCIDENTS_AND_AUDIT_FINDINGS", "incident", None)
+    
+    # Get all incidents from the database
+    all_incidents = Incident.objects.all()
+    all_incidents_serialized = IncidentSerializer(all_incidents, many=True).data
+    
+    # Categorize by type
+    for item in all_incidents_serialized:
+        if item['Origin'] == 'Manual':
+            item['type'] = 'manual'
+            item['source'] = 'manual'
+        elif item['Origin'] == 'Audit Finding':
+            item['type'] = 'audit_incident'
+            item['source'] = 'auditor'
+            # Add criticality for audit incidents
+            if item['ComplianceId']:
+                try:
+                    compliance = Compliance.objects.get(pk=item['ComplianceId'])
+                    item['criticality'] = compliance.Criticality if hasattr(compliance, 'Criticality') else None
+                except Compliance.DoesNotExist:
+                    item['criticality'] = None
+        elif item['Origin'] == 'SIEM':
+            item['type'] = 'siem'
+            item['source'] = 'siem'
+        else:
+            item['type'] = 'other'
+            item['source'] = 'other'
+    
+    # Get findings from lastchecklistitemverified with Complied = 0 or 1
+    audit_findings = LastChecklistItemVerified.objects.filter(Complied__in=[0, 1])
+    audit_findings_serialized = LastChecklistItemVerifiedSerializer(audit_findings, many=True).data
+    
+    # Process each audit finding
+    for item in audit_findings_serialized:
+        item['type'] = 'audit'
+        item['Origin'] = 'Audit Finding'  # Set origin for filtering in frontend
+        item['source'] = 'auditor'  # All audit findings come from auditor
+        
+        # Get the complete compliance item details
+        if item['ComplianceId']:
+            try:
+                compliance = Compliance.objects.get(pk=item['ComplianceId'])
+                item['compliance_name'] = compliance.ComplianceItemDescription
+                item['compliance_mitigation'] = compliance.mitigation if hasattr(compliance, 'mitigation') else None
+                item['criticality'] = compliance.Criticality if hasattr(compliance, 'Criticality') else None
+            except Compliance.DoesNotExist:
+                item['compliance_name'] = "No description"
+                item['compliance_mitigation'] = None
+                item['criticality'] = None
+        else:
+            item['compliance_name'] = "No description"
+            item['compliance_mitigation'] = None
+            item['criticality'] = None
+                
+        # Check if there's a corresponding incident
+        related_incident = None
+        if item.get('FrameworkId') and item['ComplianceId']:
+            related_incident = Incident.objects.filter(
+                Origin="Audit Finding",
+                # Adjust these field mappings based on your actual model relationships
+                FrameworkId=item['FrameworkId'],
+                ComplianceId=item['ComplianceId']
+            ).first()
+        
+        if related_incident:
+            item['Status'] = related_incident.Status
+        else:
+            item['Status'] = None
+    
+    combined = all_incidents_serialized + audit_findings_serialized
+    return Response(combined)
+
+@api_view(['POST'])
+@permission_classes([IncidentCreatePermission])
+def create_workflow(request):
+    client_ip = get_client_ip(request)
+    user_id = request.data.get('userId')
+    
+    # Log workflow creation attempt
+    send_log(
+        module="Incident",
+        actionType="CREATE_WORKFLOW_ATTEMPT",
+        description="User attempting to create workflow",
+        userId=str(user_id) if user_id else None,
+        userName=request.data.get('userName', 'Unknown'),
+        entityType="Workflow",
+        ipAddress=client_ip
+    )
+    
+    # Define validation rules for workflow creation
+    validation_rules = {
+        'finding_id': {
+            'type': 'string',
+            'max_length': 255,
+            'pattern': SecureValidator.ALPHANUMERIC_WITH_SPACES,
+            'required': False
+        },
+        'incident_id': {
+            'type': 'integer',
+            'min_value': 1,
+            'required': False
+        },
+        'IncidentId': {
+            'type': 'integer',
+            'min_value': 1,
+            'required': False
+        },
+        'assignee_id': {
+            'type': 'integer',
+            'min_value': 1,
+            'required': True
+        },
+        'reviewer_id': {
+            'type': 'integer',
+            'min_value': 1,
+            'required': True
+        }
+    }
+    
+    # Validate JSON request body
+    try:
+        validated_data = validate_json_request_body(request, validation_rules)
+    except ValidationError as e:
+        return Response({'error': str(e)}, status=400)
+    
+    # Accept either finding_id or IncidentId
+    finding_id = validated_data.get('finding_id')
+    incident_id = validated_data.get('incident_id') or validated_data.get('IncidentId')
+
+    # Check that at least one ID is provided
+    if not finding_id and not incident_id:
+        return Response({'error': 'Either finding_id or incident_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Prepare data for serializer
+    data = validated_data.copy()
+
+    # Set the correct fields for the serializer
+    if finding_id:
+        data['finding_id'] = finding_id
+        data['IncidentId'] = None
+    else:
+        data['IncidentId'] = incident_id
+        data['finding_id'] = None
+
+    serializer = WorkflowSerializer(data=data)
+    if serializer.is_valid():
+        workflow = serializer.save()
+        
+        # Log successful workflow creation
+        send_log(
+            module="Incident",
+            actionType="CREATE_WORKFLOW_SUCCESS",
+            description="Workflow created successfully",
+            userId=str(user_id) if user_id else None,
+            userName=request.data.get('userName', 'Unknown'),
+            entityType="Workflow",
+            entityId=str(workflow.Id),
+            ipAddress=client_ip,
+            additionalInfo={
+                "finding_id": finding_id,
+                "incident_id": incident_id,
+                "assignee_id": validated_data.get('assignee_id'),
+                "reviewer_id": validated_data.get('reviewer_id')
+            }
+        )
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    # Log validation errors
+    send_log(
+        module="Incident",
+        actionType="CREATE_WORKFLOW_VALIDATION_ERROR",
+        description="Workflow creation failed due to validation errors",
+        userId=str(user_id) if user_id else None,
+        userName=request.data.get('userName', 'Unknown'),
+        entityType="Workflow",
+        logLevel="WARNING",
+        ipAddress=client_ip,
+        additionalInfo=serializer.errors
+    )
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IncidentViewPermission])
+def list_assigned_findings(request):
+    workflows = Workflow.objects.all()
+    result = []
+    for wf in workflows:
+        # Assigned Audit Finding
+        if wf.finding_id:
+            try:
+                finding = AuditFinding.objects.get(date=wf.finding_id)
+                result.append({
+                    'type': 'finding',
+                    'date': wf.finding_id,
+                    'comment': finding.comment,
+                    'assignee': Users.objects.get(UserId=wf.assignee_id).UserName,
+                    'reviewer': Users.objects.get(UserId=wf.reviewer_id).UserName,
+                    'assigned_at': wf.assigned_at,
+                })
+            except AuditFinding.DoesNotExist:
+                continue
+        # Assigned Incident
+        elif wf.IncidentId:
+            try:
+                incident = Incident.objects.get(IncidentId=wf.IncidentId)
+                result.append({
+                    'type': 'incident',
+                    'IncidentId': wf.IncidentId,
+                    'incidenttitle': incident.incidenttitle,
+                    'description': incident.description,
+                    'assignee': Users.objects.get(UserId=wf.assignee_id).UserName,
+                    'reviewer': Users.objects.get(UserId=wf.reviewer_id).UserName,
+                    'assigned_at': wf.assigned_at,
+                })
+            except Incident.DoesNotExist:
+                continue
+    return Response(result)
+
+@api_view(['GET'])
+@permission_classes([IncidentViewPermission])
+def combined_incidents_and_audit_findings(request):
+    # Get all incidents from the database
+    all_incidents = Incident.objects.all()
+    all_incidents_serialized = IncidentSerializer(all_incidents, many=True).data
+    
+    # Categorize by type
+    for item in all_incidents_serialized:
+        if item['Origin'] == 'Manual':
+            item['type'] = 'manual'
+            item['source'] = 'manual'
+        elif item['Origin'] == 'Audit Finding':
+            item['type'] = 'audit_incident'
+            item['source'] = 'auditor'
+            # Add criticality for audit incidents
+            if item['ComplianceId']:
+                try:
+                    compliance = Compliance.objects.get(pk=item['ComplianceId'])
+                    item['criticality'] = compliance.Criticality if hasattr(compliance, 'Criticality') else None
+                except Compliance.DoesNotExist:
+                    item['criticality'] = None
+        elif item['Origin'] == 'SIEM':
+            item['type'] = 'siem'
+            item['source'] = 'siem'
+        else:
+            item['type'] = 'other'
+            item['source'] = 'other'
+    
+    # Get audit findings with Check='0' or Check='2'
+    audit_findings = AuditFinding.objects.filter(Check__in=['0', '2'])
+    audit_findings_serialized = AuditFindingSerializer(audit_findings, many=True).data
+    
+    # Process each audit finding
+    for item in audit_findings_serialized:
+        item['type'] = 'audit'
+        item['Origin'] = 'Audit Finding'  # Set origin for filtering in frontend
+        item['source'] = 'auditor'  # All audit findings come from auditor
+        
+        # Get the complete compliance item details
+        if item['ComplianceId']:
+            try:
+                compliance = Compliance.objects.get(pk=item['ComplianceId'])
+                item['compliance_name'] = compliance.ComplianceItemDescription
+                item['compliance_mitigation'] = compliance.mitigation if hasattr(compliance, 'mitigation') else None
+                item['criticality'] = compliance.Criticality if hasattr(compliance, 'Criticality') else None
+            except Compliance.DoesNotExist:
+                item['compliance_name'] = "No description"
+                item['compliance_mitigation'] = None
+                item['criticality'] = None
+        else:
+            item['compliance_name'] = "No description"
+            item['compliance_mitigation'] = None
+            item['criticality'] = None
+                
+        # Check if there's a corresponding incident
+        related_incident = None
+        if item['AuditId'] and item['ComplianceId']:
+            related_incident = Incident.objects.filter(
+                Origin="Audit Finding",
+                AuditId=item['AuditId'],
+                ComplianceId=item['ComplianceId']
+            ).first()
+        
+        if related_incident:
+            item['Status'] = related_incident.Status
+        else:
+            item['Status'] = None
+    
+    combined = all_incidents_serialized + audit_findings_serialized
+    return Response(combined)
+
+@api_view(['POST'])
+@permission_classes([IncidentCreatePermission])
+def create_incident_from_audit_finding(request):
+    client_ip = get_client_ip(request)
+    user_id = request.data.get('userId')
+    
+    # Log incident creation from audit finding attempt
+    send_log(
+        module="Incident",
+        actionType="CREATE_INCIDENT_FROM_AUDIT_FINDING_ATTEMPT",
+        description="User attempting to create incident from audit finding",
+        userId=str(user_id) if user_id else None,
+        userName=request.data.get('userName', 'Unknown'),
+        entityType="Incident",
+        ipAddress=client_ip
+    )
+    
+    # Define validation rules for creating incident from audit finding
+    validation_rules = {
+        'audit_finding_id': {
+            'type': 'integer',
+            'min_value': 1,
+            'required': True
+        }
+    }
+    
+    # Validate JSON request body
+    try:
+        validated_data = validate_json_request_body(request, validation_rules)
+    except ValidationError as e:
+        return Response({'error': str(e)}, status=400)
+    
+    finding_id = validated_data.get('audit_finding_id')
+
+    try:
+        finding = AuditFinding.objects.get(pk=finding_id)
+    except AuditFinding.DoesNotExist:
+        return Response({'error': 'Audit finding not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Check if an incident already exists for this finding
+    existing_incident = Incident.objects.filter(
+        Origin="Audit Finding",
+        AuditId=finding.AuditId,
+        ComplianceId=finding.ComplianceId
+    ).first()
+    
+    if existing_incident:
+        # Update the existing incident
+        existing_incident.Status = 'Scheduled'
+        existing_incident.save()
+        serializer = IncidentSerializer(existing_incident)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # Create a new incident
+    incident_data = {
+        'IncidentTitle': finding.ComplianceId.ComplianceItemDescription if finding.ComplianceId else "Audit Finding",
+        'Description': finding.DetailsOfFinding or finding.Comments or "",
+        'Mitigation': finding.ComplianceId.mitigation if finding.ComplianceId else "",
+        'AuditId': finding.AuditId.pk if finding.AuditId else None,
+        'ComplianceId': finding.ComplianceId.pk if finding.ComplianceId else None,
+        'Date': finding.AssignedDate.date() if finding.AssignedDate else None,
+        'Time': finding.AssignedDate.time() if finding.AssignedDate else None,
+        'UserId': finding.UserId.UserId,
+        'Origin': 'Audit Finding',
+        'Comments': finding.Comments,
+        'Status': 'Scheduled',
+    }
+
+    serializer = IncidentSerializer(data=incident_data)
+    if serializer.is_valid():
+        incident = serializer.save()
+        
+        # Ensure CreatedAt is set correctly with current timezone-aware datetime
+        if not incident.CreatedAt:
+            incident.CreatedAt = timezone.now()
+            incident.save()
+        
+        print(f"Incident from audit finding created with ID: {incident.IncidentId}")
+        print(f"CreatedAt timestamp: {incident.CreatedAt}")
+        
+        # Do not change the Check status if it's partially compliant (2)
+        if finding.Check != '2':
+            finding.Check = '1'  # Mark as compliant/processed
+            finding.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IncidentCreatePermission])
+def schedule_manual_incident(request):
+    client_ip = get_client_ip(request)
+    user_id = request.data.get('userId')
+    
+    # Log manual incident scheduling attempt
+    send_log(
+        module="Incident",
+        actionType="SCHEDULE_MANUAL_INCIDENT_ATTEMPT",
+        description="User attempting to schedule manual incident",
+        userId=str(user_id) if user_id else None,
+        userName=request.data.get('userName', 'Unknown'),
+        entityType="Incident",
+        ipAddress=client_ip
+    )
+    
+    # Define validation rules for scheduling manual incident
+    validation_rules = {
+        'incident_id': {
+            'type': 'integer',
+            'min_value': 1,
+            'required': True
+        }
+    }
+    
+    # Validate JSON request body
+    try:
+        validated_data = validate_json_request_body(request, validation_rules)
+    except ValidationError as e:
+        return Response({'error': str(e)}, status=400)
+    
+    incident_id = validated_data.get('incident_id')
+    try:
+        incident = Incident.objects.get(pk=incident_id, Origin="Manual")
+        
+        # Use the same logic as update_incident_status to create RiskInstance when escalating
+        try:
+            # Check if RiskInstance already exists for this incident
+            existing_risk = RiskInstance.objects.filter(IncidentId=incident_id).first()
+            
+            if not existing_risk:
+                # Handle ComplianceId - only include if it's not null/empty
+                compliance_id = incident.ComplianceId
+                if compliance_id == '' or compliance_id == 'null':
+                    compliance_id = None
+                    
+                # Use CreatedAt and ensure it's timezone-aware  
+                incident_datetime = incident.CreatedAt
+                if incident_datetime and not timezone.is_aware(incident_datetime):
+                    incident_datetime = timezone.make_aware(incident_datetime)
+                
+                risk_instance_data = {
+                    'IncidentId': incident,  # Pass the incident instance (not just ID)
+                    'RiskTitle': incident.IncidentTitle or '',
+                                            'Criticality': incident.Criticality if incident.Criticality else None,  # Convert empty string to None
+                    'Category': incident.RiskCategory or '',
+                    'RiskDescription': incident.Description or '',
+                    'PossibleDamage': incident.PossibleDamage if incident.PossibleDamage else None,  # Convert empty string to None
+                    'RiskPriority': incident.RiskPriority or '',
+                    'Date': incident_datetime,  # Combined datetime instead of just date
+                    'Origin': incident.Origin or '',
+                    'RiskStatus': 'Open',  # Default status
+                    'ReportedBy': incident.UserId.UserId if incident.UserId else 1,   # Save UserId in ReportedBy column
+                    'ComplianceId': compliance_id  # Include ComplianceId only if provided and not null
+                }
+                
+                print(f"Creating RiskInstance for scheduled incident {incident_id}")
+                
+                # Create RiskInstance directly using the model to avoid serializer timezone issues
+                try:
+                    risk_instance = RiskInstance.objects.create(**risk_instance_data)
+                    print(f"RiskInstance created successfully with ID: {risk_instance.RiskInstanceId}")
+                    print(f"Saved data: IncidentId={risk_instance.IncidentId}, RiskTitle={risk_instance.RiskTitle}, Category={risk_instance.Category}")
+                except Exception as create_error:
+                    print(f"Error creating RiskInstance with model: {create_error}")
+                    # Try with serializer as fallback
+                    risk_instance_serializer = RiskInstanceSerializer(data=risk_instance_data)
+                    if risk_instance_serializer.is_valid():
+                        risk_instance = risk_instance_serializer.save()
+                        print(f"RiskInstance created via serializer with ID: {risk_instance.RiskInstanceId}")
+                    else:
+                        print("RiskInstance serializer errors:", risk_instance_serializer.errors)
+                        # Continue with status update even if RiskInstance creation fails
+            else:
+                print(f"RiskInstance already exists for incident {incident_id}")
+                
+        except Exception as e:
+            print(f"Error creating RiskInstance during scheduling: {str(e)}")
+            # Continue with status update even if RiskInstance creation fails
+        
+        incident.Status = "Scheduled"
+        incident.save()
+        return Response({'message': 'Incident scheduled and directed to risk workflow.'}, status=status.HTTP_200_OK)
+    except Incident.DoesNotExist:
+        return Response({'error': 'Incident not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([IncidentEvaluatePermission])
+def reject_incident(request):
+    client_ip = get_client_ip(request)
+    user_id = request.data.get('userId')
+    
+    # Log incident rejection attempt
+from django.shortcuts import render, redirect, get_object_or_404
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.contrib.auth import authenticate, login as auth_login
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import (
+    UserSerializer, IncidentSerializer, AuditFindingSerializer, 
+    PolicySerializer, SubPolicySerializer, ComplianceCreateSerializer, PolicyAllocationSerializer, FrameworkSerializer,
+    PolicyApprovalSerializer, LastChecklistItemVerifiedSerializer, RiskInstanceSerializer  # Add RiskInstanceSerializer
+)
+from .models import Incident, AuditFinding, Users, Workflow, Compliance, Framework, PolicyVersion, PolicyApproval, Policy, SubPolicy, RiskInstance, LastChecklistItemVerified, IncidentApproval, ExportTask, ExportTask,CategoryBusinessUnit, GRCLog
+from .notification_service import NotificationService
+# Import KPI functions from separate module
+from .kpis_incidents import (
+    incident_mttd, incident_mttr, incident_mttc, incident_mttrv,
+    incident_volume, incidents_by_severity, incident_root_causes,
+    incident_types, incident_origins, escalation_rate, repeat_rate,
+    incident_cost, first_response_time, false_positive_rate,
+    detection_accuracy, incident_closure_rate, incident_reopened_count,
+    incident_count, incident_metrics, get_incident_counts,
+    to_aware_datetime, safe_combine_date_time
+)
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.db import transaction
+from django.db.models import Q
+import traceback
+import datetime
+from django.db import connection
+import json
+import uuid
+import re
+import base64
+import tempfile
+import os
+from datetime import date, time
+from .s3_fucntions import S3Client
+from .validation import SecureValidator, ValidationError, IncidentValidator, QuestionnaireValidator
+from contextlib import contextmanager
+import logging
+import requests
+
+# Logging Configuration
+LOGGING_SERVICE_URL = None  # Disabled external logging service
+
+def send_log(module, actionType, description=None, userId=None, userName=None,
+             userRole=None, entityType=None, logLevel='INFO', ipAddress=None,
+             additionalInfo=None, entityId=None):
+   
+    # Debug print to console
+    print(f"[DEBUG LOGGING] send_log called: module={module}, actionType={actionType}, userId={userId}")
+   
+    # Create log entry in database
+    try:
+        # Prepare data for GRCLog model
+        log_data = {
+            'Module': module,
+            'ActionType': actionType,
+            'Description': description,
+            'UserId': str(userId) if userId is not None else None,
+            'UserName': userName,
+            'EntityType': entityType,
+            'EntityId': str(entityId) if entityId is not None else None,
+            'LogLevel': logLevel,
+            'IPAddress': ipAddress,
+            'AdditionalInfo': additionalInfo
+        }
+       
+        # Remove None values
+        log_data = {k: v for k, v in log_data.items() if v is not None}
+        
+        print(f"[DEBUG LOGGING] Prepared log_data: {log_data}")
+       
+        # Create and save the log entry
+        log_entry = GRCLog(**log_data)
+        print(f"[DEBUG LOGGING] Created GRCLog instance: {log_entry}")
+        
+        log_entry.save()
+        print(f"[DEBUG LOGGING] Successfully saved log with ID: {log_entry.LogId}")
+       
+        # Optionally still send to logging service if needed
+        try:
+            if LOGGING_SERVICE_URL:
+                # Format for external service (matches expected format in loggingservice.js)
+                api_log_data = {
+                    "module": module,
+                    "actionType": actionType,  # This is exactly what the service expects
+                    "description": description,
+                    "userId": userId,
+                    "userName": userName,
+                    "userRole": userRole,
+                    "entityType": entityType,
+                    "logLevel": logLevel,
+                    "ipAddress": ipAddress,
+                    "additionalInfo": additionalInfo
+                }
+                # Clean out None values
+                api_log_data = {k: v for k, v in api_log_data.items() if v is not None}
+               
+                response = requests.post(LOGGING_SERVICE_URL, json=api_log_data)
+                if response.status_code != 200:
+                    print(f"Failed to send log to service: {response.text}")
+        except Exception as e:
+            print(f"Error sending log to service: {str(e)}")
+           
+        return log_entry.LogId  # Return the ID of the created log
+    except Exception as e:
+        print(f"[ERROR LOGGING] Error saving log to database: {str(e)}")
+        print(f"[ERROR LOGGING] Exception type: {type(e)}")
+        import traceback
+        print(f"[ERROR LOGGING] Traceback: {traceback.format_exc()}")
+        
+        # Try to capture the error itself
+        try:
+            error_log = GRCLog(
+                Module=module,
+                ActionType='LOG_ERROR',
+                Description=f"Error logging {actionType} on {module}: {str(e)}",
+                LogLevel='ERROR'
+            )
+            error_log.save()
+            print(f"[ERROR LOGGING] Saved error log with ID: {error_log.LogId}")
+        except Exception as error_save_exception:
+            print(f"[ERROR LOGGING] Could not even save error log: {str(error_save_exception)}")
+        return None
+
+def get_client_ip(request):
+    """Helper function to get client IP address"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+
+
+
+
+
+# Add these imports at the top of your incident_views.py file
+from rest_framework.permissions import IsAuthenticated
+from grc.rbac.permissions import (
+    # Incident permissions
+    IncidentCreatePermission,
+    IncidentEditPermission,
+    IncidentAssignPermission,
+    IncidentEvaluatePermission,
+    IncidentEscalatePermission,
+    IncidentViewPermission,
+    IncidentAnalyticsPermission,
+    
+    # Audit permissions (for audit findings)
+    AuditViewPermission,
+    AuditConductPermission,
+    AuditReviewPermission,
+    AuditAssignPermission,
+    AuditAnalyticsPermission
+)
+
+# Add RBAC debug logging
+import logging
+logger = logging.getLogger(__name__)
+
+def debug_user_permissions(request, action, resource_type=None, resource_id=None):
+    """Debug function to log user permissions and access attempts using RBACUtils"""
+    try:
+        from grc.rbac.utils import RBACUtils
+        
+        # Extract user ID using RBACUtils
+        user_id = RBACUtils.get_user_id_from_request(request)
+        ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+        
+        if not user_id:
+            logger.info(f"[RBAC DEBUG] User Access Attempt:")
+            logger.info(f"   User ID: None (could not extract from request)")
+            logger.info(f"   Action: {action}")
+            logger.info(f"   Resource: {resource_type} (ID: {resource_id})")
+            logger.info(f"   IP Address: {ip_address}")
+            logger.info(f"   Status: FAILED - No user ID")
+            logger.info(f"   " + "=" * 60)
+            return None
+        
+        # Get detailed permissions from database
+        detailed_permissions = get_user_detailed_permissions(user_id)
+        
+        # Log comprehensive access attempt
+        logger.info(f"[RBAC DEBUG] User Access Attempt:")
+        logger.info(f"   User ID: {user_id}")
+        logger.info(f"   Action: {action}")
+        logger.info(f"   Resource: {resource_type} (ID: {resource_id})")
+        logger.info(f"   IP Address: {ip_address}")
+        
+        # Display detailed permissions
+        logger.info(f"   === DETAILED PERMISSIONS FROM DATABASE ===")
+        if detailed_permissions:
+            for module, permissions in detailed_permissions.items():
+                logger.info(f"   Module '{module}':")
+                for perm_name, has_perm in permissions.items():
+                    status = "✓ YES" if has_perm else "✗ NO"
+                    logger.info(f"      {perm_name}: {status}")
+        else:
+            logger.info(f"   No specific permissions found in database")
+        
+        # Check module permissions if resource_type maps to a module
+        module_permissions = {}
+        if resource_type:
+            # Map resource_type to module name
+            module_map = {
+                'incident': 'Incident',
+                'audit': 'Audit', 
+                'risk': 'Risk',
+                'policy': 'Policy',
+                'compliance': 'Compliance',
+                'framework': 'Framework'
+            }
+            
+            module = module_map.get(resource_type.lower())
+            if module:
+                # Check basic permissions for this module
+                permissions_to_check = ['view', 'create', 'edit', 'approve', 'assign']
+                for perm in permissions_to_check:
+                    has_perm = RBACUtils.has_permission(user_id, module, perm)
+                    module_permissions[perm] = has_perm
+                    # Debug each permission check
+                    debug_permission_check(user_id, module, perm, has_perm)
+                
+                logger.info(f"   Module Permissions for {module}:")
+                for perm, has_perm in module_permissions.items():
+                    status = "YES" if has_perm else "NO"
+                    logger.info(f"      {perm.capitalize()}: {status}")
+        
+        logger.info(f"   Timestamp: {timezone.now()}")
+        logger.info(f"   " + "=" * 60)
+        
+        return {
+            'user_id': user_id,
+            'module_permissions': module_permissions,
+            'detailed_permissions': detailed_permissions
+        }
+        
+    except Exception as e:
+        logger.error(f"[RBAC DEBUG ERROR]: {str(e)}")
+        import traceback
+        logger.error(f"[RBAC DEBUG TRACEBACK]: {traceback.format_exc()}")
+        return None
+
+
+def get_user_detailed_permissions(user_id):
+    """Get detailed permissions for a user from all RBAC tables"""
+    try:
+        from .models import RBAC, RBACModulePermission, RBACUserPermission, RBACDepartmentAccess
+        
+        # Get user's RBAC info
+        rbac_info = RBAC.objects.filter(UserId=user_id).first()
+        if not rbac_info:
+            logger.warning(f"[RBAC] No RBAC info found for user {user_id}")
+            return None
+        
+        permissions = {}
+        
+        # 1. Get role-based module permissions
+        role_permissions = RBACModulePermission.objects.filter(Role=rbac_info.Role)
+        for perm in role_permissions:
+            module = perm.Module
+            if module not in permissions:
+                permissions[module] = {}
+            permissions[module][perm.Permission] = perm.IsAllowed
+        
+        # 2. Get user-specific permission overrides
+        user_permissions = RBACUserPermission.objects.filter(UserId=user_id)
+        for perm in user_permissions:
+            module = perm.Module
+            if module not in permissions:
+                permissions[module] = {}
+            # User permissions override role permissions
+            permissions[module][perm.Permission] = perm.IsAllowed
+        
+        # 3. Get department access info
+        dept_access = RBACDepartmentAccess.objects.filter(
+            Department=rbac_info.Department
+        )
+        
+        if dept_access.exists():
+            permissions['Department_Access'] = {}
+            for access in dept_access:
+                permissions['Department_Access'][f"access_{access.ResourceType}"] = access.CanAccess
+        
+        logger.info(f"[RBAC] Retrieved detailed permissions for user {user_id}: {permissions}")
+        return permissions
+        
+    except Exception as e:
+        logger.error(f"[RBAC] Error getting detailed permissions for user {user_id}: {str(e)}")
+        return None
+
+
+def log_user_login_permissions(user_id, username=None):
+    """Log all permissions when user logs in"""
+    try:
+        logger.info(f"[RBAC LOGIN] ===== USER LOGIN PERMISSIONS DEBUG =====")
+        logger.info(f"[RBAC LOGIN] User ID: {user_id}")
+        logger.info(f"[RBAC LOGIN] Username: {username}")
+        logger.info(f"[RBAC LOGIN] Login Time: {timezone.now()}")
+        
+        # Get detailed permissions
+        detailed_permissions = get_user_detailed_permissions(user_id)
+        
+        if detailed_permissions:
+            logger.info(f"[RBAC LOGIN] === USER PERMISSIONS FROM DATABASE ===")
+            for module, permissions in detailed_permissions.items():
+                logger.info(f"[RBAC LOGIN] Module: {module}")
+                for perm_name, has_perm in permissions.items():
+                    status = "✓ GRANTED" if has_perm else "✗ DENIED"
+                    logger.info(f"[RBAC LOGIN]    {perm_name}: {status}")
+        else:
+            logger.warning(f"[RBAC LOGIN] No permissions found for user {user_id}")
+        
+        # Get RBAC basic info
+        from .models import RBAC
+        rbac_info = RBAC.objects.filter(UserId=user_id).first()
+        if rbac_info:
+            logger.info(f"[RBAC LOGIN] === BASIC RBAC INFO ===")
+            logger.info(f"[RBAC LOGIN] Role: {rbac_info.Role}")
+            logger.info(f"[RBAC LOGIN] Department: {rbac_info.Department}")
+            logger.info(f"[RBAC LOGIN] Entity: {rbac_info.Entity}")
+            logger.info(f"[RBAC LOGIN] Active: {rbac_info.IsActive}")
+        else:
+            logger.warning(f"[RBAC LOGIN] No RBAC configuration found for user {user_id}")
+        
+        logger.info(f"[RBAC LOGIN] ============================================")
+        
+        return detailed_permissions
+        
+    except Exception as e:
+        logger.error(f"[RBAC LOGIN] Error logging user permissions: {str(e)}")
+        return None
+
+
+def debug_permission_check(user_id, module, permission, result):
+    """Debug individual permission checks"""
+    try:
+        logger.info(f"[RBAC PERM CHECK] User {user_id} checking {module}.{permission} = {result}")
+        
+        # Get the actual database values
+        from .models import RBACModulePermission, RBACUserPermission, RBAC
+        
+        # Get user's role
+        rbac_info = RBAC.objects.filter(UserId=user_id).first()
+        if rbac_info:
+            logger.info(f"[RBAC PERM CHECK] User Role: {rbac_info.Role}")
+            
+            # Check role permission
+            role_perm = RBACModulePermission.objects.filter(
+                Role=rbac_info.Role,
+                Module=module,
+                Permission=permission
+            ).first()
+            
+            if role_perm:
+                logger.info(f"[RBAC PERM CHECK] Role Permission in DB: {role_perm.IsAllowed}")
+            else:
+                logger.info(f"[RBAC PERM CHECK] No role permission found in DB")
+            
+            # Check user override
+            user_perm = RBACUserPermission.objects.filter(
+                UserId=user_id,
+                Module=module,
+                Permission=permission
+            ).first()
+            
+            if user_perm:
+                logger.info(f"[RBAC PERM CHECK] User Override in DB: {user_perm.IsAllowed}")
+            else:
+                logger.info(f"[RBAC PERM CHECK] No user override found in DB")
+        
+    except Exception as e:
+        logger.error(f"[RBAC PERM CHECK] Error debugging permission check: {str(e)}")
+
+
+
+# Input validation utilities
+class ValidationError(Exception):
+    """Custom exception for validation errors"""
+    def __init__(self, field, message):
+        self.field = field
+        self.message = message
+        super().__init__(f"{field}: {message}")
+
+def validate_string(value, field_name, max_length=255, min_length=0, required=False, allowed_pattern=None):
+    """Validate a string value with allow-list validation"""
+    # Check if required
+    if required and (value is None or value == ''):
+        raise ValidationError(field_name, "This field is required")
+    
+    # Skip validation if not required and value is None or empty
+    if not required and (value is None or value == ''):
+        return value
+    
+    # Validate type
+    if not isinstance(value, str):
+        raise ValidationError(field_name, f"Must be a string, got {type(value).__name__}")
+    
+    # Validate length
+    if len(value) < min_length:
+        raise ValidationError(field_name, f"Must be at least {min_length} characters")
+    
+    if len(value) > max_length:
+        raise ValidationError(field_name, f"Must be no more than {max_length} characters")
+    
+    # Validate pattern if provided
+    if allowed_pattern and not re.match(allowed_pattern, value):
+        raise ValidationError(field_name, "Contains invalid characters")
+    
+    return value
+
+def validate_date(value, field_name, required=False):
+    """Validate a date value"""
+    # Check if required
+    if required and (value is None or value == ''):
+        raise ValidationError(field_name, "This field is required")
+    
+    # Skip validation if not required and value is None or empty
+    if not required and (value is None or value == ''):
+        return value
+    
+    # If already a date object, return as is
+    if isinstance(value, date):
+        return value
+    
+    # Try to parse the date
+    try:
+        # Handle different date formats
+        if isinstance(value, str):
+            # Try ISO format YYYY-MM-DD
+            parts = value.split('-')
+            if len(parts) == 3:
+                year, month, day = map(int, parts)
+                return date(year, month, day)
+        
+        raise ValidationError(field_name, "Invalid date format, expected YYYY-MM-DD")
+    except (ValueError, TypeError):
+        raise ValidationError(field_name, "Invalid date format, expected YYYY-MM-DD")
+
+def validate_time(value, field_name, required=False):
+    """Validate a time value"""
+    # Check if required
+    if required and (value is None or value == ''):
+        raise ValidationError(field_name, "This field is required")
+    
+    # Skip validation if not required and value is None or empty
+    if not required and (value is None or value == ''):
+        return value
+    
+    # If already a time object, return as is
+    if isinstance(value, time):
+        return value
+    
+    # Try to parse the time
+    try:
+        # Handle different time formats
+        if isinstance(value, str):
+            # Try ISO format HH:MM or HH:MM:SS
+            parts = value.split(':')
+            if len(parts) >= 2:
+                hour = int(parts[0])
+                minute = int(parts[1])
+                second = int(parts[2]) if len(parts) > 2 else 0
+                return time(hour, minute, second)
+        
+        raise ValidationError(field_name, "Invalid time format, expected HH:MM or HH:MM:SS")
+    except (ValueError, TypeError):
+        raise ValidationError(field_name, "Invalid time format, expected HH:MM or HH:MM:SS")
+
+def validate_boolean(value, field_name):
+    """Validate a boolean value"""
+    if value is None:
+        return None
+    
+    if isinstance(value, bool):
+        return value
+    
+    if isinstance(value, str):
+        value_lower = value.lower()
+        if value_lower in ('true', 't', 'yes', 'y', '1'):
+            return True
+        elif value_lower in ('false', 'f', 'no', 'n', '0'):
+            return False
+    
+    if isinstance(value, int):
+        if value == 1:
+            return True
+        elif value == 0:
+            return False
+    
+    raise ValidationError(field_name, "Must be a boolean value")
+
+def validate_choice(value, field_name, choices, required=False):
+    """Validate that a value is one of the allowed choices"""
+    # Check if required
+    if required and (value is None or value == ''):
+        raise ValidationError(field_name, "This field is required")
+    
+    # Skip validation if not required and value is None or empty
+    if not required and (value is None or value == ''):
+        return value
+    
+    # Validate that value is in choices
+    if value not in choices:
+        raise ValidationError(field_name, f"Must be one of: {', '.join(choices)}")
+    
+    return value
+
+def validate_incident_data(data):
+    """
+    Validate incident data with strict allow-list validation
+    Returns cleaned data or raises ValidationError
+    """
+    validated_data = {}
+    
+    # Define allowed patterns for enhanced security
+    ALPHANUMERIC_WITH_SPACES = r'^[a-zA-Z0-9\s\-_.,!?()]+$'
+    BUSINESS_TEXT_PATTERN = r'^[a-zA-Z0-9\s\-_.,!?():;/\\@#$%&*+=<>[\]{}|~`"\']+$'
+    CURRENCY_PATTERN = r'^[$£€]?[0-9]+(\.[0-9]{1,2})?$'
+    
+    # Required fields
+    validated_data['IncidentTitle'] = validate_string(
+        data.get('IncidentTitle'), 'IncidentTitle', 
+        max_length=255, min_length=3, required=True,
+        allowed_pattern=BUSINESS_TEXT_PATTERN
+    )
+    
+    validated_data['Description'] = validate_string(
+        data.get('Description'), 'Description', 
+        max_length=2000, min_length=10, required=True,
+        allowed_pattern=BUSINESS_TEXT_PATTERN
+    )
+    
+    validated_data['Date'] = validate_date(
+        data.get('Date'), 'Date', 
+        required=True
+    )
+    
+    validated_data['Time'] = validate_time(
+        data.get('Time'), 'Time', 
+        required=True
+    )
+    
+    validated_data['RiskPriority'] = validate_choice(
+        data.get('RiskPriority'), 'RiskPriority',
+        choices=['High', 'Medium', 'Low'], 
+        required=True
+    )
+    
+    # Optional fields with strict validation
+    if 'Origin' in data and data.get('Origin'):
+        validated_data['Origin'] = validate_choice(
+            data.get('Origin'), 'Origin',
+            choices=['Manual', 'Audit Finding', 'System Generated'], 
+            required=False
+        )
+    
+    if 'Mitigation' in data and data.get('Mitigation'):
+        validated_data['Mitigation'] = validate_string(
+            data.get('Mitigation'), 'Mitigation', 
+            max_length=2000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'Comments' in data and data.get('Comments'):
+        validated_data['Comments'] = validate_string(
+            data.get('Comments'), 'Comments', 
+            max_length=1000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'RiskCategory' in data and data.get('RiskCategory'):
+        validated_data['RiskCategory'] = validate_string(
+            data.get('RiskCategory'), 'RiskCategory', 
+            max_length=500, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'Status' in data and data.get('Status'):
+        validated_data['Status'] = validate_choice(
+            data.get('Status'), 'Status',
+            choices=['Open', 'Closed', 'In Progress', 'Scheduled', 'Under Review', 'Pending Review', 'Rejected', 'Assigned', 'New', 'Active', 'Resolved', 'Pending'], 
+            required=False
+        )
+    
+    if 'AffectedBusinessUnit' in data and data.get('AffectedBusinessUnit'):
+        validated_data['AffectedBusinessUnit'] = validate_string(
+            data.get('AffectedBusinessUnit'), 'AffectedBusinessUnit', 
+            max_length=100, required=False,
+            allowed_pattern=ALPHANUMERIC_WITH_SPACES
+        )
+    
+    if 'SystemsAssetsInvolved' in data and data.get('SystemsAssetsInvolved'):
+        validated_data['SystemsAssetsInvolved'] = validate_string(
+            data.get('SystemsAssetsInvolved'), 'SystemsAssetsInvolved', 
+            max_length=500, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'GeographicLocation' in data and data.get('GeographicLocation'):
+        validated_data['GeographicLocation'] = validate_string(
+            data.get('GeographicLocation'), 'GeographicLocation', 
+            max_length=100, required=False,
+            allowed_pattern=ALPHANUMERIC_WITH_SPACES
+        )
+    
+    if 'Criticality' in data and data.get('Criticality'):
+        validated_data['Criticality'] = validate_choice(
+            data.get('Criticality'), 'Criticality',
+            choices=['Critical', 'High', 'Medium', 'Low'], 
+            required=False
+        )
+    
+    if 'InitialImpactAssessment' in data and data.get('InitialImpactAssessment'):
+        validated_data['InitialImpactAssessment'] = validate_string(
+            data.get('InitialImpactAssessment'), 'InitialImpactAssessment', 
+            max_length=2000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'InternalContacts' in data and data.get('InternalContacts'):
+        validated_data['InternalContacts'] = validate_string(
+            data.get('InternalContacts'), 'InternalContacts', 
+            max_length=500, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'ExternalPartiesInvolved' in data and data.get('ExternalPartiesInvolved'):
+        validated_data['ExternalPartiesInvolved'] = validate_string(
+            data.get('ExternalPartiesInvolved'), 'ExternalPartiesInvolved', 
+            max_length=500, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'RegulatoryBodies' in data and data.get('RegulatoryBodies'):
+        validated_data['RegulatoryBodies'] = validate_string(
+            data.get('RegulatoryBodies'), 'RegulatoryBodies', 
+            max_length=500, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'RelevantPoliciesProceduresViolated' in data and data.get('RelevantPoliciesProceduresViolated'):
+        validated_data['RelevantPoliciesProceduresViolated'] = validate_string(
+            data.get('RelevantPoliciesProceduresViolated'), 'RelevantPoliciesProceduresViolated', 
+            max_length=1000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'ControlFailures' in data and data.get('ControlFailures'):
+        validated_data['ControlFailures'] = validate_string(
+            data.get('ControlFailures'), 'ControlFailures', 
+            max_length=1000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'PossibleDamage' in data and data.get('PossibleDamage'):
+        validated_data['PossibleDamage'] = validate_string(
+            data.get('PossibleDamage'), 'PossibleDamage', 
+            max_length=1000, required=False,
+            allowed_pattern=BUSINESS_TEXT_PATTERN
+        )
+    
+    if 'CostOfIncident' in data and data.get('CostOfIncident'):
+        cost_value = str(data.get('CostOfIncident')).strip()
+        if cost_value and not re.match(CURRENCY_PATTERN, cost_value):
+            raise ValidationError('CostOfIncident', 'Must be a valid currency amount (e.g., $100.50, 250.75)')
+        validated_data['CostOfIncident'] = cost_value if cost_value else None
+    
+    if 'IncidentClassification' in data and data.get('IncidentClassification'):
+        validated_data['IncidentClassification'] = validate_choice(
+            data.get('IncidentClassification'), 'IncidentClassification',
+            choices=['NonConformance', 'Control GAP', 'Risk', 'Issue'], 
+            required=False
+        )
+    
+    # Handle ComplianceId - must be a valid integer if provided
+    if 'ComplianceId' in data and data.get('ComplianceId'):
+        try:
+            compliance_id = int(data.get('ComplianceId'))
+            if compliance_id <= 0:
+                raise ValidationError('ComplianceId', 'Must be a positive integer')
+            validated_data['ComplianceId'] = compliance_id
+        except (ValueError, TypeError):
+            raise ValidationError('ComplianceId', 'Must be a valid integer')
+    
+    return validated_data
+
+
+LOGIN_REDIRECT_URL = '/incidents/'  # or the URL pattern for your incident page
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login(request):
+    email = request.data.get('email')
+    password = request.data.get('password')
+    client_ip = get_client_ip(request)
+    
+    # Log login attempt
+    send_log(
+        module="Incident",
+        actionType="LOGIN_ATTEMPT",
+        description="User login attempt",
+        userId=None,
+        userName=email,
+        entityType="User",
+        ipAddress=client_ip
+    )
+    
+    # Log login attempt
+    send_log(
+        module="Incident_Auth",
+        actionType="LOGIN",
+        description=f"User login attempt for email: {email}",
+        userId=None,
+        userName=email,
+        entityType="User",
+        ipAddress=get_client_ip(request)
+    )
+    
+    # Hardcoded credentials
+    if email == "admin@example.com" and password == "password123":
+        # Log successful login
+        send_log(
+            module="Incident",
+            actionType="LOGIN_SUCCESS",
+            description="User login successful",
+            userId="admin",
+            userName=email,
+            entityType="User",
+            entityId="admin",
+            ipAddress=client_ip
+        )
+        
+        # DEBUG: Log user permissions on login
+        try:
+            # Find the user ID for RBAC lookup (use hardcoded for demo)
+            from .models import Users
+            user = Users.objects.filter(Email=email).first()
+            if user:
+                user_id = user.UserId
+                log_user_login_permissions(user_id, email)
+            else:
+                logger.warning(f"[RBAC LOGIN] User not found in database for email: {email}")
+        except Exception as e:
+            logger.error(f"[RBAC LOGIN] Error during login permissions debug: {str(e)}")
+        
+        return Response({
+            'success': True,
+            'message': 'Login successful',
+            'user': {
+                'email': email,
+                'name': 'Admin User'
+            }
+        })
+    else:
+        # Log failed login
+        send_log(
+            module="Incident",
+            actionType="LOGIN_FAILED",
+            description="User login failed - invalid credentials",
+            userId=None,
+            userName=email,
+            entityType="User",
+            logLevel="WARNING",
+            ipAddress=client_ip
+        )
+        
+        return Response({
+            'success': False,
+            'message': 'Invalid credentials'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    client_ip = get_client_ip(request)
+    email = request.data.get('Email', 'Unknown')
+    
+    # Log registration attempt
+    send_log(
+        module="Incident",
+        actionType="REGISTER_ATTEMPT",
+        description="User registration attempt",
+        userId=None,
+        userName=email,
+        entityType="User",
+        ipAddress=client_ip
+    )
+    
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        
+        # Log successful registration
+        send_log(
+            module="Incident",
+            actionType="REGISTER_SUCCESS",
+            description="User registration successful",
+            userId=str(user.UserId),
+            userName=user.UserName,
+            entityType="User",
+            entityId=str(user.UserId),
+            ipAddress=client_ip
+        )
+        
+        return Response({
+            'token': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': serializer.data
+        })
+    
+    # Log failed registration
+    send_log(
+        module="Incident",
+        actionType="REGISTER_FAILED",
+        description=f"User registration failed: {serializer.errors}",
+        userId=None,
+        userName=email,
+        entityType="User",
+        logLevel="WARNING",
+        ipAddress=client_ip,
+        additionalInfo=serializer.errors
+    )
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# RBAC API Endpoints
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_user_permissions(request):
+    """Get current user's permissions for frontend"""
+    try:
+        # RBAC Debug - Log user access attempt
+        debug_info = debug_user_permissions(request, "GET_USER_PERMISSIONS", "rbac", None)
+        
+        user_id = getattr(request.user, 'id', None)
+        if not user_id:
+            return Response({'error': 'User not authenticated'}, status=401)
+        
+        from .models import RBAC, RBACDepartmentAccess, RBACResourceAccess, RBACUserPermission
+        
+        # Get user's RBAC info
+        rbac_info = RBAC.objects.filter(UserId=user_id).first()
+        
+        if not rbac_info:
+            logger.warning(f"No RBAC info found for user {user_id}")
+            return Response({
+                'permissions': {},
+                'role': None,
+                'department': None,
+                'entity': None,
+                'message': 'No RBAC configuration found for user'
+            })
+        
+        # Get detailed permissions from database
+        detailed_permissions = get_user_detailed_permissions(user_id)
+        
+        # Build permissions based on role (you'll need to implement this based on your RBAC matrix)
+        permissions = {
+            'incident': {
+                'create': True,  # This should be based on role/permissions
+                'edit': True,
+                'view': True,
+                'assign': True,
+                'escalate': True,
+                'analytics': True
+            },
+            'audit': {
+                'view': True,
+                'conduct': True,
+                'review': True,
+                'assign': True,
+                'analytics': True
+            }
+        }
+        
+        # Get user-specific permission overrides
+        user_overrides = RBACUserPermission.objects.filter(UserId=user_id)
+        for override in user_overrides:
+            if override.Module not in permissions:
+                permissions[override.Module] = {}
+            permissions[override.Module][override.Permission] = override.IsAllowed
+        
+        # Log detailed permissions debug
+        logger.info(f"[RBAC GET_PERMISSIONS] === DETAILED PERMISSIONS FOR USER {user_id} ===")
+        logger.info(f"[RBAC GET_PERMISSIONS] Role: {rbac_info.Role}")
+        logger.info(f"[RBAC GET_PERMISSIONS] Department: {rbac_info.Department}")
+        logger.info(f"[RBAC GET_PERMISSIONS] Entity: {rbac_info.Entity}")
+        
+        if detailed_permissions:
+            logger.info(f"[RBAC GET_PERMISSIONS] Database Permissions:")
+            for module, perms in detailed_permissions.items():
+                logger.info(f"[RBAC GET_PERMISSIONS]   {module}:")
+                for perm, value in perms.items():
+                    status = "✓ GRANTED" if value else "✗ DENIED"
+                    logger.info(f"[RBAC GET_PERMISSIONS]     {perm}: {status}")
+        else:
+            logger.warning(f"[RBAC GET_PERMISSIONS] No detailed permissions found in database")
+        
+        logger.info(f"✅ User {user_id} permissions retrieved successfully")
+        
+        return Response({
+            'permissions': permissions,
+            'detailed_permissions': detailed_permissions,
+            'role': rbac_info.Role,
+            'department': rbac_info.Department,
+            'entity': rbac_info.Entity,
+            'user_id': user_id
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting user permissions: {str(e)}")
+        return Response({'error': 'Failed to retrieve permissions'}, status=500)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_user_role(request):
+    """Get current user's role"""
+    try:
+        user_id = getattr(request.user, 'id', None)
+        if not user_id:
+            return Response({'error': 'User not authenticated'}, status=401)
+        
+        from .models import RBAC
+        rbac_info = RBAC.objects.filter(UserId=user_id).first()
+        
+        if rbac_info:
+            return Response({
+                'role': rbac_info.Role,
+                'department': rbac_info.Department,
+                'entity': rbac_info.Entity
+            })
+        else:
+            return Response({'role': None, 'department': None, 'entity': None})
+            
+    except Exception as e:
+        logger.error(f"❌ Error getting user role: {str(e)}")
+        return Response({'error': 'Failed to retrieve role'}, status=500)
+
+
+@api_view(['GET'])  
+@permission_classes([AllowAny])
+def debug_user_permissions_endpoint(request):
+    """Endpoint to debug user permissions on demand"""
+    try:
+        from grc.rbac.utils import RBACUtils
+        
+        # Get user ID from request
+        user_id = RBACUtils.get_user_id_from_request(request)
+        if not user_id:
+            return Response({'error': 'Could not extract user ID from request'}, status=400)
+        
+        # Log comprehensive permissions debug
+        detailed_permissions = get_user_detailed_permissions(user_id)
+        
+        # Get RBAC info
+        rbac_info = RBACUtils.get_user_rbac_info(user_id)
+        
+        # Test specific module permissions
+        test_modules = ['Incident', 'Audit', 'Risk', 'Policy', 'Compliance', 'Framework']
+        test_permissions = ['view', 'create', 'edit', 'approve', 'assign']
+        
+        permission_tests = {}
+        for module in test_modules:
+            permission_tests[module] = {}
+            for perm in test_permissions:
+                has_perm = RBACUtils.has_permission(user_id, module, perm)
+                permission_tests[module][perm] = has_perm
+                # Debug each check
+                debug_permission_check(user_id, module, perm, has_perm)
+        
+        # Log the debug info
+        logger.info(f"[RBAC ENDPOINT DEBUG] === USER PERMISSIONS ENDPOINT DEBUG ===")
+        logger.info(f"[RBAC ENDPOINT DEBUG] User ID: {user_id}")
+        logger.info(f"[RBAC ENDPOINT DEBUG] Time: {timezone.now()}")
+        
+        if rbac_info:
+            logger.info(f"[RBAC ENDPOINT DEBUG] Role: {rbac_info.get('role')}")
+            logger.info(f"[RBAC ENDPOINT DEBUG] Department: {rbac_info.get('department')}")
+            logger.info(f"[RBAC ENDPOINT DEBUG] Entity: {rbac_info.get('entity')}")
+        
+        logger.info(f"[RBAC ENDPOINT DEBUG] === PERMISSION TEST RESULTS ===")
+        for module, perms in permission_tests.items():
+            logger.info(f"[RBAC ENDPOINT DEBUG] {module}:")
+            for perm, has_perm in perms.items():
+                status = "✓ GRANTED" if has_perm else "✗ DENIED"
+                logger.info(f"[RBAC ENDPOINT DEBUG]   {perm}: {status}")
+        
+        # Return detailed response
+        return Response({
+            'success': True,
+            'user_id': user_id,
+            'rbac_info': rbac_info,
+            'detailed_permissions': detailed_permissions,
+            'permission_tests': permission_tests,
+            'message': 'Debug information logged to console and database'
+        })
+        
+    except Exception as e:
+        logger.error(f"[RBAC ENDPOINT DEBUG] Error: {str(e)}")
+        import traceback
+        logger.error(f"[RBAC ENDPOINT DEBUG] Traceback: {traceback.format_exc()}")
+        return Response({'error': f'Debug failed: {str(e)}'}, status=500)
+
+
+@api_view(['GET'])  
+@permission_classes([AllowAny])
+def test_user_permissions_comprehensive(request):
+    """Comprehensive test of user permissions against all RBAC tables"""
+    try:
+        from grc.rbac.utils import RBACUtils
+        
+        # Get user ID from request
+        user_id = RBACUtils.get_user_id_from_request(request)
+        if not user_id:
+            return Response({'error': 'Could not extract user ID from request'}, status=400)
+        
+        # Test results structure
+        test_results = {
+            'user_id': user_id,
+            'timestamp': timezone.now().isoformat(),
+            'rbac_info': {},
+            'database_permissions': {},
+            'permission_tests': {},
+            'endpoint_access_tests': {},
+            'summary': {'total_tests': 0, 'passed': 0, 'failed': 0}
+        }
+        
+        # 1. Get basic RBAC info
+        rbac_info = RBACUtils.get_user_rbac_info(user_id)
+        test_results['rbac_info'] = rbac_info if rbac_info else {}
+        
+        # 2. Get database permissions
+        detailed_permissions = get_user_detailed_permissions(user_id)
+        test_results['database_permissions'] = detailed_permissions if detailed_permissions else {}
+        
+        # 3. Test specific module permissions using RBACUtils
+        modules_to_test = ['Incident', 'Audit', 'Risk', 'Policy', 'Compliance', 'Framework']
+        permissions_to_test = ['view', 'create', 'edit', 'approve', 'assign', 'delete']
+        
+        for module in modules_to_test:
+            test_results['permission_tests'][module] = {}
+            for permission in permissions_to_test:
+                try:
+                    has_permission = RBACUtils.has_permission(user_id, module, permission)
+                    test_results['permission_tests'][module][permission] = {
+                        'result': has_permission,
+                        'status': 'PASS' if has_permission else 'FAIL'
+                    }
+                    test_results['summary']['total_tests'] += 1
+                    if has_permission:
+                        test_results['summary']['passed'] += 1
+                    else:
+                        test_results['summary']['failed'] += 1
+                        
+                    # Debug each permission check
+                    debug_permission_check(user_id, module, permission, has_permission)
+                    
+                except Exception as e:
+                    test_results['permission_tests'][module][permission] = {
+                        'result': False,
+                        'status': 'ERROR',
+                        'error': str(e)
+                    }
+                    test_results['summary']['total_tests'] += 1
+                    test_results['summary']['failed'] += 1
+        
+        # 4. Test department access
+        if rbac_info and rbac_info.get('department'):
+            try:
+                dept_access = RBACUtils.has_department_access(user_id, rbac_info['department'])
+                test_results['department_access'] = {
+                    'department': rbac_info['department'],
+                    'has_access': dept_access,
+                    'status': 'PASS' if dept_access else 'FAIL'
+                }
+            except Exception as e:
+                test_results['department_access'] = {
+                    'department': rbac_info.get('department'),
+                    'has_access': False,
+                    'status': 'ERROR',
+                    'error': str(e)
+                }
+        
+        # 5. Log comprehensive test results
+        logger.info(f"[RBAC COMPREHENSIVE TEST] === USER {user_id} PERMISSION TEST RESULTS ===")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] User: {rbac_info.get('username', 'Unknown') if rbac_info else 'Unknown'}")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] Role: {rbac_info.get('role', 'Unknown') if rbac_info else 'Unknown'}")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] Department: {rbac_info.get('department', 'Unknown') if rbac_info else 'Unknown'}")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] Total Tests: {test_results['summary']['total_tests']}")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] Passed: {test_results['summary']['passed']}")
+        logger.info(f"[RBAC COMPREHENSIVE TEST] Failed: {test_results['summary']['failed']}")
+        
+        # Log detailed results
+        for module, permissions in test_results['permission_tests'].items():
+            logger.info(f"[RBAC COMPREHENSIVE TEST] {module}:")
+            for perm, result in permissions.items():
+                status_symbol = "✓" if result['status'] == 'PASS' else "✗" if result['status'] == 'FAIL' else "⚠"
+                logger.info(f"[RBAC COMPREHENSIVE TEST]   {perm}: {status_symbol} {result['status']}")
+        
+        return Response({
+            'success': True,
+            'test_results': test_results,
+            'message': 'Comprehensive permission test completed - check logs for detailed results'
+        })
+        
+    except Exception as e:
+        logger.error(f"[RBAC COMPREHENSIVE TEST] Error: {str(e)}")
+        import traceback
+        logger.error(f"[RBAC COMPREHENSIVE TEST] Traceback: {traceback.format_exc()}")
+        return Response({'error': f'Comprehensive test failed: {str(e)}'}, status=500)
+
+# Add GET parameter validation helper
+def validate_get_parameters(request, allowed_params):
+    """
+    Validate GET parameters using strict allow-list validation
+    SECURITY: Rejects requests with ANY unknown parameters to prevent parameter pollution
+    """
+    validator = SecureValidator()
+    validated_params = {}
+    
+    # SECURITY: Check for unknown parameters first - reject any request with unknown params
+    provided_params = set(request.GET.keys())
+    allowed_param_names = set(allowed_params.keys())
+    unknown_params = provided_params - allowed_param_names
+    
+    if unknown_params:
+        # SECURITY: Log the attempt for monitoring
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Security: Unknown parameters detected: {list(unknown_params)} from IP: {request.META.get('REMOTE_ADDR', 'unknown')}")
+        
+        return None, f"Unknown parameters not allowed: {', '.join(sorted(unknown_params))}"
+    
+    # Validate each allowed parameter
+    for param_name, param_config in allowed_params.items():
+        value = request.GET.get(param_name)
+        
+        if value is not None:
+            try:
+                if param_config.get('type') == 'choice':
+                    validated_params[param_name] = validator.validate_choice(
+                        value, param_name, param_config['choices']
+                    )
+                elif param_config.get('type') == 'string':
+                    validated_params[param_name] = validator.validate_string(
+                        value, param_name, 
+                        max_length=param_config.get('max_length', 255),
+                        allowed_pattern=param_config.get('pattern')
+                    )
+                elif param_config.get('type') == 'integer':
+                    validated_params[param_name] = validator.validate_integer(
+                        value, param_name,
+                        min_value=param_config.get('min_value'),
+                        max_value=param_config.get('max_value')
+                    )
+            except ValidationError as e:
+                return None, f"Invalid parameter {param_name}: {e.message}"
+    
+    return validated_params, None
+
+def validate_path_parameter(param_value, param_name, param_type='integer', min_value=1):
+    """
+    Validate path parameters (like user_id, incident_id) using SecureValidator
+    Returns validated value or raises ValidationError
+    """
+    validator = SecureValidator()
+    try:
+        if param_type == 'integer':
+            return validator.validate_integer(
+                param_value, param_name, min_value=min_value, required=True
+            )
+        elif param_type == 'string':
+            return validator.validate_string(
+                param_value, param_name, max_length=255, min_length=1, 
+                required=True, allowed_pattern=validator.ALPHANUMERIC_ONLY
+            )
+        else:
+            raise ValidationError(param_name, f"Unsupported parameter type: {param_type}")
+    except ValidationError as e:
+        raise e
+
+def validate_json_request_body(request, validation_rules):
+    """
+    Validate JSON request body using SecureValidator and defined rules
+    Returns validated data or raises ValidationError
+    """
+    validator = SecureValidator()
+    
+    # Parse JSON safely
+    try:
+        if hasattr(request, 'data') and request.data:
+            # DRF parsed data (preferred)
+            data = request.data
+        elif request.body:
+            # Raw JSON body
+            data = json.loads(request.body)
+        else:
+            data = {}
+    except json.JSONDecodeError:
+        raise ValidationError('request_body', 'Invalid JSON format')
+    
+    validated_data = {}
+    
+    for field_name, rules in validation_rules.items():
+        value = data.get(field_name)
+        required = rules.get('required', False)
+        
+        # Skip validation if field is not provided and not required
+        if value is None and not required:
+            continue
+            
+        try:
+            if rules.get('type') == 'choice':
+                validated_data[field_name] = validator.validate_choice(
+                    value, field_name, rules['choices'], required=required
+                )
+            elif rules.get('type') == 'string':
+                validated_data[field_name] = validator.validate_string(
+                    value, field_name,
+                    max_length=rules.get('max_length', 255),
+                    min_length=rules.get('min_length', 0),
+                    required=required,
+                    allowed_pattern=rules.get('pattern')
+                )
+            elif rules.get('type') == 'integer':
+                validated_data[field_name] = validator.validate_integer(
+                    value, field_name,
+                    min_value=rules.get('min_value'),
+                    max_value=rules.get('max_value'),
+                    required=required
+                )
+            elif rules.get('type') == 'date':
+                validated_data[field_name] = validator.validate_date(
+                    value, field_name, required=required
+                )
+            elif rules.get('type') == 'time':
+                validated_data[field_name] = validator.validate_time(
+                    value, field_name, required=required
+                )
+            elif rules.get('type') == 'currency':
+                validated_data[field_name] = validator.validate_currency(
+                    value, field_name, required=required
+                )
+            elif rules.get('type') == 'boolean':
+                # Import the standalone validate_boolean function
+                from .validation import validate_boolean
+                validated_data[field_name] = validate_boolean(
+                    value, field_name
+                )
+            else:
+                # Default to string validation
+                validated_data[field_name] = validator.validate_string(
+                    value, field_name, required=required
+                )
+        except ValidationError as e:
+            raise e
+    
+    return validated_data
+
+@api_view(['GET', 'PUT', 'PATCH'])
 @permission_classes([AllowAny])
 def incident_by_id(request, incident_id):
     """
@@ -2947,7 +7383,7 @@ def update_incident_by_id(request, incident_id):
         }, status=500)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])  # Changed from IncidentViewPermission to AllowAny
+@permission_classes([IncidentViewPermission])
 def list_incidents(request):
     # DEBUG: Check if permission was called
     print(f"[DEBUG] list_incidents function called - Permission should have been checked")
@@ -3179,7 +7615,7 @@ import json
 # Add this endpoint for updating incident status
 @csrf_exempt
 @api_view(['PUT'])
-@permission_classes([AllowAny])  # Changed from IncidentEditPermission to AllowAny
+@permission_classes([IncidentEditPermission])
 def update_incident_status(request, incident_id):
     client_ip = get_client_ip(request)
     user_id = request.data.get('UserId')
@@ -3430,7 +7866,7 @@ def update_incident_status(request, incident_id):
 
 @csrf_exempt
 @api_view(['POST'])
-@permission_classes([AllowAny])  # Changed from IncidentCreatePermission to AllowAny
+@permission_classes([IncidentCreatePermission])
 def create_incident(request):
     # RBAC Debug - Log user access attempt
     debug_info = debug_user_permissions(request, "CREATE_INCIDENT", "incident", None)
@@ -3608,7 +8044,7 @@ def incident_page(request):
 
 @csrf_exempt
 @api_view(['PUT'])
-@permission_classes([AllowAny])  # Changed from IncidentAssignPermission to AllowAny
+@permission_classes([IncidentAssignPermission])
 def assign_incident(request, incident_id):
     client_ip = get_client_ip(request)
     user_id = request.data.get('userId')
@@ -3894,59 +8330,6 @@ def unchecked_audit_findings(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])  # Changed from IsAuthenticated to AllowAny
-def list_users(request):
-    # Get user info for logging
-    user_id = getattr(request.user, 'id', None)
-    username = getattr(request.user, 'username', 'Unknown')
-    
-    # Log users list request
-    send_log(
-        module="User",
-        actionType="LIST_USERS",
-        description="User requesting list of all users",
-        userId=user_id,
-        userName=username,
-        entityType="User",
-        ipAddress=get_client_ip(request)
-    )
-    
-    try:
-        print("Listing users")
-        users = Users.objects.all()
-        serializer = UserSerializer(users, many=True)
-        
-        # Log successful user list retrieval
-        send_log(
-            module="User",
-            actionType="LIST_USERS_SUCCESS",
-            description=f"Successfully retrieved {len(users)} users",
-            userId=user_id,
-            userName=username,
-            entityType="User",
-            ipAddress=get_client_ip(request),
-            additionalInfo={'user_count': len(users)}
-        )
-        
-        return Response(serializer.data)
-    
-    except Exception as e:
-        # Log error
-        send_log(
-            module="User",
-            actionType="LIST_USERS_ERROR",
-            description=f"Error retrieving users list: {str(e)}",
-            userId=user_id,
-            userName=username,
-            entityType="User",
-            logLevel="ERROR",
-            ipAddress=get_client_ip(request),
-            additionalInfo={'error': str(e)}
-        )
-        
-        return Response({'error': str(e)}, status=500)
-
-@api_view(['GET'])
 @permission_classes([AllowAny])  # Changed from IncidentViewPermission to AllowAny
 def combined_incidents_and_audit_findings(request):
     # RBAC Debug - Log user access attempt
@@ -4023,7 +8406,7 @@ def combined_incidents_and_audit_findings(request):
     return Response(combined)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IncidentCreatePermission])
 def create_workflow(request):
     client_ip = get_client_ip(request)
     user_id = request.data.get('userId')
@@ -4134,7 +8517,7 @@ def create_workflow(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IncidentViewPermission])
 def list_assigned_findings(request):
     workflows = Workflow.objects.all()
     result = []
@@ -4171,7 +8554,7 @@ def list_assigned_findings(request):
     return Response(result)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IncidentViewPermission])
 def combined_incidents_and_audit_findings(request):
     # Get all incidents from the database
     all_incidents = Incident.objects.all()
@@ -4541,7 +8924,7 @@ def reject_incident(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_dashboard(request):
     """
     Endpoint to fetch incident dashboard data
@@ -4746,7 +9129,7 @@ def incident_dashboard(request):
     return JsonResponse(response_data)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_analytics(request):
     """
     Endpoint to fetch incident analytics data for charts based on specified dimensions
@@ -5415,7 +9798,7 @@ def incident_analytics(request):
     return JsonResponse(response_data)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IncidentViewPermission])
 def get_recent_incidents(request):
     """
     Endpoint to fetch recent incidents for the dashboard activity feed
@@ -5506,7 +9889,7 @@ from .export_service import export_data
 
 @csrf_exempt
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IncidentViewPermission])
 def export_incidents(request):
     """
     Export incidents to various file formats.
@@ -5660,7 +10043,7 @@ def export_incidents(request):
         }, status=500) 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([AuditViewPermission])
 def get_audit_findings(request):
     """
     Get audit finding incidents from incidents table where origin = 'Audit Finding'
@@ -5803,7 +10186,7 @@ def get_audit_findings(request):
 
 @csrf_exempt
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([AuditViewPermission])
 def export_audit_findings(request):
     """
     Export audit finding incidents to various file formats.
@@ -6016,7 +10399,7 @@ def lastchecklistitemverified(request):
         }, status=500)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([AuditViewPermission])
 def audit_findings_list(request):
     """
     Get audit findings from LastChecklistItemVerified table with specified compliance status
@@ -6607,7 +10990,7 @@ def incident_mitigations(request, incident_id):
         return JsonResponse({'error': safe_error}, status=500)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IncidentAssignPermission])
 def assign_incident_reviewer(request):
     """Assign a reviewer to an incident with mitigation data"""
     try:
@@ -6833,7 +11216,7 @@ def incident_review_data(request, incident_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IncidentEvaluatePermission])
 def complete_incident_review(request):
     """Complete the review of an incident"""
     try:
@@ -7076,7 +11459,7 @@ def complete_incident_review(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IncidentEvaluatePermission])
 def submit_incident_assessment(request):
     """Submit incident assessment with cost impact analysis"""
     try:
@@ -7488,7 +11871,7 @@ def audit_finding_mitigations(request, incident_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([AuditAssignPermission])
 def assign_audit_finding_reviewer(request):
     """Assign a reviewer to an audit finding incident with mitigation data"""
     try:
@@ -7609,7 +11992,7 @@ def audit_finding_review_data(request, incident_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([AuditReviewPermission])
 def complete_audit_finding_review(request):
     """Complete audit finding review with approval/rejection decisions"""
     try:
@@ -8355,6 +12738,40 @@ php_flag engine off
         except Exception as e:
             print(f"[SECURITY] ClamAV scan error: {e}")
             return False  # Fail secure
+    
+    def _categorize_document(self, extension, mime_type):
+        """
+        Categorize document based on extension and MIME type.
+        
+        Args:
+            extension: File extension (without dot)
+            mime_type: MIME type
+            
+        Returns:
+            Document category string
+        """
+        # Remove dot if present
+        if extension.startswith('.'):
+            extension = extension[1:]
+        
+        # Spreadsheets
+        if extension in ['xlsx', 'xls', 'csv'] or 'spreadsheet' in mime_type:
+            return 'spreadsheet'
+            
+        # Documents
+        if extension in ['doc', 'docx', 'odt', 'rtf', 'txt'] or 'document' in mime_type:
+            return 'document'
+            
+        # PDFs
+        if extension == 'pdf' or mime_type == 'application/pdf':
+            return 'pdf'
+            
+        # Images
+        if extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff'] or mime_type.startswith('image/'):
+            return 'image'
+            
+        # Default
+        return 'other'
 
 @method_decorator(csrf_exempt, name='dispatch')
 class FileUploadView(View):
@@ -8406,12 +12823,19 @@ class FileUploadView(View):
             file = request.FILES['file']
             incident_id = request.POST.get('incidentId')
             mitigation_number = request.POST.get('mitigationNumber')
+            user_id_from_form = request.POST.get('userId')
+            item_type = request.POST.get('itemType', 'incident')
+            upload_type = request.POST.get('uploadType', 'mitigation_evidence')
+            
+            # Use user ID from form if available
+            if user_id_from_form and user_id_from_form.isdigit():
+                user_id = int(user_id_from_form)
             
             # Log file details
             send_log(
                 module="File",
                 actionType="UPLOAD_FILE_DETAILS",
-                description=f"File upload details - filename: {file.name}, size: {file.size}, incident: {incident_id}",
+                description=f"File upload details - filename: {file.name}, size: {file.size}, incident: {incident_id}, type: {item_type}",
                 userId=user_id,
                 userName=username,
                 entityType="File",
@@ -8420,7 +12844,9 @@ class FileUploadView(View):
                     'filename': file.name,
                     'file_size': file.size,
                     'incident_id': incident_id,
-                    'mitigation_number': mitigation_number
+                    'mitigation_number': mitigation_number,
+                    'item_type': item_type,
+                    'upload_type': upload_type
                 }
             )
             
@@ -8579,6 +13005,12 @@ class FileUploadView(View):
             # Upload to S3 with secure metadata
             try:
                 s3_client = S3Client()
+                
+                # Check S3 service health before upload
+                health_check = s3_client.check_health()
+                if not health_check.get('is_running'):
+                    raise Exception(f"S3 service is not available: {health_check.get('message', 'Unknown error')}")
+                
                 upload_result = s3_client.upload_file(
                     file_path=str(secure_path),
                     file_name=secure_filename,  # Use secure filename, not original
@@ -8588,7 +13020,10 @@ class FileUploadView(View):
                     original_filename=file_name,  # Store original name as metadata
                     mime_type=mime_result,
                     upload_timestamp=timezone.now().isoformat(),
-                    security_validated=True
+                    security_validated=True,
+                    item_type=item_type,
+                    upload_type=upload_type,
+                    document_type=handler._categorize_document(file_ext[1:] if file_ext.startswith('.') else file_ext, mime_result)
                 )
                 
                 # Clean up local file after successful S3 upload
@@ -8867,8 +13302,29 @@ def debug_category_data(request):
         print(f"Error fetching debug data: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([AllowAny])
+def check_s3_service_health(request):
+    """Check if S3 microservice is available"""
+    try:
+        s3_client = S3Client()
+        health_check = s3_client.check_health()
+        
+        return Response({
+            'success': True,
+            'is_running': health_check.get('is_running', False),
+            'message': health_check.get('message', 'Unknown status'),
+            'status_code': health_check.get('status_code')
+        })
+    except Exception as e:
+        return Response({
+            'success': False,
+            'is_running': False,
+            'message': f"S3 service error: {str(e)}"
+        }, status=500)
+
+@api_view(['POST'])
+@permission_classes([IncidentCreatePermission])
 def generate_analysis(request):
     """
     Generate comprehensive incident analysis using the SLM model.

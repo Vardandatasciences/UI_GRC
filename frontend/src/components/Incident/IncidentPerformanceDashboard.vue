@@ -185,6 +185,7 @@ import {
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import { incidentService } from '@/services/api'
 import { PopupModal } from '@/modules/popup'
+import { AccessUtils } from '@/utils/accessUtils'
 
 ChartJS.register(
   CategoryScale,
@@ -297,6 +298,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching recent incidents:', error)
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.recentIncidents = []
       }
     },
@@ -316,6 +323,12 @@ export default {
           console.log('Incident Dashboard API Response:', dashboardResponse.data)
         } catch (err) {
           console.error('Error fetching dashboard data:', err)
+          
+          // Check for access denied first
+          if (AccessUtils.handleApiError(err)) {
+            return
+          }
+          
           throw new Error(`Dashboard fetch failed: ${err.message}`)
         }
         
@@ -327,6 +340,12 @@ export default {
           console.log('Incident Analytics API Response:', analyticsResponse.data)
         } catch (err) {
           console.error('Error fetching analytics data:', err)
+          
+          // Check for access denied first
+          if (AccessUtils.handleApiError(err)) {
+            return
+          }
+          
           throw new Error(`Analytics fetch failed: ${err.message}`)
         }
 
@@ -382,6 +401,11 @@ export default {
         }
       } catch (error) {
         console.error('Error in fetchDashboardData:', error)
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
         
         // Set default values on error
         this.dashboardData = {

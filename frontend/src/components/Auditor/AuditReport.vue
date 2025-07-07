@@ -23,11 +23,11 @@
     <!-- Versions Popup Modal -->
     <div v-if="showVersionsPopup" class="popup-overlay" @click="closeVersionsPopup">
       <div class="popup-content" @click.stop>
+        <button class="close-btn" @click="closeVersionsPopup">
+          <i class="fas fa-times"></i>
+        </button>
         <div class="popup-header">
           <h3>Audit Versions - Audit ID: {{ selectedAuditId }}</h3>
-          <button class="close-btn" @click="closeVersionsPopup">
-            <i class="fas fa-times"></i>
-          </button>
         </div>
         <div class="popup-body">
           <div v-if="loadingVersions" class="loading-message">Loading versions...</div>
@@ -544,41 +544,48 @@ export default {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   max-width: 90%;
   max-height: 90%;
-  width: 800px;
+  width: 1100px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: #f5f5f5;
+  border: none;
+  color: #475569;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 10;
+  transition: background 0.2s, color 0.2s;
+}
+.close-btn:hover {
+  background: #e0e7ef;
+  color: #d32f2f;
 }
 
 .popup-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  padding: 20px 24px;
-  background: #ffffff;
-  color: #fff;
+  padding: 20px 24px 12px 24px;
+  background: white;
+  color: #334155;
   border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .popup-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .popup-body {

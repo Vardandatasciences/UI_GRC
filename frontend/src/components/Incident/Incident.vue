@@ -275,23 +275,20 @@
       </div>
     </div>
   </div>
-  
-  <!-- Popup Modal -->
-  <PopupModal />
 </template>
 
 <script>
 import axios from 'axios';
 import './Incident.css';
-import { PopupService, PopupModal } from '@/modules/popup';
+import { PopupService } from '@/modules/popup';
 import { permissionMixin } from '@/mixins/permissionMixin.js';
+import { AccessUtils } from '@/utils/accessUtils';
 import DynamicTable from '@/components/DynamicTable.vue';
 import DynamicSearchBar from '@/components/Dynamicalsearch.vue';
 
 export default {
   name: 'IncidentManagement',
   components: {
-    PopupModal,
     DynamicTable,
     DynamicSearchBar
   },
@@ -477,7 +474,22 @@ export default {
         
         if (!hasPermission) {
           console.warn(`❌ Permission denied for action: ${action}`);
-          PopupService.error(`You don't have permission to ${action} incidents`);
+          
+          // Use AccessUtils to show proper access denied popup
+          switch(action) {
+            case 'assign':
+              AccessUtils.showIncidentAccessDenied('assign');
+              break;
+            case 'escalate':
+              AccessUtils.showIncidentAccessDenied('escalate');
+              break;
+            case 'reject':
+              AccessUtils.showIncidentAccessDenied('edit');
+              break;
+            default:
+              AccessUtils.showIncidentAccessDenied('access');
+          }
+          
           this.dropdownOpenFor = null;
           return;
         }
@@ -729,7 +741,12 @@ export default {
       })
       .catch(error => {
         console.error('Error assigning incident:', error);
-        PopupService.error('Failed to assign incident. Please try again.');
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'assign incidents')) {
+          // Only show generic error if it's not an access denied error
+          PopupService.error('Failed to assign incident. Please try again.');
+        }
       });
     },
     confirmSolve() {
@@ -770,7 +787,12 @@ export default {
       })
       .catch(error => {
         console.error('Error updating incident status:', error);
-        PopupService.error('Failed to escalate incident. Please try again.');
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'escalate incidents')) {
+          // Only show generic error if it's not an access denied error
+          PopupService.error('Failed to escalate incident. Please try again.');
+        }
       });
     },
     confirmReject() {
@@ -809,7 +831,12 @@ export default {
       })
       .catch(error => {
         console.error('Error updating incident status:', error);
-        PopupService.error('Failed to reject incident. Please try again.');
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'reject incidents')) {
+          // Only show generic error if it's not an access denied error
+          PopupService.error('Failed to reject incident. Please try again.');
+        }
       });
     },
     confirmAssign() {
@@ -850,7 +877,12 @@ export default {
       })
       .catch(error => {
         console.error('Error assigning incident:', error);
-        PopupService.error('Failed to assign incident. Please try again.');
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'assign incidents')) {
+          // Only show generic error if it's not an access denied error
+          PopupService.error('Failed to assign incident. Please try again.');
+        }
       });
     },
     getRiskCategoryClass(category) {
@@ -933,7 +965,12 @@ export default {
       } catch (error) {
         console.error('Failed to fetch incidents:', error);
         console.error('Error details:', error.response);
-        PopupService.error('Failed to load incidents. Please try again.');
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'view incidents')) {
+          // Only show generic error if it's not an access denied error
+          PopupService.error('Failed to load incidents. Please try again.');
+        }
       } finally {
         this.isLoadingIncidents = false;
       }
@@ -950,6 +987,13 @@ export default {
         console.log('Fetched users:', this.availableUsers);
       } catch (error) {
         console.error('Failed to fetch users:', error);
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'view users')) {
+          // Only show generic error if it's not an access denied error
+          PopupService.error('Failed to load users. Please try again.');
+        }
+        
         // Keep empty array if fetch fails
         this.availableUsers = [];
       }
@@ -1082,7 +1126,13 @@ export default {
       })
       .catch(error => {
         console.error('Export failed:', error);
-        PopupService.error('Export failed. Please try again.');
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'export incidents')) {
+          // Only show generic error if it's not an access denied error
+          PopupService.error('Export failed. Please try again.');
+        }
+        
         this.isExporting = false;
       });
     }

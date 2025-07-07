@@ -1023,6 +1023,7 @@
 
 <script>
 import axios from 'axios';
+import { AccessUtils } from '@/utils/accessUtils';
 
 export default {
   name: 'RiskKPI',
@@ -1407,6 +1408,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching KPI data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackData();
       }
     },
@@ -1435,6 +1442,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching active risks trend:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackActiveRisksTrend();
       }
     },
@@ -1462,6 +1475,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching exposure trend:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackExposureTrend();
       }
     },
@@ -1488,6 +1507,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching reduction trend:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackReductionTrend();
       }
     },
@@ -1517,6 +1542,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching criticality data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackCriticalityData();
       }
     },
@@ -1550,6 +1581,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching mitigation completion rate data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackMitigationData();
       }
     },
@@ -1588,6 +1625,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching remediation time data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackRemediationData();
       }
     },
@@ -1627,6 +1670,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching recurrence data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackRecurrenceData();
       }
     },
@@ -1665,6 +1714,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching incident response time data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackResponseData();
       }
     },
@@ -1682,6 +1737,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching mitigation cost data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackMitigationCostData();
       }
     },
@@ -1699,6 +1760,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching identification rate data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackIdentificationData();
       }
     },
@@ -1716,6 +1783,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching due mitigation data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackDueMitigationData();
       }
     },
@@ -1730,6 +1803,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching classification accuracy data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackClassificationData();
       }
     },
@@ -1769,6 +1848,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching initiative data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackInitiativeData();
       }
     },
@@ -1808,6 +1893,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching impact data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackImpactData();
       }
     },
@@ -1822,6 +1913,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching severity data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackSeverityData();
       }
     },
@@ -1836,6 +1933,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching exposure score data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackExposureScoreData();
       }
     },
@@ -1861,6 +1964,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching resilience data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackResilienceData();
       }
     },
@@ -1875,6 +1984,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching assessment frequency data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackAssessmentData();
       }
     },
@@ -1890,6 +2005,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching assessment consensus data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackConsensusData();
       }
       
@@ -1915,6 +2036,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching approval rate data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackApprovalRateData();
       }
     },
@@ -1944,6 +2071,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching register update frequency data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         this.setFallbackRegisterUpdateData();
       }
     },

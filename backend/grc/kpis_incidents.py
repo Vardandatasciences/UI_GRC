@@ -15,6 +15,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+# RBAC imports
+from .rbac.permissions import IncidentAnalyticsPermission, IncidentViewPermission
+
 # Standard library imports
 from datetime import datetime, date, time, timedelta
 import traceback
@@ -115,6 +118,8 @@ def safe_combine_date_time(date_value, time_value=None):
 
 # KPI Functions
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_mttd(request):
     """
     Calculate Mean Time to Detect (MTTD) metrics from incidents table.
@@ -292,6 +297,8 @@ def incident_mttd(request):
     return JsonResponse(response_data)
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_mttr(request):
     try:
         time_range = request.GET.get('timeRange', 'all')
@@ -535,6 +542,8 @@ def incident_mttr(request):
         }, status=500)
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_mttc(request):
     try:
         time_range = request.GET.get('timeRange', 'all')
@@ -729,6 +738,8 @@ def incident_mttc(request):
         }, status=500)
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_mttrv(request):
     """Mean Time to Resolve (MTTRv) - time from incident creation to resolution"""
     
@@ -828,6 +839,7 @@ def incident_mttrv(request):
 
 
 @api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_volume(request):
     # Get all incidents
     incidents = Incident.objects.all()
@@ -867,6 +879,8 @@ def incident_volume(request):
     })
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incidents_by_severity(request):
     """Get percentage distribution of incidents by severity (RiskPriority)"""
     try:
@@ -970,7 +984,8 @@ def incidents_by_severity(request):
         })
 
 
-@csrf_exempt
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_root_causes(request):
     try:
         # Get all incidents from the database
@@ -1016,7 +1031,8 @@ def incident_root_causes(request):
         }, status=500)
 
 
-@csrf_exempt
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_types(request):
     try:
         # Get all incidents from the database
@@ -1062,7 +1078,8 @@ def incident_types(request):
         }, status=500)
 
 
-@csrf_exempt
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_origins(request):
     try:
         # Get all incidents from the database
@@ -1109,6 +1126,7 @@ def incident_origins(request):
 
 
 @api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def escalation_rate(request):
     """Get incident escalation rate data for Scheduled incidents"""
     try:
@@ -1181,6 +1199,7 @@ def escalation_rate(request):
 
 
 @api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def repeat_rate(request):
     """
     Get the percentage of incidents that are repeats based on the 'repeatednot' field.
@@ -1255,6 +1274,7 @@ def repeat_rate(request):
 
 
 @api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_cost(request):
     try:
         print("===============================================")
@@ -1343,6 +1363,8 @@ def incident_cost(request):
         })
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def first_response_time(request):
     """Get the average time from detection to first analyst response"""
     print("[INFO] Processing first_response_time API call")
@@ -1425,6 +1447,8 @@ def first_response_time(request):
     })
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def false_positive_rate(request):
     print("false_positive_rate called")
 
@@ -1481,6 +1505,8 @@ def false_positive_rate(request):
     return JsonResponse(response_data)
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def detection_accuracy(request):
     print("detection_accuracy called")
     
@@ -1533,6 +1559,8 @@ def detection_accuracy(request):
     return JsonResponse(data)
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_closure_rate(request):
     time_range = request.GET.get('timeRange', 'all')
     print(f"Received request for Incident Closure Rate with timeRange: {time_range}")
@@ -1579,6 +1607,8 @@ def incident_closure_rate(request):
     return JsonResponse(response_data)
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_reopened_count(request):
     # Count total incidents
     total_incidents = Incident.objects.count()
@@ -1597,6 +1627,8 @@ def incident_reopened_count(request):
     return JsonResponse(data)
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_count(request):
     """
     Calculate the number of incidents detected and daily distribution.
@@ -1669,6 +1701,8 @@ def incident_count(request):
     return JsonResponse(response_data)
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def incident_metrics(request):
     """
     Fetch all incident metrics at once for the dashboard
@@ -1819,6 +1853,8 @@ def incident_metrics(request):
     return JsonResponse(response_data)
 
 
+@api_view(['GET'])
+@permission_classes([IncidentAnalyticsPermission])
 def get_incident_counts(request):
     """
     Get counts of incidents by status for the dashboard

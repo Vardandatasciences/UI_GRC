@@ -23,14 +23,18 @@
           <div class="dynamic-field-col">
             <label class="dynamic-label">Framework</label>
             <div class="dynamic-desc">Select the framework under which this audit is being conducted.</div>
-            <SelectInput
-              v-model="auditData.framework"
-              :options="frameworks.map(fw => ({ value: fw.FrameworkId, label: fw.FrameworkName }))"
-              label="Framework"
-              placeholder="Select Framework"
-              :error="getFieldError('framework')"
-              @change="onFrameworkChange"
-            />
+            <div class="narrow-dropdown">
+              <CustomDropdown
+                v-model="auditData.framework"
+                :config="{
+                  name: 'Framework',
+                  label: 'Framework',
+                  values: frameworks.map(fw => ({ value: fw.FrameworkId, label: fw.FrameworkName })),
+                  defaultValue: 'Select Framework'
+                }"
+                @change="onFrameworkChange"
+              />
+            </div>
             <div v-if="auditData.framework && !auditData.policy" class="compliance-scope-desc">
               Will include permanent compliances from all policies and subpolicies under this framework
             </div>
@@ -53,22 +57,30 @@
             <div class="dynamic-field-col">
               <label class="dynamic-label">Auditor</label>
               <div class="dynamic-desc">Select the auditor responsible for this audit.</div>
-              <SelectInput
+              <CustomDropdown
                 v-model="member.auditor"
-                :options="users.map(user => ({ value: user.UserId, label: user.UserName }))"
-                label="Auditor"
-                placeholder="Select Auditor"
+                :config="{
+                  name: 'Auditor',
+                  label: 'Auditor',
+                  values: users.map(user => ({ value: user.UserId, label: user.UserName })),
+                  defaultValue: 'Select Auditor'
+                }"
+                :showSearchBar="true"
                 :error="getFieldError('auditor', index)"
               />
             </div>
             <div class="dynamic-field-col">
               <label class="dynamic-label">Role</label>
               <div class="dynamic-desc">Select the role of the auditor in this audit.</div>
-              <SelectInput
+              <CustomDropdown
                 v-model="member.role"
-                :options="roles.map(role => ({ value: role, label: role }))"
-                label="Role"
-                placeholder="Select Role"
+                :config="{
+                  name: 'Role',
+                  label: 'Role',
+                  values: roles.map(role => ({ value: role, label: role })),
+                  defaultValue: 'Select Role'
+                }"
+                :showSearchBar="true"
                 :error="getFieldError('role', index)"
               />
             </div>
@@ -115,11 +127,15 @@
                   <div class="dynamic-field-col">
                     <label class="dynamic-label">Assigned Policy</label>
                     <div class="dynamic-desc">Select the policy to be audited by this team member.</div>
-                    <SelectInput
+                    <CustomDropdown
                       v-model="member.assignedPolicy"
-                      :options="policies.map(p => ({ value: p.PolicyId, label: p.PolicyName }))"
-                      label="Assigned Policy"
-                      placeholder="Select Policy"
+                      :config="{
+                        name: 'Assigned Policy',
+                        label: 'Assigned Policy',
+                        values: policies.map(p => ({ value: p.PolicyId, label: p.PolicyName })),
+                        defaultValue: 'Select Policy'
+                      }"
+                      :showSearchBar="true"
                       :error="getFieldError('assignedPolicy', index)"
                       @change="onMemberPolicyChange(index)"
                     />
@@ -127,22 +143,30 @@
                   <div class="dynamic-field-col">
                     <label class="dynamic-label">Sub Policy</label>
                     <div class="dynamic-desc">Select specific sub policy if applicable.</div>
-                    <SelectInput
+                    <CustomDropdown
                       v-model="member.assignedSubPolicy"
-                      :options="getMemberSubpolicies(index).map(sp => ({ value: sp.SubPolicyId, label: sp.SubPolicyName }))"
-                      label="Sub Policy"
-                      placeholder="Select Sub Policy"
+                      :config="{
+                        name: 'Sub Policy',
+                        label: 'Sub Policy',
+                        values: getMemberSubpolicies(index).map(sp => ({ value: sp.SubPolicyId, label: sp.SubPolicyName })),
+                        defaultValue: 'Select Sub Policy'
+                      }"
+                      :showSearchBar="true"
                       @change="onSubPolicyChange(index)"
                     />
                   </div>
                   <div class="dynamic-field-col">
                     <label class="dynamic-label">Reviewer</label>
                     <div class="dynamic-desc">Choose the reviewer who will review this audit.</div>
-                    <SelectInput
+                    <CustomDropdown
                       v-model="member.reviewer"
-                      :options="users.map(user => ({ value: user.UserId, label: user.UserName }))"
-                      label="Reviewer"
-                      placeholder="Select Reviewer"
+                      :config="{
+                        name: 'Reviewer',
+                        label: 'Reviewer',
+                        values: users.map(user => ({ value: user.UserId, label: user.UserName })),
+                        defaultValue: 'Select Reviewer'
+                      }"
+                      :showSearchBar="true"
                       :error="getFieldError('reviewer', index)"
                     />
                   </div>
@@ -611,6 +635,7 @@
 import axios from 'axios';
 import ValidationMixin from '@/mixins/ValidationMixin';
 import SelectInput from '@/components/inputs/SelectInput.vue';
+import CustomDropdown from '@/components/CustomDropdown.vue';
 // import TextInput from '@/components/inputs/TextInput.vue';
 import TextareaInput from '@/components/inputs/TextareaInput.vue';
 import DateInput from '@/components/inputs/DateInput.vue';
@@ -620,6 +645,7 @@ export default {
   mixins: [ValidationMixin],
   components: {
     SelectInput,
+    CustomDropdown,
     // TextInput,
     TextareaInput,
     DateInput,
@@ -1669,5 +1695,13 @@ export default {
 .validation-summary li {
   color: #b91c1c;
   margin-bottom: 0.25rem;
+}
+.narrow-dropdown {
+  max-width: 400px;
+}
+.narrow-dropdown .dropdown-container {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
 }
 </style>

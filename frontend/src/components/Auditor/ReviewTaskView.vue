@@ -1,5 +1,6 @@
 <template>
   <div class="audit_task-view">
+    <button class="audit_back-button" @click="$router.back()">Go back</button>
     <div v-if="error" class="audit_error-message">
       {{ error }}
       <button @click="retryFetch" class="audit_retry-button">Retry</button>
@@ -299,7 +300,6 @@
       <!-- Floating Save Button -->
       <div class="audit_floating-save-container">
         <button @click="saveReview" class="audit_floating-save-button" :disabled="isSavingReview">
-          <span class="audit_save-icon">💾</span>
           <span class="audit_save-text">
             {{ isSavingReview ? 'Saving Review...' : 'Save Review' }}
           </span>
@@ -961,7 +961,7 @@ export default {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #4e6bea ;
   color: white;
   border: none;
   padding: 15px 30px;
@@ -1193,5 +1193,24 @@ export default {
 
 .audit_btn-primary:hover {
   background: #3f5aa9;
+}
+
+.audit_back-button {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  background: #c5c5c5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s;
+}
+.audit_back-button:hover {
+  background: #898989;
 }
 </style>

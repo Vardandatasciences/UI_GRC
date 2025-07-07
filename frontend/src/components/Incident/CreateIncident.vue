@@ -23,6 +23,8 @@
                 v-model="formData.IncidentTitle" 
                 @input="validateIncidentTitle"
                 @blur="validateIncidentTitle"
+                :aria-invalid="!!validationErrors.IncidentTitle"
+                :class="{ 'error': validationErrors.IncidentTitle }"
                 required 
               />
               <div class="field-helper-tip">
@@ -37,6 +39,8 @@
                 v-model="formData.Description" 
                 @input="validateDescription"
                 @blur="validateDescription"
+                :aria-invalid="!!validationErrors.Description"
+                :class="{ 'error': validationErrors.Description }"
                 required
               ></textarea>
               <div class="field-helper-tip">
@@ -50,7 +54,10 @@
         <!-- Basic Information Section -->
         <label class="field-third">
           <span><i class="fas fa-tag"></i>Origin</span>
-          <select v-model="formData.Origin" @change="validateOrigin" title="Select how this incident was discovered or reported" required>
+          <select v-model="formData.Origin" @change="validateOrigin" 
+                  :aria-invalid="!!validationErrors.Origin"
+                  :class="{ 'error': validationErrors.Origin }"
+                  title="Select how this incident was discovered or reported">
             <option value="">Select Origin</option>
             <option value="Manual">Manual</option>
             <option value="Audit Finding">Audit Finding</option>
@@ -66,6 +73,8 @@
             v-model="formData.Date" 
             @input="validateDate"
             @blur="validateDate"
+            :aria-invalid="!!validationErrors.Date"
+            :class="{ 'error': validationErrors.Date }"
             title="Date when the incident occurred or was discovered"
             required 
           />
@@ -79,6 +88,8 @@
             v-model="formData.Time" 
             @input="validateTime"
             @blur="validateTime"
+            :aria-invalid="!!validationErrors.Time"
+            :class="{ 'error': validationErrors.Time }"
             title="Time when the incident occurred or was discovered"
             required 
           />
@@ -87,7 +98,10 @@
         
         <label class="field-third required">
           <span><i class="fas fa-exclamation-triangle"></i>Risk Priority</span>
-          <select v-model="formData.RiskPriority" @change="validateRiskPriority" class="priority-select" title="Assess the severity level of this incident" required>
+          <select v-model="formData.RiskPriority" @change="validateRiskPriority" 
+                  :aria-invalid="!!validationErrors.RiskPriority"
+                  :class="{ 'error': validationErrors.RiskPriority, 'priority-select': true }"
+                  title="Assess the severity level of this incident" required>
             <option value="">Select Priority</option>
             <option value="High">High</option>
             <option value="Medium">Medium</option>
@@ -99,8 +113,10 @@
         <!-- Risk and Impact Section -->
         <label class="field-third required">
           <span><i class="fas fa-shield-alt"></i>Risk Category</span>
-          <div class="multi-select-dropdown">
-            <div class="multi-select-input" @click="toggleCategoryDropdown">
+          <div class="multi-select-dropdown" :class="{ 'error': validationErrors.RiskCategory }">
+            <div class="multi-select-input" @click="toggleCategoryDropdown" 
+                 :aria-invalid="!!validationErrors.RiskCategory"
+                 :class="{ 'error': validationErrors.RiskCategory }">
               <div class="selected-items">
                 <span v-if="selectedCategories.length === 0" class="placeholder">
                   Select categories or type to add new...
@@ -148,7 +164,10 @@
         
         <label class="field-third">
           <span><i class="fas fa-radiation-alt"></i>Criticality</span>
-          <select v-model="formData.Criticality" @change="validateCriticality" title="Rate the overall criticality level of this incident">
+          <select v-model="formData.Criticality" @change="validateCriticality" 
+                  :aria-invalid="!!validationErrors.Criticality"
+                  :class="{ 'error': validationErrors.Criticality }"
+                  title="Rate the overall criticality level of this incident">
             <option value="">Select Criticality</option>
             <option value="Critical">Critical</option>
             <option value="High">High</option>
@@ -165,6 +184,8 @@
             v-model="formData.CostOfIncident" 
             @input="validateCost" 
             @blur="validateCost"
+            :aria-invalid="!!validationErrors.CostOfIncident"
+            :class="{ 'error': validationErrors.CostOfIncident }"
           />
           <div class="field-helper-tip">
             Estimate the financial impact or cost of this incident (e.g., $50,000, €25,000.50, 100000)
@@ -453,8 +474,8 @@
                         <span class="framework-name">{{ compliance.SubPolicy?.Policy?.Framework?.FrameworkName || 'No Framework' }}</span>
                         <span class="policy-name">{{ compliance.SubPolicy?.Policy?.PolicyName || 'No Policy' }}</span>
                       </div>
-                      <div v-if="compliance.Mitigation" class="compliance-mitigation">
-                        <small>{{ compliance.Mitigation.substring(0, 100) }}{{ compliance.Mitigation.length > 100 ? '...' : '' }}</small>
+                      <div v-if="compliance.Mitigation && typeof compliance.Mitigation === 'string'" class="compliance-mitigation">
+                        <small>{{ safeSubstring(compliance.Mitigation, 100) }}</small>
                       </div>
                     </div>
                   </div>
@@ -480,8 +501,8 @@
                 <p><strong>Framework:</strong> {{ selectedCompliance.SubPolicy?.Policy?.Framework?.FrameworkName || 'N/A' }}</p>
                 <p><strong>Policy:</strong> {{ selectedCompliance.SubPolicy?.Policy?.PolicyName || 'N/A' }}</p>
                 <p><strong>Sub Policy:</strong> {{ selectedCompliance.SubPolicy?.SubPolicyName || 'N/A' }}</p>
-                <p v-if="selectedCompliance.Mitigation"><strong>Mitigation:</strong> {{ selectedCompliance.Mitigation }}</p>
-                <p v-if="selectedCompliance.PossibleDamage"><strong>Possible Damage:</strong> {{ selectedCompliance.PossibleDamage }}</p>
+                <p v-if="selectedCompliance.Mitigation && typeof selectedCompliance.Mitigation === 'string'"><strong>Mitigation:</strong> {{ selectedCompliance.Mitigation }}</p>
+                <p v-if="selectedCompliance.PossibleDamage && typeof selectedCompliance.PossibleDamage === 'string'"><strong>Possible Damage:</strong> {{ selectedCompliance.PossibleDamage }}</p>
               </div>
               <button type="button" @click="clearCompliance" class="clear-compliance-btn">
                 <i class="fas fa-times"></i> Clear Selection
@@ -522,6 +543,7 @@
           <button type="button" @click="cancel" class="incident-cancel-btn">
             <i class="fas fa-times"></i> Cancel
           </button>
+          
           <button 
             type="submit" 
             class="incident-submit-btn"
@@ -545,6 +567,7 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 import './CreateIncident.css'
 import { PopupService, PopupModal } from '@/modules/popup'
+import { AccessUtils } from '@/utils/accessUtils'
 
 export default {
   name: 'CreateIncident',
@@ -609,6 +632,14 @@ export default {
     const showBusinessUnitDropdown = ref(false)
     const filteredBusinessUnits = ref([])
 
+    // Utility function to safely truncate text
+    const safeSubstring = (text, maxLength = 100) => {
+      if (!text || typeof text !== 'string') {
+        return ''
+      }
+      return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
+    }
+
     // Computed properties
     const showComplianceMapping = computed(() => {
       return formData.value.IncidentClassification === 'NonConformance' || 
@@ -623,10 +654,10 @@ export default {
       return compliances.value.filter(compliance => {
         const searchLower = complianceSearchTerm.value.toLowerCase()
         return (
-          compliance.ComplianceItemDescription?.toLowerCase().includes(searchLower) ||
-          compliance.Identifier?.toLowerCase().includes(searchLower) ||
-          compliance.SubPolicy?.Policy?.PolicyName?.toLowerCase().includes(searchLower) ||
-          compliance.SubPolicy?.Policy?.Framework?.FrameworkName?.toLowerCase().includes(searchLower)
+          (compliance.ComplianceItemDescription && typeof compliance.ComplianceItemDescription === 'string' && compliance.ComplianceItemDescription.toLowerCase().includes(searchLower)) ||
+          (compliance.Identifier && typeof compliance.Identifier === 'string' && compliance.Identifier.toLowerCase().includes(searchLower)) ||
+          (compliance.SubPolicy?.Policy?.PolicyName && typeof compliance.SubPolicy.Policy.PolicyName === 'string' && compliance.SubPolicy.Policy.PolicyName.toLowerCase().includes(searchLower)) ||
+          (compliance.SubPolicy?.Policy?.Framework?.FrameworkName && typeof compliance.SubPolicy.Policy.Framework.FrameworkName === 'string' && compliance.SubPolicy.Policy.Framework.FrameworkName.toLowerCase().includes(searchLower))
         )
       }) // Show all filtered results without limit
     })
@@ -656,7 +687,25 @@ export default {
       // Check for validation errors
       const hasNoErrors = Object.keys(validationErrors.value).length === 0
       
-      return hasRequiredFields && hasNoErrors
+      const isReady = hasRequiredFields && hasNoErrors
+      
+      // Only log when form is not ready to help debug
+      if (!isReady) {
+        console.log('=== FORM NOT READY - DEBUG INFO ===')
+        console.log('Missing required fields:', {
+          IncidentTitle: !formData.value.IncidentTitle,
+          Description: !formData.value.Description,
+          Date: !formData.value.Date,
+          Time: !formData.value.Time,
+          RiskPriority: !formData.value.RiskPriority,
+          Categories: selectedCategories.value.length === 0
+        })
+        console.log('Validation errors:', validationErrors.value)
+        console.log('Has required fields:', hasRequiredFields)
+        console.log('Has no errors:', hasNoErrors)
+      }
+      
+      return isReady
     })
 
     // Enhanced validation methods with security patterns
@@ -737,9 +786,15 @@ export default {
 
     const validateOrigin = () => {
       const allowedOrigins = ['Manual', 'Audit Finding', 'System Generated']
-      if (formData.value.Origin && !allowedOrigins.includes(formData.value.Origin)) {
-        validationErrors.value.Origin = 'Must be one of: Manual, Audit Finding, System Generated'
+      // Origin is optional, so only validate if it has a value
+      if (formData.value.Origin) {
+        if (!allowedOrigins.includes(formData.value.Origin)) {
+          validationErrors.value.Origin = 'Must be one of: Manual, Audit Finding, System Generated'
+        } else {
+          delete validationErrors.value.Origin
+        }
       } else {
+        // Clear any existing error if field is empty (since it's optional)
         delete validationErrors.value.Origin
       }
     }
@@ -986,11 +1041,28 @@ export default {
         if (response.data.success) {
           compliances.value = response.data.data
           console.log('Loaded compliances:', compliances.value.length)
+          
+          // Debug: Check for any compliance items with invalid data types
+          const invalidCompliances = compliances.value.filter(compliance => {
+            return (compliance.Mitigation && typeof compliance.Mitigation !== 'string') ||
+                   (compliance.PossibleDamage && typeof compliance.PossibleDamage !== 'string') ||
+                   (compliance.ComplianceItemDescription && typeof compliance.ComplianceItemDescription !== 'string')
+          })
+          
+          if (invalidCompliances.length > 0) {
+            console.warn('Found compliances with invalid data types:', invalidCompliances)
+          }
         } else {
           console.error('Failed to fetch compliances:', response.data.message)
         }
       } catch (error) {
         console.error('Error fetching compliances:', error)
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'view compliances')) {
+          // Only show generic error if it's not an access denied error
+          PopupService.error('Failed to load compliances. Please try again.')
+        }
       } finally {
         loadingCompliances.value = false
       }
@@ -1017,13 +1089,13 @@ export default {
       showDropdown.value = false // Close dropdown
       
       // Auto-fill some fields from compliance if they're empty
-      if (!formData.value.PossibleDamage && compliance.PossibleDamage) {
+      if (!formData.value.PossibleDamage && compliance.PossibleDamage && typeof compliance.PossibleDamage === 'string') {
         formData.value.PossibleDamage = compliance.PossibleDamage
       }
-      if (!formData.value.Mitigation && compliance.Mitigation) {
+      if (!formData.value.Mitigation && compliance.Mitigation && typeof compliance.Mitigation === 'string') {
         formData.value.Mitigation = compliance.Mitigation
       }
-      if (!formData.value.Criticality && compliance.Criticality) {
+      if (!formData.value.Criticality && compliance.Criticality && typeof compliance.Criticality === 'string') {
         formData.value.Criticality = compliance.Criticality
       }
       
@@ -1054,13 +1126,20 @@ export default {
     }
 
     const validateAndSubmit = async () => {
+      console.log('=== SUBMIT ATTEMPT ===')
+      
       if (!validateForm()) {
-        PopupService.error('Please correct the validation errors before submitting')
+        console.log('Form validation failed')
+        showValidationSummary()
+        PopupService.error('Please correct the validation errors before submitting. Check the console for details.')
         return
       }
       
+      console.log('Form validation passed, submitting...')
       await submitForm()
     }
+
+
 
     const submitForm = async () => {
       try {
@@ -1089,17 +1168,22 @@ export default {
         }
       } catch (error) {
         console.error('Error creating incident:', error)
-        if (error.response && error.response.data) {
-          // Handle validation errors from server
-          const serverErrors = error.response.data
-          Object.keys(serverErrors).forEach(field => {
-            validationErrors.value[field] = Array.isArray(serverErrors[field]) 
-              ? serverErrors[field][0] 
-              : serverErrors[field]
-          })
-          PopupService.error('Please correct the validation errors and try again.')
-        } else {
-          PopupService.error('Error creating incident. Please try again.')
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'create incidents')) {
+          // Only show generic error if it's not an access denied error
+          if (error.response && error.response.data) {
+            // Handle validation errors from server
+            const serverErrors = error.response.data
+            Object.keys(serverErrors).forEach(field => {
+              validationErrors.value[field] = Array.isArray(serverErrors[field]) 
+                ? serverErrors[field][0] 
+                : serverErrors[field]
+            })
+            PopupService.error('Please correct the validation errors and try again.')
+          } else {
+            PopupService.error('Error creating incident. Please try again.')
+          }
         }
       }
     }
@@ -1236,19 +1320,24 @@ export default {
 
       } catch (error) {
         console.error('Error generating analysis:', error)
-        let errorMessage = 'Failed to generate analysis. '
         
-        if (error.code === 'ECONNABORTED') {
-          errorMessage += 'Request timed out. The server took too long to respond. Please try again or fill the form manually.'
-        } else if (error.response && error.response.data && error.response.data.error) {
-          errorMessage += error.response.data.error
-        } else if (error.message) {
-          errorMessage += error.message
-        } else {
-          errorMessage += 'Please try again or fill the form manually.'
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'generate incident analysis')) {
+          // Only show generic error if it's not an access denied error
+          let errorMessage = 'Failed to generate analysis. '
+          
+          if (error.code === 'ECONNABORTED') {
+            errorMessage += 'Request timed out. The server took too long to respond. Please try again or fill the form manually.'
+          } else if (error.response && error.response.data && error.response.data.error) {
+            errorMessage += error.response.data.error
+          } else if (error.message) {
+            errorMessage += error.message
+          } else {
+            errorMessage += 'Please try again or fill the form manually.'
+          }
+          
+          PopupService.error(errorMessage)
         }
-        
-        PopupService.error(errorMessage)
       } finally {
         isGeneratingAnalysis.value = false
       }
@@ -1261,6 +1350,12 @@ export default {
         filteredCategories.value = response.data
       } catch (error) {
         console.error('Error fetching categories:', error)
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'view categories')) {
+          // Only show generic error if it's not an access denied error
+          PopupService.error('Failed to load categories. Please try again.')
+        }
       }
     }
 
@@ -1334,7 +1429,12 @@ export default {
           PopupService.success(`Category "${addedCategory}" added successfully!`)
         } catch (error) {
           console.error('Error adding category:', error)
-          PopupService.error('Failed to add category. Please try again.')
+          
+          // Check if this is an access denied error first
+          if (!AccessUtils.handleApiError(error, 'add categories')) {
+            // Only show generic error if it's not an access denied error
+            PopupService.error('Failed to add category. Please try again.')
+          }
         }
       } else if (newCategory && availableCategories.value.some(cat => cat.toLowerCase() === newCategory.toLowerCase())) {
         // Category exists, just select it
@@ -1366,6 +1466,12 @@ export default {
         filteredBusinessUnits.value = response.data
       } catch (error) {
         console.error('Error fetching business units:', error)
+        
+        // Check if this is an access denied error first
+        if (!AccessUtils.handleApiError(error, 'view business units')) {
+          // Only show generic error if it's not an access denied error
+          PopupService.error('Failed to load business units. Please try again.')
+        }
       }
     }
 
@@ -1437,7 +1543,12 @@ export default {
           PopupService.success(`Business unit "${addedUnit}" added successfully!`)
         } catch (error) {
           console.error('Error adding business unit:', error)
-          PopupService.error('Failed to add business unit. Please try again.')
+          
+          // Check if this is an access denied error first
+          if (!AccessUtils.handleApiError(error, 'add business units')) {
+            // Only show generic error if it's not an access denied error
+            PopupService.error('Failed to add business unit. Please try again.')
+          }
         }
       } else if (newUnit && availableBusinessUnits.value.some(unit => unit.toLowerCase() === newUnit.toLowerCase())) {
         // Business unit exists, just select it
@@ -1473,6 +1584,8 @@ export default {
         selectedBusinessUnits.value = formData.value.AffectedBusinessUnit.split(', ').filter(unit => unit.trim())
       }
     }
+
+
 
     // Load compliances when component mounts if needed
     onMounted(() => {
@@ -1529,6 +1642,8 @@ export default {
       businessUnitSearchTerm,
       showBusinessUnitDropdown,
       filteredBusinessUnits,
+      // Utility methods
+      safeSubstring,
       // Methods
       onClassificationChange,
       selectCompliance,
@@ -1551,30 +1666,9 @@ export default {
       filterBusinessUnits,
       toggleBusinessUnit,
       removeBusinessUnit,
-      addCustomBusinessUnit,
+            addCustomBusinessUnit,
       updateFormDataBusinessUnits,
       initializeSelectedData,
-      // Debug methods
-      debugValidation: () => {
-        console.log('=== MANUAL DEBUG ===')
-        console.log('Selected categories:', selectedCategories.value)
-        console.log('Available categories:', availableCategories.value)
-        console.log('Form RiskCategory:', formData.value.RiskCategory)
-        console.log('Validation errors:', validationErrors.value)
-        
-        // Test pattern for "HEALTH RISK"
-        const testCategory = "HEALTH RISK"
-        console.log(`Business pattern test for "${testCategory}":`, BUSINESS_TEXT_PATTERN.test(testCategory))
-        console.log(`Category pattern test for "${testCategory}":`, CATEGORY_PATTERN.test(testCategory))
-        
-        // Manually trigger validation
-        validateRiskCategory()
-        console.log('After manual validation:', validationErrors.value)
-      },
-      clearAllErrors: () => {
-        validationErrors.value = {}
-        console.log('Cleared all validation errors')
-      },
       // Validation methods
       validateCost,
       validateIncidentTitle,
@@ -1618,6 +1712,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 4px;
+  animation: slideIn 0.3s ease-out;
 }
 
 .validation-error::before {
@@ -1626,44 +1721,67 @@ export default {
 }
 
 /* Apply red border to fields with validation errors */
-input:invalid, 
-textarea:invalid, 
-select:invalid,
+input.error, 
+textarea.error, 
+select.error,
+.multi-select-input.error,
+.multi-select-dropdown.error .multi-select-input,
 input[aria-invalid="true"],
 textarea[aria-invalid="true"],
 select[aria-invalid="true"] {
-  border-color: #e74c3c !important;
+  border: 2px solid #e74c3c !important;
+  background-color: rgba(231, 76, 60, 0.05) !important;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
+}
+
+/* Multi-select dropdown error styling */
+.multi-select-dropdown.error {
+  border: 2px solid #e74c3c;
+  border-radius: 4px;
   background-color: rgba(231, 76, 60, 0.05);
-  box-shadow: 0 0 0 1px rgba(231, 76, 60, 0.2);
+}
+
+.multi-select-dropdown.error .multi-select-input {
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Valid state styling */
-input:valid:not(:placeholder-shown),
-textarea:valid:not(:placeholder-shown),
-select:valid {
+input:valid:not(:placeholder-shown):not(.error),
+textarea:valid:not(:placeholder-shown):not(.error),
+select:valid:not(.error) {
   border-color: #27ae60;
   background-color: rgba(39, 174, 96, 0.05);
 }
 
 /* Focus states */
-input:focus,
-textarea:focus,
-select:focus {
+input:focus:not(.error),
+textarea:focus:not(.error),
+select:focus:not(.error) {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  border-color: #3498db;
 }
 
-input:focus:invalid,
-textarea:focus:invalid,
-select:focus:invalid {
-  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+/* Error focus states */
+input.error:focus,
+textarea.error:focus,
+select.error:focus,
+.multi-select-input.error:focus {
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.3) !important;
+  border-color: #c0392b !important;
+}
+
+/* Required field indicators */
+label.required span::after {
+  content: " *";
+  color: #e74c3c;
+  font-weight: bold;
+  font-size: 1.1em;
 }
 
 /* Real-time validation feedback animation */
-.validation-error {
-  animation: slideIn 0.3s ease-out;
-}
-
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -1675,16 +1793,37 @@ select:focus:invalid {
   }
 }
 
-/* Field labels for required fields */
-label span::after {
-  content: "";
+/* Form section error indicators */
+.field-third.has-error,
+.field-full.has-error {
+  border-left: 4px solid #e74c3c;
+  padding-left: 12px;
+  margin-left: -12px;
+  background-color: rgba(231, 76, 60, 0.02);
 }
 
-label.required span::after {
-  content: " *";
-  color: #e74c3c;
-  font-weight: bold;
+/* Improve visibility of validation messages */
+.validation-error {
+  background-color: rgba(231, 76, 60, 0.1);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border-left: 4px solid #e74c3c;
+  margin-top: 6px;
 }
+
+/* Submit button styling when disabled */
+.incident-submit-btn:disabled {
+  background-color: #bdc3c7 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.incident-submit-btn:disabled:hover {
+  background-color: #bdc3c7 !important;
+  transform: none !important;
+}
+
+
 </style>
   
   

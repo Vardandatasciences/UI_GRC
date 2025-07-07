@@ -674,19 +674,21 @@ export default {
       } catch (error) {
         console.error('Error fetching risk metrics:', error)
         
-        // Access denied errors are now handled globally by the HTTP interceptor
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         hasData.value = false
         
         // Set default values if API fails (only for non-access errors)
-        if (!error.response || ![401, 403].includes(error.response.status)) {
-          Object.assign(metrics, { 
-            total: 0, 
-            accepted: 0, 
-            rejected: 0, 
-            mitigated: 0, 
-            inProgress: 0 
-          })
-        }
+        Object.assign(metrics, { 
+          total: 0, 
+          accepted: 0, 
+          rejected: 0, 
+          mitigated: 0, 
+          inProgress: 0 
+        })
       }
     }
 
@@ -757,6 +759,11 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching category distribution:', error)
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
       }
     }
 
@@ -877,6 +884,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching risk trend data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         // Clear data on error
         riskTrendData.labels = [];
         riskTrendData.datasets[0].data = [];
@@ -962,6 +975,11 @@ export default {
         
       } catch (error) {
         console.error('Error fetching specialized chart data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
       }
     };
     
@@ -1015,6 +1033,11 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching mitigation cost data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
       }
     };
 
@@ -1390,6 +1413,12 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching custom analysis data:', error);
+        
+        // Check for access denied first
+        if (AccessUtils.handleApiError(error)) {
+          return
+        }
+        
         hasCustomChartData.value = false;
       } finally {
         isLoadingCustomChart.value = false;

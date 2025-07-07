@@ -1,5 +1,6 @@
 <template>
   <div class="audit_task-view">
+    <button class="audit_back-button" @click="$router.back()">Go back</button>
     <div v-if="error" class="audit_error-message">
       {{ error }}
       <button @click="retryFetch" class="audit_retry-button">Retry</button>
@@ -268,7 +269,6 @@
           <!-- Keep the floating save button -->
           <div class="audit_floating-save-container">
             <button @click="saveCompliance" class="audit_floating-save-button" :disabled="isSaving">
-              <span class="audit_save-icon">💾</span>
               <span class="audit_save-text">
                 {{ isSaving ? 'Saving Version...' : 'Save Changes' }}
               </span>
@@ -1696,7 +1696,7 @@ h1 {
 }
 
 .audit_floating-save-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background:  #3a57d9 ;
   color: white;
   border: none;
   padding: 15px 25px;
@@ -2265,5 +2265,25 @@ textarea.disabled::placeholder {
 
 .audit_validation-summary li {
   margin-bottom: 4px;
+}
+
+.audit_back-button {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  background: #c5c5c5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.audit_back-button:hover {
+  background: #898989;
 }
 </style> 
