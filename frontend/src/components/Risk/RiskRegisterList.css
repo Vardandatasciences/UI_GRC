@@ -1,0 +1,266 @@
+/* Modern UI Variables for Risk Register Table */
+:root {
+  --risk-register-primary: #7B6FDD;
+  --risk-register-primary-light: #8F84E8;
+  --risk-register-primary-dark: #6A5ED4;
+  --risk-register-secondary: #f72585;
+  --risk-register-success: #4cc9f0;
+  --risk-register-warning: #f8961e;
+  --risk-register-danger: #e63946;
+  --risk-register-light: #f8f9fa;
+  --risk-register-dark: #212529;
+  --risk-register-gray-100: #f8f9fa;
+  --risk-register-gray-200: #e9ecef;
+  --risk-register-gray-300: #dee2e6;
+  --risk-register-gray-400: #ced4da;
+  --risk-register-gray-500: #adb5bd;
+  --risk-register-gray-600: #6c757d;
+  --risk-register-gray-700: #495057;
+  --risk-register-gray-800: #343a40;
+  --risk-register-gray-900: #212529;
+  --risk-register-border-radius: 8px;
+  --risk-register-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --risk-register-transition: all 0.3s ease;
+}
+
+/* Container for the risk register - remove scrolling to use app-level scrolling */
+.risk-register-container {
+  padding: 16px 16px 16px 280px;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--risk-register-gray-800);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* Header Styles */
+.risk-register-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.risk-register-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--form-header-text, var(--card-view-title-color, var(--text-primary)));
+  margin-bottom: 28px;
+  margin-top: 8px;
+  letter-spacing: 0.01em;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 6px;
+  background: transparent;
+  font-family: var(--font-family-primary);
+}
+.risk-register-title::after {
+  content: '';
+  display: block;
+  margin-top: 4px;
+  margin-left: 0;
+  height: 4px;
+  width: 25%;
+  background: var(--primary-color, #4f7cff);
+  border-radius: 2px;
+}
+
+.risk-register-icon {
+  margin-right: 8px;
+  color: #7B6FDD;
+}
+
+/* Filter Controls Styles - Updated for search bar on top, dropdowns below */
+.risk-register-filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px 16px 24px;
+  border-bottom: 1px solid var(--risk-register-gray-200);
+  background-color: transparent;
+  margin-bottom: 20px;
+}
+
+.risk-register-search-row {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.risk-register-search-row .dynamic-search-bar {
+  min-width: 200px;
+  max-width: 600px;
+  flex: 0 0 auto;
+}
+
+.risk-register-dropdowns-row {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 16px !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  width: 100%;
+}
+
+/* Style overrides for dynamic components */
+.risk-register-dropdowns-row .dropdown-container {
+  min-width: 200px;
+  max-width: 250px;
+  flex: 0 0 auto;
+}
+
+.risk-register-dropdowns-row .filter-btn {
+  min-width: 200px;
+  max-width: 250px;
+  width: 100%;
+  height: 45px;
+  padding: 10px 16px;
+  font-size: 14px;
+  border: 1px solid var(--risk-register-gray-300);
+  border-radius: 8px;
+  background-color: white;
+  transition: all 0.3s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.risk-register-dropdowns-row .filter-btn:hover {
+  border-color: var(--risk-register-primary);
+  box-shadow: 0 0 0 2px rgba(123, 111, 221, 0.1);
+}
+
+/* Risk ID styling - adjusted for tighter layout */
+.risk-register-id {
+  color: #7B6FDD;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* View Risk Button Styles */
+.risk-register-view-btn {
+  background-color: var(--risk-register-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.risk-register-view-btn:hover {
+  background-color: var(--risk-register-primary-dark);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .risk-register-container {
+    padding: 16px 16px 16px 210px;
+  }
+  
+  .risk-register-dropdowns-row {
+    gap: 12px !important;
+  }
+  
+  .risk-register-search-row .dynamic-search-bar {
+    min-width: 200px;
+    max-width: 400px;
+  }
+  
+  .risk-register-dropdowns-row .dropdown-container {
+    min-width: 180px;
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .risk-register-container {
+    padding: 16px;
+  }
+  
+  .risk-register-search-row {
+    justify-content: center;
+  }
+  
+  .risk-register-search-row .dynamic-search-bar {
+    min-width: 100%;
+    max-width: 100%;
+  }
+  
+  .risk-register-dropdowns-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100%;
+  }
+  
+  .risk-register-dropdowns-row .dropdown-container {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Ensure the risk title has enough space */
+.risk-register-container .dynamic-table td:nth-child(6) {
+  max-width: 400px;
+  word-wrap: break-word;
+}
+
+/* Risk Register specific styling for DynamicTable */
+.risk-register-container .dynamic-table tbody tr:nth-child(even) {
+  background-color: #fafafa !important;
+}
+
+.risk-register-container .dynamic-table tbody tr:hover {
+  background-color: #f8f9ff !important;
+}
+
+/* Status cell styling for DynamicTable */
+.risk-register-container .status-cell .status {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+  text-align: center;
+  min-width: 60px;
+}
+
+/* Override DynamicTable pagination styling */
+.risk-register-container .pagination-container {
+  padding: 12px 0;
+  margin-top: 12px;
+  border-top: 1px solid var(--risk-register-gray-200);
+  background-color: transparent;
+}
+
+.risk-register-container .pagination-controls button {
+  padding: 6px 12px;
+  background-color: white;
+  border: 1px solid var(--risk-register-gray-300);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--risk-register-gray-700);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.risk-register-container .pagination-controls button:hover:not(:disabled) {
+  background-color: #f0f0f0;
+}
+
+.risk-register-container .pagination-controls button.active {
+  background-color: var(--risk-register-primary);
+  color: white;
+  border-color: var(--risk-register-primary);
+}
+
+.risk-register-container .pagination-controls button:disabled {
+  color: var(--risk-register-gray-400);
+  cursor: not-allowed;
+}
