@@ -457,103 +457,182 @@ export default {
     }
 
     // Poll unread notifications every 10 seconds
+
     const fetchUnreadCount = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/get-notifications/?user_id=default_user');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.status === 'success') {
-            const count = (data.notifications || []).filter(n => n.status && !n.status.isRead).length;
-            if (count > prevUnreadCount && prevUnreadCount !== 0) {
-              // Play sound only if new notification arrives (not on first load)
-              if (notifAudio.value) notifAudio.value.play();
-            }
-            unreadCount.value = count;
-            prevUnreadCount = count;
-          }
-        }
-      } catch (e) {
-        // Ignore errors
+
+try {
+
+  const response = await fetch('http://localhost:8000/api/get-notifications/?user_id=default_user');
+
+  if (response.ok) {
+
+    const data = await response.json();
+
+    if (data.status === 'success') {
+
+      const count = (data.notifications || []).filter(n => n.status && !n.status.isRead).length;
+
+      if (count > prevUnreadCount && prevUnreadCount !== 0) {
+
+        // Play sound only if new notification arrives (not on first load)
+
+        if (notifAudio.value) notifAudio.value.play();
+
       }
+
+      unreadCount.value = count;
+
+      prevUnreadCount = count;
+
     }
 
-    // Get logged in username
-    const fetchUsername = async () => {
-      try {
-        // Try all possible sources for the user's name
-        const storedFullName = localStorage.getItem('fullName')
-        const storedUsername = localStorage.getItem('username')
-        const userData = localStorage.getItem('user')
-        let fallback = 'User'
-        if (userData) {
-          try {
-            const userObj = JSON.parse(userData)
-            fallback = userObj.full_name || userObj.UserName || userObj.user_name || userObj.username || fallback
-          } catch (e) {
-            console.error('Error parsing user data:', e)
-          }
-        }
-        if (storedFullName && storedFullName !== 'null') {
-          username.value = storedFullName
-        } else if (storedUsername && storedUsername !== 'null') {
-          username.value = storedUsername
-        } else {
-          username.value = fallback
-        }
-      } catch (e) {
-        console.error('Error fetching username:', e)
-        username.value = 'User'
-      }
-    }
-
-    onMounted(() => {
-      fetchUnreadCount();
-      fetchUsername();
-      pollInterval = setInterval(fetchUnreadCount, 10000);
-      const savedTheme = localStorage.getItem('selected-theme') || 'light'
-      setTheme(savedTheme)
-      
-      // Listen for user data updates
-      window.addEventListener('userDataUpdated', fetchUsername)
-    })
-    onUnmounted(() => {
-      if (pollInterval) clearInterval(pollInterval)
-      window.removeEventListener('userDataUpdated', fetchUsername)
-    })
-
-    return {
-      isCollapsed,
-      openMenus,
-      themeMenuOpen,
-      currentTheme,
-      logo,
-      username,
-      toggleCollapse,
-      toggleSubmenu,
-      toggleThemeMenu,
-      setTheme,
-      navigate,
-      handleDashboardClick,
-      unreadCount,
-      notifAudio
-    }
   }
+
+} catch (e) {
+
+  // Ignore errors
+
+}
+
+}
+
+// Get logged in username
+
+const fetchUsername = async () => {
+
+try {
+
+  // Try all possible sources for the user's name
+
+  const storedUsername = localStorage.getItem('user_name')
+
+  const userData = localStorage.getItem('user')
+
+  let fallback = 'User'
+
+  if (userData) {
+
+    try {
+
+      const userObj = JSON.parse(userData)
+
+      fallback = userObj.username || userObj.UserName || fallback
+
+    } catch (e) {
+
+      console.error('Error parsing user data:', e)
+
+    }
+
+  }
+
+  if (storedUsername && storedUsername !== 'null') {
+
+    username.value = storedUsername
+
+  } else {
+
+    username.value = fallback
+
+  }
+
+} catch (e) {
+
+  console.error('Error fetching username:', e)
+
+  username.value = 'User'
+
+}
+
+}
+
+onMounted(() => {
+
+fetchUnreadCount();
+
+fetchUsername();
+
+pollInterval = setInterval(fetchUnreadCount, 10000);
+
+const savedTheme = localStorage.getItem('selected-theme') || 'light'
+
+setTheme(savedTheme)
+
+// Listen for user data updates
+
+window.addEventListener('userDataUpdated', fetchUsername)
+
+})
+
+onUnmounted(() => {
+
+if (pollInterval) clearInterval(pollInterval)
+
+window.removeEventListener('userDataUpdated', fetchUsername)
+
+})
+
+return {
+
+isCollapsed,
+
+openMenus,
+
+themeMenuOpen,
+
+currentTheme,
+
+logo,
+
+username,
+
+toggleCollapse,
+
+toggleSubmenu,
+
+toggleThemeMenu,
+
+setTheme,
+
+navigate,
+
+handleDashboardClick,
+
+unreadCount,
+
+notifAudio
+
+}
+
+}
+
 }
 </script>
 
 <style scoped>
+
 /* Import the existing CSS file */
+
 @import './sidebar.css';
 
 /* Notification tab style */
+
 .notification-menu-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 20px;
-  cursor: pointer;
-  transition: background 0.2s;
-  position: relative;
+
+display: flex;
+
+align-items: center;
+
+padding: 12px 20px;
+
+cursor: pointer;
+
+transition: background 0.2s;
+
+position: relative;
+
 }
+
 .notification-menu-item:hover {
   background: #f0f4ff;
 }

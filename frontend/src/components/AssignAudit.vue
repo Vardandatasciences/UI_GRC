@@ -23,18 +23,14 @@
           <div class="dynamic-field-col">
             <label class="dynamic-label">Framework</label>
             <div class="dynamic-desc">Select the framework under which this audit is being conducted.</div>
-            <div class="narrow-dropdown">
-              <CustomDropdown
-                v-model="auditData.framework"
-                :config="{
-                  name: 'Framework',
-                  label: 'Framework',
-                  values: frameworks.map(fw => ({ value: fw.FrameworkId, label: fw.FrameworkName })),
-                  defaultValue: 'Select Framework'
-                }"
-                @change="onFrameworkChange"
-              />
-            </div>
+            <SelectInput
+              v-model="auditData.framework"
+              :options="frameworks.map(fw => ({ value: fw.FrameworkId, label: fw.FrameworkName }))"
+              label="Framework"
+              placeholder="Select Framework"
+              :error="getFieldError('framework')"
+              @change="onFrameworkChange"
+            />
             <div v-if="auditData.framework && !auditData.policy" class="compliance-scope-desc">
               Will include permanent compliances from all policies and subpolicies under this framework
             </div>
@@ -57,30 +53,22 @@
             <div class="dynamic-field-col">
               <label class="dynamic-label">Auditor</label>
               <div class="dynamic-desc">Select the auditor responsible for this audit.</div>
-              <CustomDropdown
+              <SelectInput
                 v-model="member.auditor"
-                :config="{
-                  name: 'Auditor',
-                  label: 'Auditor',
-                  values: users.map(user => ({ value: user.UserId, label: user.UserName })),
-                  defaultValue: 'Select Auditor'
-                }"
-                :showSearchBar="true"
+                :options="users.map(user => ({ value: user.UserId, label: user.UserName }))"
+                label="Auditor"
+                placeholder="Select Auditor"
                 :error="getFieldError('auditor', index)"
               />
             </div>
             <div class="dynamic-field-col">
               <label class="dynamic-label">Role</label>
               <div class="dynamic-desc">Select the role of the auditor in this audit.</div>
-              <CustomDropdown
+              <SelectInput
                 v-model="member.role"
-                :config="{
-                  name: 'Role',
-                  label: 'Role',
-                  values: roles.map(role => ({ value: role, label: role })),
-                  defaultValue: 'Select Role'
-                }"
-                :showSearchBar="true"
+                :options="roles.map(role => ({ value: role, label: role }))"
+                label="Role"
+                placeholder="Select Role"
                 :error="getFieldError('role', index)"
               />
             </div>
@@ -127,15 +115,11 @@
                   <div class="dynamic-field-col">
                     <label class="dynamic-label">Assigned Policy</label>
                     <div class="dynamic-desc">Select the policy to be audited by this team member.</div>
-                    <CustomDropdown
+                    <SelectInput
                       v-model="member.assignedPolicy"
-                      :config="{
-                        name: 'Assigned Policy',
-                        label: 'Assigned Policy',
-                        values: policies.map(p => ({ value: p.PolicyId, label: p.PolicyName })),
-                        defaultValue: 'Select Policy'
-                      }"
-                      :showSearchBar="true"
+                      :options="policies.map(p => ({ value: p.PolicyId, label: p.PolicyName }))"
+                      label="Assigned Policy"
+                      placeholder="Select Policy"
                       :error="getFieldError('assignedPolicy', index)"
                       @change="onMemberPolicyChange(index)"
                     />
@@ -143,30 +127,22 @@
                   <div class="dynamic-field-col">
                     <label class="dynamic-label">Sub Policy</label>
                     <div class="dynamic-desc">Select specific sub policy if applicable.</div>
-                    <CustomDropdown
+                    <SelectInput
                       v-model="member.assignedSubPolicy"
-                      :config="{
-                        name: 'Sub Policy',
-                        label: 'Sub Policy',
-                        values: getMemberSubpolicies(index).map(sp => ({ value: sp.SubPolicyId, label: sp.SubPolicyName })),
-                        defaultValue: 'Select Sub Policy'
-                      }"
-                      :showSearchBar="true"
+                      :options="getMemberSubpolicies(index).map(sp => ({ value: sp.SubPolicyId, label: sp.SubPolicyName }))"
+                      label="Sub Policy"
+                      placeholder="Select Sub Policy"
                       @change="onSubPolicyChange(index)"
                     />
                   </div>
                   <div class="dynamic-field-col">
                     <label class="dynamic-label">Reviewer</label>
                     <div class="dynamic-desc">Choose the reviewer who will review this audit.</div>
-                    <CustomDropdown
+                    <SelectInput
                       v-model="member.reviewer"
-                      :config="{
-                        name: 'Reviewer',
-                        label: 'Reviewer',
-                        values: users.map(user => ({ value: user.UserId, label: user.UserName })),
-                        defaultValue: 'Select Reviewer'
-                      }"
-                      :showSearchBar="true"
+                      :options="users.map(user => ({ value: user.UserId, label: user.UserName }))"
+                      label="Reviewer"
+                      placeholder="Select Reviewer"
                       :error="getFieldError('reviewer', index)"
                     />
                   </div>
@@ -334,61 +310,8 @@
           <h3>Assignment Summary</h3>
           <div v-for="(member, index) in teamMembers" :key="index" class="summary-card">
             <div class="summary-header">
-              <span class="member-name">{{ getUserName(member.auditor) || 'Team Member' }}</span>
-              <span class="member-role">{{ member.role || 'Role not assigned' }}</span>
-            </div>
-            
-            <!-- Expandable Team Member Information Section -->
-            <div class="review-section">
-              <div class="review-section-header" @click="member.isReviewTeamExpanded = !member.isReviewTeamExpanded">
-                <h4>Team Member Information</h4>
-                <div class="review-controls">
-                  <button class="edit-btn" @click.stop="toggleTeamEditMode(member)">
-                    <i :class="['fas', member.isTeamEditMode ? 'fa-check' : 'fa-edit']"></i>
-                    {{ member.isTeamEditMode ? 'Save' : 'Edit' }}
-                  </button>
-                  <i :class="['fas', member.isReviewTeamExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-                </div>
-              </div>
-              
-              <div class="review-section-content" :class="{ 'collapsed': !member.isReviewTeamExpanded }">
-                <div class="edit-view">
-                  <div class="dynamic-fields-row">
-                    <div class="dynamic-field-col">
-                      <label class="dynamic-label">Auditor</label>
-                      <div class="dynamic-desc">Select the auditor responsible for this audit.</div>
-                      <SelectInput
-                        v-model="member.auditor"
-                        :options="users.map(user => ({ value: user.UserId, label: user.UserName }))"
-                        label="Auditor"
-                        placeholder="Select Auditor"
-                      />
-                    </div>
-                    <div class="dynamic-field-col">
-                      <label class="dynamic-label">Role</label>
-                      <div class="dynamic-desc">Select the role of the auditor in this audit.</div>
-                      <SelectInput
-                        v-model="member.role"
-                        :options="roles.map(role => ({ value: role, label: role }))"
-                        label="Role"
-                        placeholder="Select Role"
-                      />
-                    </div>
-                  </div>
-                  <div class="dynamic-fields-row">
-                    <div class="dynamic-field-col">
-                      <label class="dynamic-label">Primary Responsibilities</label>
-                      <div class="dynamic-desc">Describe the main responsibilities for this team member.</div>
-                      <TextareaInput
-                        v-model="member.responsibilities"
-                        label="Primary Responsibilities"
-                        placeholder="Enter responsibilities..."
-                        rows="3"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <span class="member-name">{{ getUserName(member.auditor) }}</span>
+              <span class="member-role">{{ member.role }}</span>
             </div>
             
             <!-- Expandable Policy Assignment Section -->
@@ -405,11 +328,11 @@
               </div>
               
               <div class="review-section-content" :class="{ 'collapsed': !member.isReviewPolicyExpanded }">
+                <!-- Always show dynamic input components -->
                 <div class="edit-view">
                   <div class="dynamic-fields-row">
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Assigned Policy</label>
-                      <div class="dynamic-desc">Select the policy to be audited by this team member.</div>
                       <SelectInput
                         v-model="member.assignedPolicy"
                         :options="policies.map(p => ({ value: p.PolicyId, label: p.PolicyName }))"
@@ -420,7 +343,6 @@
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Sub Policy</label>
-                      <div class="dynamic-desc">Select specific sub policy if applicable.</div>
                       <SelectInput
                         v-model="member.assignedSubPolicy"
                         :options="getMemberSubpolicies(index).map(sp => ({ value: sp.SubPolicyId, label: sp.SubPolicyName }))"
@@ -431,7 +353,6 @@
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Reviewer</label>
-                      <div class="dynamic-desc">Choose the reviewer who will review this audit.</div>
                       <SelectInput
                         v-model="member.reviewer"
                         :options="users.map(user => ({ value: user.UserId, label: user.UserName }))"
@@ -440,21 +361,14 @@
                       />
                     </div>
                   </div>
-                  
-                  <!-- Compliance Preview -->
                   <div class="compliance-preview" v-if="member.assignedPolicy">
-                    <div class="preview-header">Compliance Items to be Audited:</div>
                     <div class="preview-content">
                       <div class="compliance-count" :class="{ 'loading': complianceCountLoading[`${member.assignedPolicy}-loading`] }">
                         <span v-if="complianceCountLoading[`${member.assignedPolicy}-loading`]">Loading...</span>
-                        <span v-else>{{ getComplianceCount(member.assignedPolicy, member.assignedSubPolicy) }} items</span>
-                      </div>
-                      <div class="compliance-scope-desc" v-if="!member.assignedSubPolicy">
-                        Will include permanent compliances from all subpolicies under this policy
+                        <span v-else>Compliance Items: {{ getComplianceCount(member.assignedPolicy, member.assignedSubPolicy) }}</span>
                       </div>
                     </div>
                   </div>
-                  
                   <!-- Reports Section -->
                   <div class="reports-section">
                     <div class="reports-row">
@@ -464,7 +378,7 @@
                         </button>
                       </div>
                     </div>
-                    <!-- Display Selected Reports -->
+                    <!-- Display Selected Reports in edit mode -->
                     <div v-if="getSelectedReportsForMember(member).length > 0" class="selected-reports">
                       <h6>Selected Reports:</h6>
                       <div class="selected-reports-list">
@@ -500,23 +414,34 @@
               </div>
               
               <div class="review-section-content" :class="{ 'collapsed': !member.isReviewDetailsExpanded }">
+                <!-- Always show dynamic input components -->
                 <div class="edit-view">
                   <div class="dynamic-fields-row">
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Audit Title</label>
-                      <div class="dynamic-desc">Enter a concise title for this audit assignment.</div>
+                      <!-- <TextInput
+                        v-model="member.auditTitle"
+                        label="Audit Title"
+                        placeholder="Enter audit title..."
+                      /> -->
                       <input type="text" v-model="member.auditTitle" class="dynamic-input" placeholder="Enter audit title..." />
+
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Business Unit</label>
                       <div class="dynamic-desc">Mention the business unit or process area being audited.</div>
-                      <input type="text" v-model="member.businessUnit" class="dynamic-input" placeholder="Enter business unit..." />
+                        <!-- <TextInput
+                          v-model="member.businessUnit"
+                          label="Business Unit"
+                          placeholder="Enter business unit..."
+                        /> -->
+                        <input type="text" v-model="member.businessUnit" class="dynamic-input" placeholder="Enter business unit..." />
+
                     </div>
                   </div>
                   <div class="dynamic-fields-row">
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Scope</label>
-                      <div class="dynamic-desc">Specify the boundaries and extent of the audit.</div>
                       <TextareaInput
                         v-model="member.scope"
                         label="Scope"
@@ -526,7 +451,6 @@
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Objective</label>
-                      <div class="dynamic-desc">State the main goals or objectives of the audit.</div>
                       <TextareaInput
                         v-model="member.objective"
                         label="Objective"
@@ -538,7 +462,6 @@
                   <div class="dynamic-fields-row">
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Type</label>
-                      <div class="dynamic-desc">Select whether the audit is Internal or External.</div>
                       <SelectInput
                         v-model="member.type"
                         :options="[
@@ -552,7 +475,6 @@
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Frequency</label>
-                      <div class="dynamic-desc">How often should this audit occur?</div>
                       <SelectInput
                         v-model="member.frequency"
                         :options="[
@@ -570,11 +492,30 @@
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Due Date</label>
-                      <div class="dynamic-desc">Select the due date for this audit.</div>
                       <DateInput
                         v-model="member.dueDate"
                         label="Due Date"
                         placeholder="Select due date"
+                      />
+                    </div>
+                  </div>
+                  <div class="dynamic-fields-row">
+                    <div class="dynamic-field-col">
+                      <label class="dynamic-label">Role</label>
+                      <SelectInput
+                        v-model="member.role"
+                        :options="roles.map(role => ({ value: role, label: role }))"
+                        label="Role"
+                        placeholder="Select Role"
+                      />
+                    </div>
+                    <div class="dynamic-field-col">
+                      <label class="dynamic-label">Responsibilities</label>
+                      <TextareaInput
+                        v-model="member.responsibilities"
+                        label="Responsibilities"
+                        placeholder="Enter responsibilities..."
+                        rows="3"
                       />
                     </div>
                   </div>
@@ -670,7 +611,6 @@
 import axios from 'axios';
 import ValidationMixin from '@/mixins/ValidationMixin';
 import SelectInput from '@/components/inputs/SelectInput.vue';
-import CustomDropdown from '@/components/CustomDropdown.vue';
 // import TextInput from '@/components/inputs/TextInput.vue';
 import TextareaInput from '@/components/inputs/TextareaInput.vue';
 import DateInput from '@/components/inputs/DateInput.vue';
@@ -680,7 +620,6 @@ export default {
   mixins: [ValidationMixin],
   components: {
     SelectInput,
-    CustomDropdown,
     // TextInput,
     TextareaInput,
     DateInput,
@@ -761,10 +700,8 @@ export default {
         isAuditDetailsExpanded: true,
         isReviewPolicyExpanded: true,
         isReviewDetailsExpanded: true,
-        isReviewTeamExpanded: true,
         isPolicyEditMode: false,
         isDetailsEditMode: false,
-        isTeamEditMode: false,
       }],
       memberComplianceCounts: {},
       complianceCountLoading: {},
@@ -914,10 +851,8 @@ export default {
         isAuditDetailsExpanded: true,
         isReviewPolicyExpanded: true,
         isReviewDetailsExpanded: true,
-        isReviewTeamExpanded: true,
         isPolicyEditMode: false,
         isDetailsEditMode: false,
-        isTeamEditMode: false,
       });
     },
     removeTeamMember(index) {
@@ -1037,10 +972,8 @@ export default {
         isAuditDetailsExpanded: true,
         isReviewPolicyExpanded: true,
         isReviewDetailsExpanded: true,
-        isReviewTeamExpanded: true,
         isPolicyEditMode: false,
         isDetailsEditMode: false,
-        isTeamEditMode: false,
       }];
       this.currentTab = 0;
     },
@@ -1259,10 +1192,6 @@ export default {
     },
     
     // New methods for toggling edit modes
-    toggleTeamEditMode(member) {
-      member.isTeamEditMode = !member.isTeamEditMode;
-    },
-    
     togglePolicyEditMode(member) {
       member.isPolicyEditMode = !member.isPolicyEditMode;
     },
@@ -1740,13 +1669,5 @@ export default {
 .validation-summary li {
   color: #b91c1c;
   margin-bottom: 0.25rem;
-}
-.narrow-dropdown {
-  max-width: 400px;
-}
-.narrow-dropdown .dropdown-container {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
 }
 </style>

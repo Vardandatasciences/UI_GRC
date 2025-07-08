@@ -219,80 +219,139 @@ export default {
     this.loadUserData()
   },
   methods: {
-    async loadUserData() {
-      this.loading = true
-      this.error = null
-      
-      try {
-        // First try to get user data from localStorage
-        const userData = localStorage.getItem('user')
-        const storedUsername = localStorage.getItem('username')
-        const storedFullName = localStorage.getItem('fullName')
-        
-        if (userData) {
-          const user = JSON.parse(userData)
-          this.form.username = storedFullName || storedUsername || user.username || ''
-          this.form.email = user.email || ''
-          this.form.role = user.role || 'User'
-          this.form.organization = user.organization || ''
-          this.form.country = user.country || ''
-          this.form.phone = user.phone || ''
-        } else {
-          // Try to fetch from API
-          const response = await fetch('http://localhost:8000/api/current-user/')
-          if (response.ok) {
-            const data = await response.json()
-            this.form.username = data.full_name || data.username || ''
-            this.form.email = data.email || ''
-            this.form.role = data.role || 'User'
-            this.form.organization = data.organization || ''
-            this.form.country = data.country || ''
-            this.form.phone = data.phone || ''
-          }
-        }
-      } catch (error) {
-        console.error('Error loading user data:', error)
-        this.error = 'Failed to load user data. Please try again.'
-      } finally {
-        this.loading = false
+
+async loadUserData() {
+
+  this.loading = true
+
+  this.error = null
+
+  try {
+
+    // First try to get user data from localStorage
+
+    const userData = localStorage.getItem('user')
+
+    const storedUsername = localStorage.getItem('user_name')
+
+    const storedEmail = localStorage.getItem('user_email')
+
+    if (userData) {
+
+      const user = JSON.parse(userData)
+
+      this.form.username = storedUsername || user.username || ''
+
+      this.form.email = storedEmail || user.email || ''
+
+      this.form.role = user.role || 'User'
+
+      this.form.organization = user.organization || ''
+
+      this.form.country = user.country || ''
+
+      this.form.phone = user.phone || ''
+
+    } else {
+
+      // Try to fetch from API
+
+      const response = await fetch('http://localhost:8000/api/current-user/')
+
+      if (response.ok) {
+
+        const data = await response.json()
+
+        this.form.username = data.full_name || data.username || ''
+
+        this.form.email = data.email || ''
+
+        this.form.role = data.role || 'User'
+
+        this.form.organization = data.organization || ''
+
+        this.form.country = data.country || ''
+
+        this.form.phone = data.phone || ''
+
       }
-    },
-    
-    async saveAccountChanges() {
-      this.loading = true
-      this.error = null
-      this.success = null
-      
-      try {
-        // Here you would typically send the updated data to your backend
-        // For now, we'll just update localStorage
-        const userData = JSON.parse(localStorage.getItem('user') || '{}')
-        userData.username = this.form.username
-        userData.email = this.form.email
-        userData.organization = this.form.organization
-        userData.country = this.form.country
-        userData.phone = this.form.phone
-        
-        localStorage.setItem('user', JSON.stringify(userData))
-        localStorage.setItem('username', this.form.username)
-        
-        this.success = 'Account information updated successfully!'
-        
-        // Emit event to update sidebar username
-        window.dispatchEvent(new Event('userDataUpdated'))
-        
-      } catch (error) {
-        console.error('Error saving account changes:', error)
-        this.error = 'Failed to save changes. Please try again.'
-      } finally {
-        this.loading = false
-      }
-    },
-    
-    async updatePassword() {
-      this.loading = true
-      this.error = null
-      this.success = null
+
+    }
+
+  } catch (error) {
+
+    console.error('Error loading user data:', error)
+
+    this.error = 'Failed to load user data. Please try again.'
+
+  } finally {
+
+    this.loading = false
+
+  }
+
+},
+
+async saveAccountChanges() {
+
+  this.loading = true
+
+  this.error = null
+
+  this.success = null
+
+  try {
+
+    // Here you would typically send the updated data to your backend
+
+    // For now, we'll just update localStorage
+
+    const userData = JSON.parse(localStorage.getItem('user') || '{}')
+
+    userData.username = this.form.username
+
+    userData.email = this.form.email
+
+    userData.organization = this.form.organization
+
+    userData.country = this.form.country
+
+    userData.phone = this.form.phone
+
+    localStorage.setItem('user', JSON.stringify(userData))
+
+    localStorage.setItem('user_name', this.form.username)
+
+    localStorage.setItem('user_email', this.form.email)
+
+    this.success = 'Account information updated successfully!'
+
+    // Emit event to update sidebar username
+
+    window.dispatchEvent(new Event('userDataUpdated'))
+
+  } catch (error) {
+
+    console.error('Error saving account changes:', error)
+
+    this.error = 'Failed to save changes. Please try again.'
+
+  } finally {
+
+    this.loading = false
+
+  }
+
+},
+
+async updatePassword() {
+
+  this.loading = true
+
+  this.error = null
+
+  this.success = null
+
       
       try {
         if (this.form.newPassword !== this.form.confirmPassword) {

@@ -276,34 +276,27 @@
 
 .compliance-preview {
   margin-top: 1.5rem;
-  padding: 1.2rem;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 8px;
+  padding: 1rem;
+  background: #797979;
+  border: 1px solid #747474;
+  border-radius: 6px;
 }
 
 .preview-header {
-  font-weight: 600;
+  font-weight: 500;
   color: #0369a1;
-  margin-bottom: 0.75rem;
-  font-size: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .preview-content {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .compliance-count {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #0284c7;
-  font-weight: 600;
-}
-
-.compliance-count.loading {
-  color: #64748b;
-  font-style: italic;
   font-weight: 500;
 }
 
@@ -311,10 +304,9 @@
   color: #0369a1;
   font-size: 0.9rem;
   line-height: 1.4;
-  background: #e0f2fe;
-  padding: 0.75rem;
-  border-radius: 6px;
-  border-left: 4px solid #0ea5e9;
+  background: #f0f9ff;
+  padding: 0.5rem;
+  border-radius: 4px;
 }
 
 /* Review Tab Styles */
@@ -335,42 +327,35 @@
 
 .summary-card {
   background: #fff !important;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 2rem;
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .summary-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e5e7eb;
-  background: #f8fafc;
-  padding: 1rem;
-  border-radius: 8px;
-  margin: -1rem -1rem 1.5rem -1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .member-name {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #111827;
 }
 
 .member-role {
-  color: #64748b;
-  font-size: 1rem;
-  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.95rem;
 }
 
 /* Review Section Styles */
 .review-section {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   width: 100%;
 }
 
@@ -378,9 +363,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 1.5rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  padding: 1rem 1.5rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   margin-bottom: 0.5rem;
   cursor: pointer;
@@ -389,32 +374,29 @@
 }
 
 .review-section-header:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: #e5e7eb;
 }
 
 .review-section-header h4 {
   margin: 0;
-  font-size: 1.15rem;
-  color: #1e293b;
-  font-weight: 600;
+  font-size: 1.1rem;
+  color: #374151;
 }
 
 .review-section-header i {
-  color: #64748b;
-  font-size: 1rem;
+  color: #6b7280;
+  font-size: 0.9rem;
 }
 
 .review-section-content {
   padding: 2rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: #ffffff;
+  background: #f9fafb;
   transition: all 0.3s ease;
   overflow: hidden;
   max-height: 2500px;
   width: 100%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .review-section-content.collapsed {
@@ -422,7 +404,6 @@
   padding: 0;
   border: none;
   opacity: 0;
-  box-shadow: none;
 }
 
 /* Enhanced form layout for Review & Assign section */
@@ -436,7 +417,7 @@
   align-items: flex-start;
   gap: 2rem;
   width: 100%;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   flex-wrap: wrap;
 }
 
@@ -444,23 +425,23 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-width: 280px;
+  min-width: 250px;
   flex: 1 1 350px;
   gap: 0.5rem;
 }
 
 .review-section-content .dynamic-label {
   font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0;
 }
 
 .review-section-content .dynamic-desc {
   font-size: 0.9rem;
-  color: #64748b;
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
+  color: #6b7280;
+  margin-bottom: 0.2rem;
+  line-height: 1.3;
 }
 
 .review-section-content .dynamic-input {

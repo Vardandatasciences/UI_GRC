@@ -5660,20 +5660,20 @@ def get_all_compliances_for_dropdown(request):
 @permission_classes([AllowAny])
 def get_users_for_dropdown(request):
     """
-    Get all users with essential metadata for dropdown selection
+    Get all users with essential metadata for dropdown selection from RBAC table
     """
-    # Removed logging that requires user authentication
-    
     try:
-        # Get users from the Users model directly
-        users = Users.objects.all().order_by('UserName')
+        # Get users from the RBAC table with role information
+        from .models import RBAC
+        rbac_users = RBAC.objects.filter(is_active='Y').order_by('username')
         
-        # Create a simplified response with only UserId and UserName
+        # Create response with UserId, UserName, and Role
         user_data = []
-        for user in users:
+        for rbac_user in rbac_users:
             user_data.append({
-                'UserId': user.UserId,
-                'UserName': user.UserName
+                'UserId': rbac_user.user_id,
+                'UserName': rbac_user.username,
+                'Role': rbac_user.role
             })
         
         return Response(user_data)

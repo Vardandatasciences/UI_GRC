@@ -538,13 +538,19 @@
         <div class="approval-form">
           <div class="form-group">
             <label>Created By <span class="required-star">*</span></label>
+            <div class="created-by-field">
+              <div class="user-icon">
+                <i class="fas fa-user"></i>
+              </div>
             <input
               type="text"
               v-model="approvalForm.createdByName"
               readonly
               :disabled="loading"
+                :placeholder="currentUser.UserName || 'Loading user...'"
               title="This policy will be created under your username"
             />
+            </div>
             <div class="helper-text">This policy will be created under your username.</div>
           </div>
           <div class="form-group">
@@ -616,6 +622,13 @@ export default {
       createdBy: '',
       createdByName: localStorage.getItem('username') || '', // Initialize with logged-in username
       reviewer: ''
+    })
+
+    // Add reactive ref for current user info
+    const currentUser = ref({
+      UserId: null,
+      UserName: localStorage.getItem('username') || '',
+      Role: null
     })
     const frameworks = ref([])
     const loading = ref(false)
@@ -890,6 +903,33 @@ export default {
       showApprovalForm.value = true
     }
 
+    // Fetch current logged-in user information
+    async function fetchCurrentUser() {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/user-role/`)
+        if (response.data.success) {
+          currentUser.value = {
+            UserId: response.data.user_id,
+            UserName: response.data.username || response.data.user_name || localStorage.getItem('username') || '',
+            Role: response.data.role
+          }
+          // Update approval form with current user name
+          approvalForm.value.createdByName = currentUser.value.UserName
+          approvalForm.value.createdBy = currentUser.value.UserId
+          
+          console.log('Current user loaded:', currentUser.value)
+        }
+      } catch (err) {
+        console.error('Error fetching current user:', err)
+        // Fallback to localStorage if API fails
+        const storedUsername = localStorage.getItem('username')
+        if (storedUsername) {
+          currentUser.value.UserName = storedUsername
+          approvalForm.value.createdByName = storedUsername
+        }
+      }
+    }
+
     // Add this function to fetch users
     async function fetchUsers() {
       try {
@@ -1155,7 +1195,8 @@ export default {
         }
 
         // Find the selected creator and reviewer users
-        const creatorUser = users.value.find(u => u.UserName === approvalForm.value.createdByName)
+        const creatorUser = users.value.find(u => u.UserName === approvalForm.value.createdByName) || 
+                           currentUser.value // Use current user as fallback
         const reviewerUser = users.value.find(u => u.UserId === approvalForm.value.reviewer)
 
         if (!approvalForm.value.createdByName) {
@@ -1364,7 +1405,8 @@ export default {
         // Reset forms
         policiesForm.value = []
         approvalForm.value = {
-          createdBy: '',
+          createdBy: currentUser.value.UserId || '',
+          createdByName: currentUser.value.UserName || localStorage.getItem('username') || '',
           reviewer: ''
         }
         selectedFramework.value = ''
@@ -1407,7 +1449,11 @@ export default {
     }
 
     // Fetch frameworks and users on mount
-    onMounted(() => {
+    onMounted(async () => {
+      // Fetch current user first to ensure we have the logged-in user's name
+      await fetchCurrentUser()
+      
+      // Then fetch other data
       fetchFrameworks()
       fetchUsers()
       fetchPolicyCategories()
@@ -1452,6 +1498,7 @@ export default {
       loading,
       error,
       users,
+      currentUser,
       policyCategories,
       policyTypes,
       entities,
