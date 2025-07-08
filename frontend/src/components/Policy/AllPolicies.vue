@@ -1,18 +1,48 @@
 <template>
   <div class="policy-tabs-container single-container">
-    <!-- Loading Indicator -->
-    <div v-if="loading" class="loading-overlay">
+    <!-- RBAC Loading Indicator -->
+    <div v-if="rbacLoading" class="loading-overlay">
       <div class="loading-spinner">
-        <i class="fas fa-circle-notch fa-spin"></i>
-        <span>Loading...</span>
+        <i class="fas fa-shield-alt fa-spin"></i>
+        <span>Checking access permissions...</span>
       </div>
     </div>
-    
-    <!-- Error Message -->
-    <div v-if="error" class="error-message">
-      <i class="fas fa-exclamation-circle"></i>
-      <span>{{ error }}</span>
+
+    <!-- RBAC Access Denied -->
+    <div v-else-if="!canViewPolicies && !rbacLoading" class="access-denied-container">
+      <div class="access-denied-content">
+        <i class="fas fa-shield-alt access-denied-icon"></i>
+        <h2>Access Denied</h2>
+        <p>You don't have permission to view policies. Please contact your administrator.</p>
+        <div class="access-info">
+          <strong>Your Role:</strong> {{ userRole }}
+        </div>
+        <div class="access-actions">
+          <button @click="showAccessDenied('view')" class="btn btn-warning">
+            <i class="fas fa-envelope"></i> Contact Admin
+          </button>
+          <button @click="$router.push('/')" class="btn btn-secondary">
+            <i class="fas fa-home"></i> Go to Dashboard
+          </button>
+        </div>
+      </div>
     </div>
+
+    <!-- Main Content - Only show if user has permissions -->
+    <template v-else>
+      <!-- Loading Indicator -->
+      <div v-if="loading" class="loading-overlay">
+        <div class="loading-spinner">
+          <i class="fas fa-circle-notch fa-spin"></i>
+          <span>Loading...</span>
+        </div>
+      </div>
+      
+      <!-- Error Message -->
+      <div v-if="error" class="error-message">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>{{ error }}</span>
+      </div>
 
     <!-- Modern Pill Toggle Tabs: Only show on first page (framework selection) -->
     <div v-if="!selectedFramework" class="pill-tabs-bar">
@@ -418,6 +448,7 @@
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
@@ -425,6 +456,14 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import axios from 'axios'
 import CustomDropdown from '../CustomDropdown.vue'
+import { usePolicyRbac } from '@/mixins/policyRbacMixin'
+
+// Initialize RBAC system
+const {
+  canViewPolicies,
+  userRole,
+  initializeRBAC
+} = usePolicyRbac()
 
 const activeTab = ref('framework')
 const selectedFramework = ref(null)
@@ -1243,17 +1282,25 @@ const preloadData = () => {
 }
 
 // Load data on component mount
-onMounted(() => {
-  fetchFrameworks()
+onMounted(async () => {
+  // Initialize RBAC first
+  await initializeRBAC()
   
-  // If starting directly on policies or subpolicies tab, load that data too
-  if (activeTab.value === 'policies') {
-    fetchAllPolicies()
-  } else if (activeTab.value === 'subpolicies') {
-    fetchAllSubpolicies()
+  // Only proceed if user has permissions
+  if (canViewPolicies.value) {
+    fetchFrameworks()
+    
+    // If starting directly on policies or subpolicies tab, load that data too
+    if (activeTab.value === 'policies') {
+      fetchAllPolicies()
+    } else if (activeTab.value === 'subpolicies') {
+      fetchAllSubpolicies()
+    } else {
+      // If on frameworks tab, preload other tab data in the background for faster tab switching
+      preloadData()
+    }
   } else {
-    // If on frameworks tab, preload other tab data in the background for faster tab switching
-    preloadData()
+    console.log('[AllPolicies] User does not have permission to view policies')
   }
 })
 
@@ -1389,6 +1436,94 @@ watch(selectedSubpolicyFramework, handleSubpolicyFrameworkChange)
 .card-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-}
+      justify-content: flex-end;
+  }
+
+  /* RBAC Access Control Styles */
+  .access-denied-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    padding: 2rem;
+  }
+
+  .access-denied-content {
+    text-align: center;
+    max-width: 500px;
+    background: white;
+    padding: 3rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border: 1px solid #f1f5f9;
+  }
+
+  .access-denied-icon {
+    font-size: 4rem;
+    color: #f59e0b;
+    margin-bottom: 1.5rem;
+  }
+
+  .access-denied-content h2 {
+    color: #1f2937;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .access-denied-content p {
+    color: #6b7280;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .access-info {
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #374151;
+    border-left: 4px solid #3b82f6;
+    margin-bottom: 1.5rem;
+  }
+
+  .access-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .access-actions .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+
+  .access-actions .btn-warning {
+    background: #f59e0b;
+    color: white;
+  }
+
+  .access-actions .btn-warning:hover {
+    background: #d97706;
+  }
+
+  .access-actions .btn-secondary {
+    background: #6b7280;
+    color: white;
+  }
+
+  .access-actions .btn-secondary:hover {
+    background: #4b5563;
+  }
 </style> 

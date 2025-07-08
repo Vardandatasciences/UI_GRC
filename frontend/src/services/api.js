@@ -5,7 +5,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 15000 // Add a 15-second timeout for all requests
+  timeout: 15000, // Add a 15-second timeout for all requests
+  withCredentials: true // Include cookies in requests for session handling
 });
  
 // Add response interceptor for error handling
@@ -29,11 +30,27 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-// Add request interceptor to include auth token
+// Add request interceptor to include auth token and user_id
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  
+  // Add user_id to request if available (for session-based auth)
+  const userId = localStorage.getItem('user_id');
+  if (userId) {
+    // Add user_id to query params for GET requests
+    if (config.method === 'get') {
+      config.params = config.params || {};
+      config.params.user_id = userId;
+    }
+    // Add user_id to request body for POST/PUT requests
+    else if (config.method === 'post' || config.method === 'put') {
+      if (config.data && typeof config.data === 'object') {
+        config.data.user_id = userId;
+      }
+    }
   }
  
   // Log outgoing requests
@@ -45,22 +62,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
  
-// Add request interceptor to include auth token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Policy document upload service
+export const policyService = {
+  // Upload policy document to S3
+  uploadPolicyDocument: (file, userId, policyName, docType = 'policy') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('userId', userId);
+    formData.append('fileName', file.name);
+    formData.append('type', docType);
+    formData.append('policyName', policyName);
+    
+    // Use multipart/form-data for file uploads
+    return api.post('/upload-policy-document/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
   }
- 
-  // Log outgoing requests
-  console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-    data: config.data,
-    params: config.params
-  });
- 
-  return config;
-});
- 
+};
  
 export const incidentService = {
   // Incident main endpoints

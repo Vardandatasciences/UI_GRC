@@ -5,6 +5,68 @@
 
 import { PopupService } from '@/modules/popup/popupService';
 
+// Session Management Utilities
+export const SessionUtils = {
+  /**
+   * Set user session data
+   * @param {Object} userData - User data from login response
+   */
+  setUserSession(userData) {
+    console.log('[SESSION_UTILS] Setting user session:', userData);
+    if (userData.user_id) {
+      localStorage.setItem('user_id', userData.user_id.toString());
+    }
+    if (userData.email) {
+      localStorage.setItem('user_email', userData.email);
+    }
+    if (userData.name) {
+      localStorage.setItem('user_name', userData.name);
+    }
+    // Set a flag to indicate user is logged in
+    localStorage.setItem('is_logged_in', 'true');
+  },
+
+  /**
+   * Get user session data
+   * @returns {Object} User session data
+   */
+  getUserSession() {
+    return {
+      user_id: localStorage.getItem('user_id'),
+      email: localStorage.getItem('user_email'),
+      name: localStorage.getItem('user_name'),
+      is_logged_in: localStorage.getItem('is_logged_in') === 'true'
+    };
+  },
+
+  /**
+   * Clear user session
+   */
+  clearUserSession() {
+    console.log('[SESSION_UTILS] Clearing user session');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('user_name');
+    localStorage.removeItem('is_logged_in');
+  },
+
+  /**
+   * Check if user is logged in
+   * @returns {boolean} True if user is logged in
+   */
+  isLoggedIn() {
+    return localStorage.getItem('is_logged_in') === 'true';
+  },
+
+  /**
+   * Get user ID for API requests
+   * @returns {string|null} User ID or null if not logged in
+   */
+  getUserId() {
+    return localStorage.getItem('user_id');
+  }
+};
+
 export const AccessUtils = {
   /**
    * Show access denied popup with default message
@@ -60,26 +122,201 @@ export const AccessUtils = {
   },
 
   /**
-   * Show access denied popup for specific compliance operations
+   * Show access denied popup for specific compliance operations (5 main features)
    * @param {string} operation - Operation type
    * @param {Function} onContactAdmin - Callback for contact admin action
    */
   showComplianceAccessDenied(operation = 'access', onContactAdmin = null) {
     console.log('[ACCESS_UTILS] showComplianceAccessDenied called:', { operation });
     
-    const operationText = {
-      create: 'create compliance items',
-      edit: 'edit compliance items',
-      view: 'view compliance items',
-      delete: 'delete compliance items',
-      approve: 'approve compliance items',
-      analytics: 'view compliance analytics',
-      access: 'access the compliance module'
-    }[operation] || operation;
+    // Map operations to main features and descriptions
+    const operationFeatureMap = {
+      // CreateCompliance operations
+      create: { feature: 'CreateCompliance', text: 'create compliance items' },
+      clone: { feature: 'CreateCompliance', text: 'clone compliance items' },
+      
+      // EditCompliance operations
+      edit: { feature: 'EditCompliance', text: 'edit compliance items' },
+      toggle: { feature: 'EditCompliance', text: 'toggle compliance status' },
+      deactivate: { feature: 'EditCompliance', text: 'deactivate compliance items' },
+      delete: { feature: 'EditCompliance', text: 'delete compliance items' },
+      assign: { feature: 'EditCompliance', text: 'assign compliance items' },
+      category: { feature: 'EditCompliance', text: 'manage compliance categories' },
+      'business-unit': { feature: 'EditCompliance', text: 'manage compliance business units' },
+      
+      // ApproveCompliance operations
+      approve: { feature: 'ApproveCompliance', text: 'approve compliance items' },
+      review: { feature: 'ApproveCompliance', text: 'review compliance items' },
+      
+      // ViewAllCompliance operations
+      view: { feature: 'ViewAllCompliance', text: 'view compliance items' },
+      dashboard: { feature: 'ViewAllCompliance', text: 'access the compliance dashboard' },
+      versioning: { feature: 'ViewAllCompliance', text: 'view compliance versioning' },
+      audit: { feature: 'ViewAllCompliance', text: 'view compliance audit information' },
+      framework: { feature: 'ViewAllCompliance', text: 'access compliance frameworks' },
+      policy: { feature: 'ViewAllCompliance', text: 'access compliance policies' },
+      subpolicy: { feature: 'ViewAllCompliance', text: 'access compliance subpolicies' },
+      notification: { feature: 'ViewAllCompliance', text: 'view compliance notifications' },
+      export: { feature: 'ViewAllCompliance', text: 'export compliance data' },
+      access: { feature: 'ViewAllCompliance', text: 'access the compliance module' },
+      
+      // CompliancePerformanceAnalytics operations
+      analytics: { feature: 'CompliancePerformanceAnalytics', text: 'view compliance analytics' },
+      kpi: { feature: 'CompliancePerformanceAnalytics', text: 'view compliance KPIs' }
+    };
 
-    const message = `You don't have permission to ${operationText}. Please contact your administrator to request access to this feature.`;
+    const operationInfo = operationFeatureMap[operation] || { feature: 'ViewAllCompliance', text: operation };
+    
+    const message = `You don't have permission to ${operationInfo.text}. Please contact your administrator to request the "${operationInfo.feature}" permission.`;
     
     PopupService.accessDenied(message, 'Compliance Access Denied', onContactAdmin || this.defaultContactAdmin);
+  },
+
+  /**
+   * Show access denied popup for specific main compliance features
+   * @param {string} feature - Main feature name (CreateCompliance, EditCompliance, etc.)
+   * @param {Function} onContactAdmin - Callback for contact admin action
+   */
+  showComplianceFeatureDenied(feature, onContactAdmin = null) {
+    console.log('[ACCESS_UTILS] showComplianceFeatureDenied called:', { feature });
+    
+    const featureMessages = {
+      'CreateCompliance': 'create compliance items',
+      'EditCompliance': 'edit compliance items',
+      'ApproveCompliance': 'approve compliance items',
+      'ViewAllCompliance': 'view compliance information',
+      'CompliancePerformanceAnalytics': 'view compliance performance analytics'
+    };
+    
+    const operationText = featureMessages[feature] || 'access this compliance feature';
+    const message = `You don't have permission to ${operationText}. Please contact your administrator to request the "${feature}" permission.`;
+    
+    PopupService.accessDenied(message, 'Compliance Access Denied', onContactAdmin || this.defaultContactAdmin);
+  },
+
+  /**
+   * Comprehensive compliance access control methods
+   */
+  
+  // Compliance viewing methods
+  showComplianceViewDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('view', onContactAdmin);
+  },
+  
+  showComplianceDashboardDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('dashboard', onContactAdmin);
+  },
+  
+  showComplianceVersioningDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('versioning', onContactAdmin);
+  },
+  
+  // Compliance creation methods
+  showComplianceCreateDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('create', onContactAdmin);
+  },
+  
+  showComplianceCloneDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('clone', onContactAdmin);
+  },
+  
+  // Compliance editing methods
+  showComplianceEditDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('edit', onContactAdmin);
+  },
+  
+  showComplianceToggleDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('toggle', onContactAdmin);
+  },
+  
+  showComplianceDeactivateDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('deactivate', onContactAdmin);
+  },
+  
+  // Compliance approval methods
+  showComplianceApproveDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('approve', onContactAdmin);
+  },
+  
+  showComplianceReviewDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('review', onContactAdmin);
+  },
+  
+  // Compliance analytics methods
+  showComplianceAnalyticsDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('analytics', onContactAdmin);
+  },
+  
+  showComplianceKPIDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('kpi', onContactAdmin);
+  },
+  
+  showCompliancePerformanceAnalyticsDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('analytics', onContactAdmin);
+  },
+  
+  // 5 Main Compliance Features
+  showCreateComplianceDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('create', onContactAdmin);
+  },
+  
+  showEditComplianceDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('edit', onContactAdmin);
+  },
+  
+  showApproveComplianceDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('approve', onContactAdmin);
+  },
+  
+  showViewAllComplianceDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('view', onContactAdmin);
+  },
+  
+  // Compliance export methods
+  showComplianceExportDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('export', onContactAdmin);
+  },
+  
+  // Compliance audit methods
+  showComplianceAuditDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('audit', onContactAdmin);
+  },
+  
+  // Compliance framework methods
+  showComplianceFrameworkDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('framework', onContactAdmin);
+  },
+  
+  showCompliancePolicyDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('policy', onContactAdmin);
+  },
+  
+  showComplianceSubpolicyDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('subpolicy', onContactAdmin);
+  },
+  
+  // Compliance category methods
+  showComplianceCategoryDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('category', onContactAdmin);
+  },
+  
+  showComplianceBusinessUnitDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('business-unit', onContactAdmin);
+  },
+  
+  // Compliance notification methods
+  showComplianceNotificationDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('notification', onContactAdmin);
+  },
+  
+  // Compliance assignment methods
+  showComplianceAssignDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('assign', onContactAdmin);
+  },
+  
+  // Compliance deletion methods
+  showComplianceDeleteDenied(onContactAdmin = null) {
+    this.showComplianceAccessDenied('delete', onContactAdmin);
   },
 
   /**

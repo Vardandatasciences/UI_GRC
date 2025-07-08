@@ -24,6 +24,12 @@ from grc.models import Framework, Policy, SubPolicy, Compliance
 from grc.routes.final_adithya import extract_document_sections
 from grc.routes.policy_text_extract import process_checked_sections
 
+# RBAC Permission imports
+from ..rbac.decorators import (
+    policy_create_required, policy_edit_required, policy_view_required,
+    policy_approve_required, rbac_required
+)
+
 # Global progress tracking
 processing_status = {}
 
@@ -65,6 +71,7 @@ def process_pdf_framework(pdf_path, task_id, output_dir):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_create_required
 def upload_framework_file(request):
     try:
         if 'file' not in request.FILES:
@@ -186,6 +193,7 @@ def upload_framework_file(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@policy_view_required
 def get_processing_status(request, task_id):
     """Get processing status for a task"""
     try:
@@ -203,6 +211,7 @@ def get_processing_status(request, task_id):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@policy_view_required
 def get_sections(request, task_id):
     """Get extracted sections for a processed document"""
     try:
@@ -308,6 +317,7 @@ def get_sections(request, task_id):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_edit_required
 def update_section(request):
     """Update section content"""
     try:
@@ -354,6 +364,7 @@ def update_section(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_create_required
 def create_checked_structure(request):
     """Create structure with checked items"""
     try:
@@ -442,6 +453,7 @@ def create_checked_structure(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@policy_view_required
 def get_extracted_policies(request, task_id):
     """Get extracted policy information from Excel file"""
     try:
@@ -542,6 +554,7 @@ def get_extracted_policies(request, task_id):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_create_required
 def direct_process_checked_sections(request):
     """
     Directly process the existing checked_sections directory without requiring upload or selection.
@@ -587,6 +600,7 @@ def direct_process_checked_sections(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_edit_required
 def save_updated_policies(request):
     """Save updated policy data to a new Excel file"""
     try:
@@ -639,6 +653,7 @@ def save_updated_policies(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_create_required
 def save_policies(request):
     """Save all policies to Excel file with timestamp"""
     try:
@@ -702,6 +717,7 @@ def save_policies(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_create_required
 def save_single_policy(request):
     """Save a single updated policy and create new Excel file with timestamp"""
     try:
@@ -802,6 +818,7 @@ def save_single_policy(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@policy_view_required
 def get_saved_excel_files(request, task_id):
     """Get list of all saved Excel files for a task"""
     try:
@@ -853,6 +870,7 @@ def get_saved_excel_files(request, task_id):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_edit_required
 def save_policy_details(request):
     """Save policy details information (step 6)"""
     try:
@@ -894,6 +912,7 @@ def save_policy_details(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_create_required
 def save_complete_policy_package(request):
     """Save complete policy package with 4-level hierarchy: Framework -> Policy -> Sub-Policy -> Compliance"""
     try:
@@ -1196,6 +1215,7 @@ def parse_compliance_items(control_text):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_create_required
 def save_framework_to_database(request):
     """Save the hierarchical policy package to the database in proper order"""
     print("===== STARTING SAVE TO DATABASE =====")
@@ -1423,6 +1443,7 @@ def save_framework_to_database(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@policy_view_required
 def load_default_data(request):
     """Load default framework data from temp_media directory"""
     try:

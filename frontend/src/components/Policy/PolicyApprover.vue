@@ -1,21 +1,49 @@
 <template>
   <div class="dashboard-container">
-    <div class="dashboard-header">
-      <h2 class="dashboard-heading">Policy Approver</h2>
-      <div class="dashboard-actions">
-        <button class="action-btn" @click="refreshData"><i class="fas fa-sync-alt"></i></button>
-        <button class="action-btn"><i class="fas fa-download"></i></button>
-        
+    <!-- RBAC Loading -->
+    <div v-if="rbacLoading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Checking access permissions...</p>
+    </div>
+    
+    <!-- RBAC Access Denied -->
+    <div v-else-if="!canApprovePolicies && !canViewPolicies && !rbacLoading" class="access-denied-container">
+      <div class="access-denied-content">
+        <i class="fas fa-shield-alt access-denied-icon"></i>
+        <h2>Access Denied</h2>
+        <p>You don't have permission to approve policies. Please contact your administrator.</p>
+        <div class="access-info">
+          <strong>Your Role:</strong> {{ userRole }}
+        </div>
+        <div class="access-actions">
+          <button @click="showAccessDenied('approve')" class="btn btn-warning">
+            <i class="fas fa-envelope"></i> Contact Admin
+          </button>
+          <button @click="$router.push('/policy')" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Policies
+          </button>
+        </div>
       </div>
     </div>
-
-    <!-- Performance Summary Cards for Policy Approver -->
-    <div class="performance-summary">
-      <!-- Loading state -->
-      <div v-if="isLoading" class="loading-message">
-        <i class="fas fa-spinner fa-spin"></i>
-        <span>Loading approval data...</span>
+    
+    <!-- Main Content -->
+    <template v-else>
+      <div class="dashboard-header">
+        <h2 class="dashboard-heading">Policy Approver</h2>
+        <div class="dashboard-actions">
+          <button class="action-btn" @click="refreshData"><i class="fas fa-sync-alt"></i></button>
+          <button class="action-btn"><i class="fas fa-download"></i></button>
+          
+        </div>
       </div>
+
+      <!-- Performance Summary Cards for Policy Approver -->
+      <div class="performance-summary">
+        <!-- Loading state -->
+        <div v-if="isLoading" class="loading-message">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Loading approval data...</span>
+        </div>
       
       <!-- Error state -->
       <div v-else-if="error" class="error-message">
@@ -670,6 +698,7 @@
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
@@ -679,6 +708,7 @@ import { PopupService } from '@/modules/popus/popupService'
 import PopupModal from '@/modules/popus/PopupModal.vue'
 import CollapsibleTable from '@/components/CollapsibleTable.vue'
 import DynamicTable from '@/components/DynamicTable.vue'
+import { PolicyRbacUtils } from '@/utils/policyRbacUtils'
 
 export default {
   name: 'PolicyApprover',
@@ -689,6 +719,13 @@ export default {
   },
   data() {
     return {
+      // RBAC State
+      rbacLoading: true,
+      rbacError: null,
+      canApprovePolicies: false,
+      canViewPolicies: false,
+      userRole: 'Not assigned',
+      
       approvals: [], // This will hold all policy approvals
       rejectedPolicies: [], // This will hold rejected policies
       rejectedSubpolicies: [], // This will hold rejected subpolicies specifically
@@ -735,8 +772,26 @@ export default {
       }
     }
   },
-  mounted() {
+  async mounted() {
     console.log('PolicyApprover component mounted');
+    
+    // Initialize RBAC first
+    try {
+      await this.initializeRBAC();
+    } catch (error) {
+      console.error('RBAC initialization failed:', error);
+      this.rbacError = error.message;
+      this.rbacLoading = false;
+      return;
+    }
+    
+    // Only proceed if user has permissions
+    if (!this.canApprovePolicies && !this.canViewPolicies) {
+      console.log('User does not have permission to approve or view policies');
+      this.rbacLoading = false;
+      return;
+    }
+    
     this.isLoading = true;
     
     Promise.all([
@@ -777,6 +832,35 @@ export default {
     }
   },
   methods: {
+    // Initialize RBAC
+    async initializeRBAC() {
+      try {
+        this.rbacLoading = true;
+        this.rbacError = null;
+        
+        await PolicyRbacUtils.init();
+        const userAccess = PolicyRbacUtils.getPolicyComponentAccess();
+        
+        this.canApprovePolicies = userAccess?.canApprovePolicy || false;
+        this.canViewPolicies = userAccess?.canViewAllPolicies || false;
+        this.userRole = PolicyRbacUtils.getUserRole()?.role || 'Not assigned';
+        
+        console.log('[PolicyApprover] RBAC initialized:', userAccess);
+        
+      } catch (error) {
+        console.error('[PolicyApprover] Failed to initialize RBAC:', error);
+        this.rbacError = error.message;
+        this.canApprovePolicies = false;
+        this.canViewPolicies = false;
+      } finally {
+        this.rbacLoading = false;
+      }
+    },
+    
+    showAccessDenied(operation = 'approve') {
+      PolicyRbacUtils.showPolicyAccessDenied(operation);
+    },
+    
     // Update the method to fetch policies and policy approvals
     fetchPolicies() {
       console.log('Fetching policy approvals for reviewer...');

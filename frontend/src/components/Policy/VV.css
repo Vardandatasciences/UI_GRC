@@ -1,0 +1,369 @@
+.VV-page-wrapper {
+ margin-left: 280px !important;
+  }
+  .VV-container {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 32px 24px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .VV-toggle-group {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+    border: 2px solid #111;
+    border-radius: 20px;
+    overflow: hidden;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    background: #fff;
+  }
+  .VV-toggle {
+    border: none;
+    outline: none;
+    background: #fff;
+    color: #111;
+    font-weight: 500;
+    font-size: 1.2rem;
+    padding: 8px 56px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    border-radius: 0;
+    margin: 0;
+    box-shadow: none;
+  }
+  .VV-toggle:first-child {
+    border-radius: 20px 0 0 20px;
+  }
+  .VV-toggle:last-child {
+    border-radius: 0 20px 20px 0;
+  }
+  .VV-toggle.VV-active {
+    background: #5676ff;
+    color: #fff;
+  }
+  .VV-top-dropdowns {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    justify-content: center;
+  }
+  .VV-top-dropdowns .VV-select-framework,
+  .VV-top-dropdowns .VV-select-policy {
+    width: 260px;
+    display: inline-block;
+    margin-bottom: 0;
+  }
+  .VV-select-framework, .VV-select-policy {
+    padding: 10px 12px;
+    border: 1px solid #bfcfff;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #f5f7ff;
+    box-shadow: none;
+    outline: none;
+    color: #2a3a5e;
+  }
+  .VV-policy-dropdowns {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .VV-form-container {
+    background: #f8faff;
+    border-radius: 12px;
+    padding: 24px 20px;
+    box-shadow: 0 2px 8px rgba(61,90,254,0.04);
+  }
+  .VV-form-group {
+    margin-bottom: 18px;
+  }
+  .VV-label {
+    font-weight: 600;
+    color: #2a3a5e;
+    margin-bottom: 4px;
+    display: block;
+  }
+  .VV-input, .VV-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #bfcfff !important;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #fff;
+    margin-bottom: 4px;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  .VV-input:focus, .VV-textarea:focus {
+    border-color: #3d5afe;
+    box-shadow: 0 0 0 2px rgba(61,90,254,0.08);
+  }
+  input:required:invalid, textarea:required:invalid, select:required:invalid {
+    border-color: #bfcfff !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  .VV-textarea {
+    resize: vertical;
+  }
+  .VV-desc {
+    font-size: 0.92rem;
+    color: #7a7a7a;
+    margin-left: 2px;
+  }
+  .VV-row {
+    display: flex;
+    gap: 18px;
+  }
+  .VV-half {
+    flex: 1;
+  }
+  .VV-container form {
+    display: flex;
+    flex-direction: column;
+  }
+  .VV-submit {
+    align-self: center;
+    background: #3d5afe;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: background 0.2s;
+  }
+  .VV-submit:hover {
+    background: #2a3a5e;
+  }
+  .VV-policy-tabs-container {
+    margin-top: 32px;
+    background: transparent;
+    box-shadow: none;
+    max-width: 1300px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+  }
+  .VV-policy-tabs-row {
+    background: #fff;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 2px 8px rgba(61,90,254,0.04);
+    padding: 24px 32px 12px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+  }
+  .VV-policy-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .VV-policy-tab {
+    background: #f5f7ff;
+    border: 1px solid #bfcfff;
+    color: #2a3a5e;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 10px 32px;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.2s, color 0.2s;
+    margin-right: 8px;
+    position: relative;
+  }
+  .VV-policy-tab-active {
+    background: #3d5afe;
+    color: #fff;
+    border-bottom: 2px solid #fff;
+  }
+  .VV-add-policy-tab {
+    background: #e3eaff;
+    border: 1px dashed #3d5afe;
+    color: #3d5afe;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-left: 16px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .VV-add-policy-tab:hover {
+    background: #3d5afe;
+    color: #fff;
+  }
+  .VV-policy-tab-content {
+    margin-top: 12px;
+  }
+  .VV-policy-form-container {
+    background: #fff;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 2px 8px rgba(61,90,254,0.04);
+    padding: 32px 32px 24px 32px;
+    margin-top: 0;
+    position: relative;
+  }
+  .VV-exclude-policy-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: #ef6d6d;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 18px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(255,62,62,0.08);
+    transition: background 0.2s;
+    display: block;
+  }
+  .VV-exclude-policy-btn:hover {
+    background: #ff6666;
+  }
+  .VV-subpolicy-tabs-container {
+    margin-top: 28px;
+    background: transparent;
+    box-shadow: none;
+    max-width: 100%;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+  }
+  .VV-subpolicy-tabs-row {
+    background: #fff;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 2px 8px rgba(61,90,254,0.04);
+    padding: 18px 24px 8px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+  }
+  .VV-subpolicy-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .VV-subpolicy-tab {
+    background: #f5f7ff;
+    border: 1px solid #bfcfff;
+    color: #2a3a5e;
+    font-weight: 600;
+    font-size: 0.98rem;
+    padding: 7px 22px;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.2s, color 0.2s;
+    margin-right: 8px;
+    position: relative;
+  }
+  .VV-subpolicy-tab-active {
+    background: #3d5afe;
+    color: #fff;
+    border-bottom: 2px solid #fff;
+  }
+  .VV-add-subpolicy-tab {
+    background: #e3eaff;
+    border: 1px dashed #3d5afe;
+    color: #3d5afe;
+    font-weight: 600;
+    font-size: 0.98rem;
+    padding: 7px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-left: 16px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .VV-add-subpolicy-tab:hover {
+    background: #3d5afe;
+    color: #fff;
+  }
+  .VV-subpolicy-form-container {
+    background: #fff;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 2px 8px rgba(61,90,254,0.04);
+    padding: 24px 32px 18px 32px;
+    margin-top: 0;
+    position: relative;
+    max-width: 100%;
+    width: 100%;
+  }
+  .VV-exclude-subpolicy-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: #ffb3b3;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 14px;
+    font-size: 0.98rem;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(255,62,62,0.08);
+    transition: background 0.2s;
+    display: block;
+  }
+  .VV-exclude-subpolicy-btn:hover {
+    background: #ff6666;
+  }
+  .VV-universal-submit-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+    margin-bottom: 32px;
+    margin-left: 280px;
+  }
+  .VV-universal-submit-btn {
+    background: #3d5afe;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 48px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-shadow: 0 2px 8px rgba(61,90,254,0.08);
+  }
+  .VV-universal-submit-btn:hover {
+    background: #2540a9;
+  } 
+  .VV-page-header {
+    margin-bottom: 32px;
+    padding-top: 24px;
+    padding-bottom: 8px;
+  }
+  
+  .VV-page-header h1 {
+    font-size: 48px;
+    font-weight: 700;
+    color: #23272f;
+    margin: 0 0 8px 0;
+    letter-spacing: -1px;
+    font-family: inherit;
+  }
+  
+  .VV-header-underline {
+    width: 120px;
+    height: 5px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #3b82f6 0%, #7b6fdd 100%);
+    margin-top: 0;
+    margin-left: 4px;
+  }

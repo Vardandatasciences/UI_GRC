@@ -286,6 +286,7 @@ import { PopupModal } from '../../modules/popup';
 import PopupMixin from './mixins/PopupMixin';
 import { CompliancePopups } from './utils/popupUtils';
 import CollapsibleTable from '../CollapsibleTable.vue';
+import { SessionUtils } from '@/utils/accessUtils';
  
 export default {
   name: 'ComplianceApprover',
@@ -304,7 +305,7 @@ export default {
       rejectedCompliances: [],
       showEditComplianceModal: false,
       editingCompliance: null,
-      userId: 2, // Default user id
+      userId: null, // Will be set from session
       isLoading: false,
       error: null,
       counts: {
@@ -325,6 +326,17 @@ export default {
   },
   async mounted() {
     console.log('ComplianceApprover mounted');
+    
+    // Get user_id from session
+    this.userId = this.getUserId();
+    console.log('ComplianceApprover userId from session:', this.userId);
+    
+    if (!this.userId) {
+      console.error('No user_id found in session');
+      this.error = 'Please login to access this page';
+      return;
+    }
+    
     await this.refreshData();
     
     // Set up auto-refresh every 30 seconds
@@ -347,10 +359,8 @@ export default {
       console.log('Refreshing data...');
       
       try {
-        // Fetch approvals with reviewer_id
-        const approvalsResponse = await complianceService.getCompliancePolicyApprovals({
-          reviewer_id: this.userId
-        });
+        // Fetch approvals - backend will get user_id from session
+        const approvalsResponse = await complianceService.getCompliancePolicyApprovals();
         console.log('Approvals response:', approvalsResponse);
 
         if (approvalsResponse.data.success) {
@@ -961,6 +971,12 @@ export default {
         ...this.collapsibleStates,
         [section]: !this.collapsibleStates[section]
       };
+    },
+    getUserId() {
+      // Get user_id from session storage
+      const userId = SessionUtils.getUserId();
+      console.log('getUserId() returned:', userId);
+      return userId;
     },
   },
   computed: {

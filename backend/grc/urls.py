@@ -82,6 +82,7 @@ from .routes.policy import (
     get_policy_extraction_progress,
     get_policy_counts_by_status,
     get_policies_paginated_by_status,
+    upload_policy_document,
 )
 from .routes.upload_framework import (
     upload_framework_file, 
@@ -302,6 +303,7 @@ policy_urlpatterns = [
     path('policy-status-change-requests-by-reviewer/', get_policy_status_change_requests_by_reviewer, name='get-policy-status-change-requests-by-reviewer'),
     path('policy-status-change-requests-by-reviewer/<int:reviewer_id>/', get_policy_status_change_requests_by_reviewer, name='get-policy-status-change-requests-by-reviewer-filtered'),
     path('policies/<int:policy_id>/test-debug/', test_policy_status_debug, name='test-policy-status-debug'),
+    path('upload-policy-document/', upload_policy_document, name='upload-policy-document'),
     
     # Entities and Utilities
     path('entities/', get_entities, name='get-entities'),

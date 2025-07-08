@@ -427,6 +427,7 @@
 <script>
 import { Bar, Pie, Doughnut, Line as LineChart } from 'vue-chartjs'
 import { complianceService } from '@/services/api'
+import AccessUtils from '@/utils/accessUtils'
 import {
   Chart as ChartJS,
   Title,
@@ -921,6 +922,12 @@ export default {
           throw new Error(response.data?.message || 'Failed to fetch data');
         }
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showCompliancePerformanceAnalyticsDenied();
+          return;
+        }
+        
         console.error('Error fetching maturity data:', error);
         this.error = error.response?.data?.message || error.message || 'Failed to load data';
       } finally {
@@ -973,6 +980,12 @@ export default {
           throw new Error(response.data?.message || 'Failed to fetch non-compliance count');
         }
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showCompliancePerformanceAnalyticsDenied();
+          return;
+        }
+        
         console.error('Error fetching non-compliance count:', error);
         this.nonComplianceError = error.response?.data?.message || error.message || 'Failed to load non-compliance data';
       } finally {
@@ -992,6 +1005,12 @@ export default {
           throw new Error(response.data?.message || 'Failed to fetch mitigated risks count');
         }
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showCompliancePerformanceAnalyticsDenied();
+          return;
+        }
+        
         console.error('Error fetching mitigated risks count:', error);
         this.mitigatedError = error.response?.data?.message || error.message || 'Failed to load mitigated risks data';
       } finally {
@@ -1012,6 +1031,12 @@ export default {
           throw new Error(response.data?.message || 'Failed to fetch automated controls data');
         }
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showCompliancePerformanceAnalyticsDenied();
+          return;
+        }
+        
         console.error('Error fetching automated controls data:', error);
         this.automatedError = error.response?.data?.message || error.message || 'Failed to load automated controls data';
       } finally {
@@ -1022,13 +1047,14 @@ export default {
     updateAutomatedChartData() {
       if (!this.automatedData) return;
       
+      // Add null checks and default values to prevent null reference errors
+      const automatedPercentage = this.automatedData.automated_percentage || 0;
+      const manualPercentage = this.automatedData.manual_percentage || 0;
+      
       this.automatedChartData = {
         labels: ['Automated', 'Manual'],
         datasets: [{
-          data: [
-            this.automatedData.automated_percentage,
-            this.automatedData.manual_percentage
-          ],
+          data: [automatedPercentage, manualPercentage],
           backgroundColor: [
             '#3b82f6',  // Blue for automated
             '#94a3b8'   // Gray for manual
@@ -1051,6 +1077,12 @@ export default {
           throw new Error(response.data?.message || 'Failed to fetch repetitions data');
         }
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showCompliancePerformanceAnalyticsDenied();
+          return;
+        }
+        
         console.error('Error fetching repetitions data:', error);
         this.repetitionsError = error.response?.data?.message || error.message || 'Failed to load repetitions data';
       } finally {
@@ -1059,14 +1091,17 @@ export default {
     },
 
     updateRepetitionsChartData() {
-      if (!this.repetitionsData) return;
+      if (!this.repetitionsData || !this.repetitionsData.distribution) return;
       
       const distribution = this.repetitionsData.distribution;
       
+      // Add null check for distribution array
+      if (!Array.isArray(distribution) || distribution.length === 0) return;
+      
       this.repetitionsChartData = {
-        labels: distribution.map(item => item.repetitions),
+        labels: distribution.map(item => item?.repetitions || 0),
         datasets: [{
-          data: distribution.map(item => item.occurrences),
+          data: distribution.map(item => item?.occurrences || 0),
           backgroundColor: '#dc2626',  // Red color
           borderRadius: 4,
           maxBarThickness: 32
@@ -1092,6 +1127,12 @@ export default {
           throw new Error(response.data?.message || 'Failed to fetch on-time mitigation data');
         }
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showCompliancePerformanceAnalyticsDenied();
+          return;
+        }
+        
         console.error('Error fetching on-time mitigation data:', error);
         this.ontimeMitigationError = error.response?.data?.message || error.message || 'Failed to load on-time mitigation data';
       } finally {
@@ -1111,6 +1152,12 @@ export default {
           throw new Error(response.data?.message || 'Failed to fetch status overview data');
         }
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showCompliancePerformanceAnalyticsDenied();
+          return;
+        }
+        
         console.error('Error fetching status overview:', error);
         this.statusOverviewError = error.response?.data?.message || error.message || 'Failed to load status overview';
       } finally {

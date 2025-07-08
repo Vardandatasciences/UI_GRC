@@ -767,6 +767,7 @@
 <script>
 import { complianceService } from '@/services/api';
 import { CompliancePopups } from './utils/popupUtils';
+import AccessUtils from '@/utils/accessUtils';
 
 export default {
   name: 'EditCompliance',
@@ -916,6 +917,12 @@ export default {
           this.error = 'Failed to load compliance data';
         }
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showEditComplianceDenied();
+          return;
+        }
+        
         console.error('Error loading compliance:', error);
         this.error = 'Failed to load compliance data. Please try again.';
       } finally {
@@ -934,6 +941,12 @@ export default {
           this.error = 'Failed to load approvers';
         }
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showEditComplianceDenied();
+          return;
+        }
+        
         console.error('Failed to load users:', error);
         this.error = 'Failed to load approvers. Please try again.';
       } finally {

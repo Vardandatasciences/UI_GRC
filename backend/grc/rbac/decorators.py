@@ -284,5 +284,119 @@ def require_all_permissions(*required_permissions):
         return wrapper
     return decorator
 
+# =====================================================
+# COMPLIANCE MODULE RBAC DECORATORS - 5 MAIN FEATURES
+# =====================================================
+
+def create_compliance_required(view_func):
+    """Decorator for CreateCompliance feature - creating new compliance items"""
+    return rbac_required(required_permission='create_compliance')(view_func)
+
+def edit_compliance_required(view_func):
+    """Decorator for EditCompliance feature - editing existing compliance items"""
+    return rbac_required(required_permission='edit_compliance')(view_func)
+
+def approve_compliance_required(view_func):
+    """Decorator for ApproveCompliance feature - approving compliance items"""
+    return rbac_required(required_permission='approve_compliance')(view_func)
+
+def view_all_compliance_required(view_func):
+    """Decorator for ViewAllCompliance feature - viewing compliance data"""
+    return rbac_required(required_permission='view_all_compliance')(view_func)
+
+def compliance_performance_analytics_required(view_func):
+    """Decorator for CompliancePerformanceAnalytics feature - analytics and reporting"""
+    return rbac_required(required_permission='compliance_performance_analytics')(view_func)
+
+# =====================================================
+# COMPLIANCE FEATURE MAPPING FUNCTIONS
+# =====================================================
+
+def map_compliance_operation_to_permission(operation):
+    """
+    Map specific compliance operations to one of the 5 main features
+    
+    Args:
+        operation: The specific operation being performed
+        
+    Returns:
+        The main feature permission required
+    """
+    operation_mapping = {
+        # CreateCompliance operations
+        'create': 'create_compliance',
+        'clone': 'create_compliance',
+        'add': 'create_compliance',
+        'initialize': 'create_compliance',
+        
+        # EditCompliance operations  
+        'edit': 'edit_compliance',
+        'update': 'edit_compliance',
+        'modify': 'edit_compliance',
+        'toggle': 'edit_compliance',
+        'deactivate': 'edit_compliance',
+        'activate': 'edit_compliance',
+        'delete': 'edit_compliance',
+        'manage_categories': 'edit_compliance',
+        'manage_business_units': 'edit_compliance',
+        
+        # ApproveCompliance operations
+        'approve': 'approve_compliance',
+        'reject': 'approve_compliance',
+        'review': 'approve_compliance',
+        'submit_review': 'approve_compliance',
+        'resubmit': 'approve_compliance',
+        
+        # ViewAllCompliance operations
+        'view': 'view_all_compliance',
+        'list': 'view_all_compliance',
+        'get': 'view_all_compliance',
+        'read': 'view_all_compliance',
+        'export': 'view_all_compliance',
+        'dashboard': 'view_all_compliance',
+        'versioning': 'view_all_compliance',
+        'audit_info': 'view_all_compliance',
+        'framework_info': 'view_all_compliance',
+        'details': 'view_all_compliance',
+        
+        # CompliancePerformanceAnalytics operations
+        'analytics': 'compliance_performance_analytics',
+        'kpi': 'compliance_performance_analytics',
+        'metrics': 'compliance_performance_analytics',
+        'reports': 'compliance_performance_analytics',
+        'statistics': 'compliance_performance_analytics'
+    }
+    
+    return operation_mapping.get(operation, 'view_all_compliance')  # Default to view permission
+
+# =====================================================
+# LEGACY DECORATOR ALIASES (for backward compatibility)
+# =====================================================
+
+# Alias the new decorators to old names for compatibility
+compliance_create_required = create_compliance_required
+compliance_edit_required = edit_compliance_required
+compliance_approve_required = approve_compliance_required
+compliance_view_required = view_all_compliance_required
+compliance_analytics_required = compliance_performance_analytics_required
+
+# Map other operations to main features
+compliance_delete_required = edit_compliance_required
+compliance_toggle_required = edit_compliance_required
+compliance_deactivate_required = edit_compliance_required
+compliance_clone_required = create_compliance_required
+compliance_review_required = approve_compliance_required
+compliance_dashboard_required = view_all_compliance_required
+compliance_versioning_required = view_all_compliance_required
+compliance_export_required = view_all_compliance_required
+compliance_kpi_required = compliance_performance_analytics_required
+compliance_framework_required = view_all_compliance_required
+compliance_policy_required = view_all_compliance_required
+compliance_subpolicy_required = view_all_compliance_required
+compliance_audit_required = view_all_compliance_required
+compliance_notification_required = view_all_compliance_required
+compliance_category_required = edit_compliance_required
+compliance_business_unit_required = edit_compliance_required
+
 
 

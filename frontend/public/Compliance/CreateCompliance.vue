@@ -536,6 +536,7 @@
 import { complianceService } from '@/services/api';
 import { PopupService, PopupModal } from '@/modules/popup';
 import { CompliancePopups } from './utils/popupUtils';
+import { SessionUtils } from '@/utils/accessUtils';
 
 export default {
   name: 'CreateCompliance',
@@ -673,6 +674,15 @@ export default {
     }
   },
   async created() {
+    // Check if user is logged in
+    if (!SessionUtils.isLoggedIn()) {
+      console.warn('[CREATE_COMPLIANCE] User not logged in, redirecting to login');
+      this.$router.push('/login');
+      return;
+    }
+    
+    console.log('[CREATE_COMPLIANCE] User session:', SessionUtils.getUserSession());
+    
     await this.loadFrameworks();
     await this.loadUsers();
     await this.loadCategoryOptions();
@@ -1460,6 +1470,9 @@ export default {
             throw new Error('SubPolicy is required');
           }
 
+          // Get user ID from session
+          const userId = SessionUtils.getUserId() || '1';
+          
           const complianceData = {
             SubPolicy: this.selectedSubPolicy.id,
             ComplianceTitle: compliance.ComplianceTitle?.trim(),
@@ -1483,13 +1496,14 @@ export default {
             Probability: parseFloat(compliance.Probability) || 5.0,
             Status: 'Under Review',
             ComplianceVersion: "1.0",
-            reviewer: parseInt(compliance.reviewer_id), // Ensure it's a number
-            CreatedByName: compliance.CreatedByName || compliance.reviewer_id?.toString(),
+            reviewer: parseInt(compliance.reviewer_id) || parseInt(userId), // Use session user ID if no reviewer selected
+            CreatedByName: compliance.CreatedByName || userId,
             Applicability: compliance.Applicability?.trim(),
             MaturityLevel: compliance.MaturityLevel || 'Initial',
             ActiveInactive: compliance.ActiveInactive || 'Active',
             PermanentTemporary: compliance.PermanentTemporary || 'Permanent',
-            ApprovalDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            ApprovalDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            user_id: userId // Include user_id for session validation
           };
 
           // Validate required fields

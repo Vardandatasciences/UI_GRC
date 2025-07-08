@@ -425,8 +425,15 @@ export default {
         console.log('Compliances response:', response);
         
         if (response.data.success && response.data.compliances) {
-          this.complianceList = response.data.compliances;
-          console.log('Loaded compliances:', this.complianceList);
+          // Initialize mitigationSteps for each compliance
+          this.complianceList = response.data.compliances.map(compliance => {
+            const mitigationSteps = this.parseMitigationSteps(compliance.mitigation);
+            return {
+              ...compliance,
+              mitigationSteps
+            };
+          });
+          console.log('Loaded compliances with mitigation steps:', this.complianceList);
         } else {
           console.error('Error in response:', response.data);
           this.error = 'Failed to load compliances';
@@ -474,9 +481,20 @@ export default {
       return date.toISOString().split('T')[0];
     },
     navigateToEdit(compliance) {
+      // Initialize the mitigation steps before navigation
+      if (compliance.mitigation) {
+        console.log('Original mitigation data:', compliance.mitigation);
+        compliance.mitigationSteps = Object.entries(compliance.mitigation).map(entry => ({
+          description: entry[1]
+        }));
+      } else {
+        compliance.mitigationSteps = [{ description: '' }];
+      }
+      console.log('Initialized mitigation steps:', compliance.mitigationSteps);
       this.$router.push(`/compliance/edit/${compliance.ComplianceId}`);
     },
     parseMitigationSteps(mitigation) {
+      console.log('Parsing mitigation:', mitigation);
       if (!mitigation) return [{ description: '' }];
       
       try {
@@ -487,6 +505,7 @@ export default {
             description: typeof step === 'string' ? step : step.description || ''
           }));
         } else if (typeof mitigation === 'object') {
+          // Convert numbered object format to array of descriptions
           return Object.values(mitigation).map(step => ({
             description: typeof step === 'string' ? step : step.description || ''
           }));
@@ -498,12 +517,15 @@ export default {
       return [{ description: '' }];
     },
     addStep(row) {
+      console.log('Adding step to row:', row);
       if (!row.mitigationSteps) {
         row.mitigationSteps = [];
       }
       row.mitigationSteps.push({ description: '' });
+      this.onMitigationStepChange(row);
     },
     removeStep(row, index) {
+      console.log('Removing step at index:', index, 'from row:', row);
       row.mitigationSteps.splice(index, 1);
       if (row.mitigationSteps.length === 0) {
         row.mitigationSteps.push({ description: '' });
@@ -511,10 +533,35 @@ export default {
       this.onMitigationStepChange(row);
     },
     onMitigationStepChange(row) {
-      row.mitigation = row.mitigationSteps.reduce((obj, step, index) => {
-        obj[`step${index + 1}`] = step.description;
-        return obj;
-      }, {});
+      console.log('Mitigation step change triggered for row:', row);
+      console.log('Current mitigation steps:', row.mitigationSteps);
+      
+      // Validate each mitigation step
+      const isValid = row.mitigationSteps.every(step => step.description.length >= 10);
+      if (!isValid) {
+        CompliancePopups.error({
+          message: 'Each mitigation step must be at least 10 characters long'
+        });
+        return; // Don't proceed if validation fails
+      }
+      
+      // Format mitigation steps into the required structure with numeric keys
+      const formattedSteps = {};
+      row.mitigationSteps.forEach((step, index) => {
+        const description = step.description.trim();
+        if (description) {  // Only add non-empty steps
+          formattedSteps[`${index + 1}`] = description;  // Convert number to string key
+        }
+      });
+      
+      // Update the mitigation property with formatted steps
+      if (Object.keys(formattedSteps).length > 0) {
+        row.mitigation = formattedSteps;
+        console.log('Updated mitigation data:', row.mitigation);
+      } else {
+        row.mitigation = null;
+        console.log('No valid mitigation steps found, setting to null');
+      }
     },
     startCopy(compliance) {
       // Navigate to the copy compliance page with the compliance ID and current context
@@ -545,6 +592,32 @@ export default {
     },
     onSubPolicyChange(option) {
       this.selectedSubPolicyId = option.value;
+    },
+    async handleSubmit(formData) {
+      try {
+        // Ensure mitigation data is properly formatted before submission
+        if (formData.mitigationSteps && formData.mitigationSteps.length > 0) {
+          const formattedMitigation = {};
+          formData.mitigationSteps.forEach((step, index) => {
+            if (step.description.trim()) {
+              formattedMitigation[`${index + 1}`] = step.description.trim();
+            }
+          });
+          if (Object.keys(formattedMitigation).length > 0) {
+            formData.mitigation = formattedMitigation;
+          }
+        }
+        
+        console.log('Submitting form data with mitigation:', formData.mitigation);
+        
+        await complianceService.updateCompliance(formData);
+        CompliancePopups.complianceUpdated(formData);
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        CompliancePopups.error({
+          message: `Failed to update compliance: ${error.message || error}`
+        });
+      }
     },
   }
 }
@@ -770,51 +843,70 @@ export default {
   border-radius: 4px;
   padding: 1rem;
   background: #f9f9f9;
+  position: relative;
 }
 
 .step-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 0.5rem;
 }
 
 .step-number {
-  font-weight: 500;
-  color: #666;
+  font-weight: 600;
 }
 
 .remove-step-btn {
   background: none;
   border: none;
+  cursor: pointer;
   color: #dc3545;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
+  font-size: 0.8rem;
 }
 
-.remove-step-btn:hover {
-  background: #fee;
+.step-description {
+  position: relative;
+  margin-top: 0.5rem;
 }
 
-.add-step-btn {
-  background: #f8f9fa;
-  border: 1px dashed #ddd;
-  color: #666;
-  padding: 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
+.step-description textarea {
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  min-height: 60px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
 }
 
-.add-step-btn:hover {
-  background: #fff;
-  border-color: #999;
-  color: #333;
+.step-description .char-count {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 0.8rem;
+  color: #666;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.step-description .char-count.invalid {
+  color: #dc3545;
+}
+
+.mitigation-step-input {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 8px 24px 8px; /* Added padding at bottom for character count */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.mitigation-step-input:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .compliance-copy-form-grid {

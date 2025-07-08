@@ -130,6 +130,7 @@ import { complianceService } from '@/services/api';
 import axios from 'axios';
 import CustomDropdown from '@/components/CustomDropdown.vue';
 import DynamicTable from '@/components/DynamicTable.vue';
+import AccessUtils from '@/utils/accessUtils';
 
 export default {
   name: 'ComplianceVersionList',
@@ -208,7 +209,17 @@ export default {
     }
   },
   mounted() {
-    this.loadFrameworks();
+    // Check if user has access to compliance versioning
+    try {
+      this.loadFrameworks();
+    } catch (error) {
+      // If there's an immediate error accessing the module, show access denied
+      if (error.response && [401, 403].includes(error.response.status)) {
+        AccessUtils.showComplianceVersioningDenied();
+        return;
+      }
+      throw error; // Re-throw if it's not an access error
+    }
   },
   methods: {
     async loadFrameworks() {
@@ -245,6 +256,12 @@ export default {
         }));
       } catch (error) {
         console.error('Error loading frameworks:', error);
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showComplianceFrameworkDenied();
+          return;
+        }
+        this.error = 'Failed to load frameworks';
       } finally {
         this.loading = false;
       }
@@ -289,6 +306,12 @@ export default {
         this.selectedSubPolicy = '';
       } catch (error) {
         console.error('Error loading policies:', error);
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showCompliancePolicyDenied();
+          return;
+        }
+        this.error = 'Failed to load policies';
       } finally {
         this.loading = false;
       }
@@ -333,6 +356,12 @@ export default {
         this.selectedSubPolicy = '';
       } catch (error) {
         console.error('Error loading subpolicies:', error);
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showComplianceSubpolicyDenied();
+          return;
+        }
+        this.error = 'Failed to load subpolicies';
       } finally {
         this.loading = false;
       }
@@ -392,6 +421,13 @@ export default {
         }
       } catch (error) {
         console.error('Error loading compliances:', error);
+        
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showComplianceViewDenied();
+          return;
+        }
+        
         // Check if it's a 500 error
         if (error.response && error.response.status === 500) {
           console.error('Server error (500):', error.response.data);
@@ -408,6 +444,11 @@ export default {
             }
           } catch (altError) {
             console.error('Alternative endpoint also failed:', altError);
+            // Check access control for alternative endpoint too
+            if (altError.response && [401, 403].includes(altError.response.status)) {
+              AccessUtils.showComplianceViewDenied();
+              return;
+            }
           }
         } else {
           this.error = error.message || 'Failed to load compliances';
@@ -490,6 +531,17 @@ export default {
       } catch (error) {
         console.error('Error toggling compliance status:', error);
         
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showComplianceToggleDenied();
+          // Reset the checkbox state to match the actual status
+          const checkbox = document.getElementById(`toggle-${compliance.ComplianceId}`);
+          if (checkbox) {
+            checkbox.checked = compliance.ActiveInactive === 'Active';
+          }
+          return;
+        }
+        
         // Show detailed error information
         let errorMsg = 'Error toggling compliance status';
         if (error.response) {
@@ -550,6 +602,15 @@ export default {
         }
       } catch (error) {
         console.error('Error submitting deactivation request:', error);
+        
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showComplianceDeactivateDenied();
+          this.showDeactivationDialog = false;
+          this.complianceToDeactivate = null;
+          return;
+        }
+        
         const errorMessage = error.response?.data?.message || error.message || 'Error submitting deactivation request';
         alert(`Error: ${errorMessage}`);
       } finally {

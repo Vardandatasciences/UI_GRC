@@ -14,12 +14,12 @@ from ..utils import send_log, get_client_ip
 # RBAC Permission imports - Add comprehensive RBAC permissions
 from ..rbac.permissions import (
     PolicyCreatePermission, PolicyViewPermission,
-    PolicyApprovePermission, PolicyEditPermission
+    PolicyApprovePermission, PolicyEditPermission, PolicyVersioningPermission
 )
 
 
 @api_view(['POST'])
- # RBAC: Require PolicyVersioningPermission for creating policy versions
+@permission_classes([PolicyVersioningPermission])  # RBAC: Require PolicyVersioningPermission for creating policy versions
 def create_policy_version(request, policy_id):
     """
     Create a new version of a policy with its subpolicies.

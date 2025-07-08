@@ -10,11 +10,9 @@ import { PopupService } from '../../../modules/popup';
 export const CompliancePopups = {
   /**
    * Show a popup for successful compliance creation
-   * @param {Object} compliance - The created compliance data
    */
-  complianceCreated(compliance) {
-    const complianceId = compliance.compliance_id || compliance.ComplianceId;
-    const message = `Compliance #${complianceId} created successfully and sent for review.`;
+  complianceCreated() {
+    const message = `Compliance created successfully and sent for review.`;
     PopupService.success(message, 'Compliance Created');
   },
 
@@ -22,9 +20,8 @@ export const CompliancePopups = {
    * Show a popup for successful compliance update
    * @param {Object} compliance - The updated compliance data
    */
-  complianceUpdated(compliance) {
-    const complianceId = compliance.compliance_id || compliance.ComplianceId;
-    const message = `Compliance #${complianceId} updated successfully and sent for review.`;
+  complianceUpdated() {
+    const message = `Compliance updated successfully and sent for review.`;
     PopupService.success(message, 'Compliance Updated');
   },
 
@@ -32,9 +29,9 @@ export const CompliancePopups = {
    * Show a popup for successful compliance clone
    * @param {Object} compliance - The cloned compliance data
    */
-  complianceCloned(compliance) {
-    const complianceId = compliance.compliance_id || compliance.ComplianceId;
-    const message = `Compliance #${complianceId} cloned successfully and sent for review.`;
+  complianceCloned() {
+    
+    const message = `Compliance  cloned successfully and sent for review.`;
     PopupService.success(message, 'Compliance Cloned');
   }
 };

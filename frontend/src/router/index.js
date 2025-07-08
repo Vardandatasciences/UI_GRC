@@ -7,8 +7,7 @@ import AllPolicies from '../components/Policy/AllPolicies.vue'
 // import AssignAudit from '../components/Auditor/AssignAudit.vue'
 import ActivePolicies from '../components/Policy/ActivePolicies.vue'
 import Framework from '../components/Policy/Framework.vue'
-import Tailoring from '../components/Policy/Tailoring.vue'
-import Versioning from '../components/Policy/Versioning.vue'
+import VV from '../components/Policy/VV.vue'
 import TreePolicies from '../components/Policy/TreePolicies.vue'
 // import CreatePolicy from '../components/Policy/CreatePolicy.vue'
 import FrameworkExplorer from '../components/Policy/FrameworkExplorer.vue'
@@ -16,6 +15,7 @@ import FrameworkPolicies from '../components/Policy/FrameworkPolicies.vue'
 import KPIDashboard from '../components/Policy/KPIDashboard.vue'
 import FrameworkApprover from '../components/Framework/FrameworkApprover.vue'
 import StatusChangeRequests from '../components/Policy/StatusChangeRequests.vue'
+import TT from '../components/Policy/TT.vue'
 
 import AssignAudit from '../components/Auditor/AssignAudit.vue'
 import AuditorDashboard from '../components/Auditor/AuditorDashboard.vue'
@@ -165,14 +165,14 @@ const routes = [
   },
   {
     path: '/create-policy/tailoring',
-    name: 'Tailoring',
-    component: Tailoring,
+    name: 'TT',
+    component: TT,
     meta: { requiresAuth: true }
   },
   {
     path: '/create-policy/versioning',
     name: 'Versioning',
-    component: Versioning,
+    component: VV,
     meta: { requiresAuth: true }
   },
   {

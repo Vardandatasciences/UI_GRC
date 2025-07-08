@@ -482,6 +482,7 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { PopupService } from '@/modules/popup'
 import DynamicTable from '../DynamicTable.vue'
+import AccessUtils from '@/utils/accessUtils'
 
 // State
 const frameworks = ref([])
@@ -564,6 +565,12 @@ onMounted(async () => {
       error.value = 'Invalid response format from server'
     }
   } catch (err) {
+    // Check if it's an access control error
+    if (err.response && [401, 403].includes(err.response.status)) {
+      AccessUtils.showViewAllComplianceDenied();
+      return;
+    }
+    
     error.value = 'Failed to load frameworks'
     console.error('Error fetching frameworks:', err.response?.data || err.message)
     frameworks.value = []
@@ -597,6 +604,12 @@ async function selectFramework(fw) {
       policies.value = []
     }
   } catch (err) {
+    // Check if it's an access control error
+    if (err.response && [401, 403].includes(err.response.status)) {
+      AccessUtils.showViewAllComplianceDenied();
+      return;
+    }
+    
     error.value = 'Failed to load policies'
     console.error('Error fetching policies:', err)
     policies.value = []
@@ -625,6 +638,12 @@ async function selectPolicy(policy) {
       subpolicies.value = []
     }
   } catch (err) {
+    // Check if it's an access control error
+    if (err.response && [401, 403].includes(err.response.status)) {
+      AccessUtils.showViewAllComplianceDenied();
+      return;
+    }
+    
     error.value = 'Failed to load subpolicies'
     console.error('Error fetching subpolicies:', err)
     subpolicies.value = []
@@ -692,6 +711,12 @@ async function selectSubpolicy(subpolicy) {
       selectedSubpolicy.value.compliances = [];
     }
   } catch (err) {
+    // Check if it's an access control error
+    if (err.response && [401, 403].includes(err.response.status)) {
+      AccessUtils.showViewAllComplianceDenied();
+      return;
+    }
+    
     console.error('Error fetching subpolicy compliances:', err);
     error.value = 'Failed to load compliances';
     selectedSubpolicy.value.compliances = [];
@@ -816,6 +841,12 @@ async function handleExport(format) {
           
           PopupService.success(`Export completed successfully! File: ${filename}`, 'Export Complete');
         } catch (downloadError) {
+          // Check if it's an access control error
+          if (downloadError.response && [401, 403].includes(downloadError.response.status)) {
+            AccessUtils.showViewAllComplianceDenied();
+            return;
+          }
+          
           console.error('Export error:', downloadError);
           const errorMessage = downloadError.response?.data?.message || downloadError.message || 'Failed to export compliances';
           PopupService.error(`Export failed: ${errorMessage}`, 'Export Error');

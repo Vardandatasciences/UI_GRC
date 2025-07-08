@@ -411,6 +411,7 @@ import { PopupModal } from '../../modules/popup';
 import PopupMixin from './mixins/PopupMixin';
 import { CompliancePopups } from './utils/popupUtils';
 import CollapsibleTable from '../CollapsibleTable.vue';
+import AccessUtils from '@/utils/accessUtils';
  
 export default {
   name: 'ComplianceApprover',
@@ -561,6 +562,12 @@ export default {
         this.updatePaginationCounts();
         
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showApproveComplianceDenied();
+          return;
+        }
+        
         console.error('Error refreshing data:', error);
         this.error = error.response?.data?.message || error.message || 'Failed to load approvals';
       } finally {

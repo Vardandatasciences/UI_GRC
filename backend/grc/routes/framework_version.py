@@ -14,12 +14,12 @@ from ..utils import send_log, get_client_ip
 # RBAC Permission imports - Add comprehensive RBAC permissions
 from ..rbac.permissions import (
      PolicyFrameworkPermission, PolicyViewPermission,
-    PolicyEditPermission, PolicyApprovalWorkflowPermission
+    PolicyEditPermission, PolicyApprovalWorkflowPermission, PolicyVersioningPermission
 )
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])# RBAC: Require PolicyVersioningPermission for creating framework versions
+@permission_classes([PolicyVersioningPermission])# RBAC: Require PolicyVersioningPermission for creating framework versions
 def create_framework_version(request, framework_id):
     """
     Create a new version of a framework with its policies and subpolicies.
@@ -763,7 +763,7 @@ def create_framework_approval_for_version(framework_id):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])  # RBAC: Require PolicyViewPermission for viewing framework versions
+@permission_classes([PolicyViewPermission])  # RBAC: Require PolicyViewPermission for viewing framework versions
 def get_framework_versions(request, framework_id=None):
     """
     Get all versions of a framework by its Identifier
@@ -866,7 +866,7 @@ def get_framework_versions(request, framework_id=None):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny]) # RBAC: Require PolicyViewPermission for viewing all framework versions
+@permission_classes([PolicyViewPermission]) # RBAC: Require PolicyViewPermission for viewing all framework versions
 def get_all_framework_versions(request):
     """
     Get all framework versions in the system
@@ -931,7 +931,7 @@ def get_all_framework_versions(request):
 
 
 @api_view(['PUT'])
-@permission_classes([AllowAny]) # RBAC: Require PolicyEditPermission for activating/deactivating framework versions
+@permission_classes([PolicyEditPermission]) # RBAC: Require PolicyEditPermission for activating/deactivating framework versions
 def activate_deactivate_framework_version(request, framework_id):
     """
     Activate or deactivate a specific framework version with date-based scheduling logic
@@ -1042,7 +1042,7 @@ def activate_deactivate_framework_version(request, framework_id):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])  # RBAC: Require PolicyViewPermission for viewing rejected framework versions
+@permission_classes([PolicyViewPermission])  # RBAC: Require PolicyViewPermission for viewing rejected framework versions
 def get_rejected_framework_versions(request, user_id=None):
     """
     Get all rejected framework versions for a specific user that can be edited and resubmitted
@@ -1149,7 +1149,7 @@ def get_rejected_framework_versions(request, user_id=None):
 
 
 @api_view(['POST', 'PUT'])
-@permission_classes([AllowAny])  # RBAC: Require PolicyApprovalWorkflowPermission for resubmitting rejected frameworks
+@permission_classes([PolicyApprovalWorkflowPermission])  # RBAC: Require PolicyApprovalWorkflowPermission for resubmitting rejected frameworks
 def resubmit_rejected_framework(request, framework_id):
     """
     Resubmit a rejected framework with updated data
@@ -1519,7 +1519,7 @@ def resubmit_rejected_framework(request, framework_id):
 
 
 @api_view(['PUT'])
-@permission_classes([AllowAny])  # RBAC: Require PolicyApprovalWorkflowPermission for resubmitting framework approvals
+@permission_classes([PolicyApprovalWorkflowPermission])  # RBAC: Require PolicyApprovalWorkflowPermission for resubmitting framework approvals
 def resubmit_framework_approval(request, framework_id):
     """
     Dedicated endpoint for the existing URL pattern used by frontend

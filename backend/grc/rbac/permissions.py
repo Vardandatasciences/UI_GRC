@@ -621,32 +621,117 @@ class BaseCompliancePermission(BasePermission):
             logger.error(f"[RBAC COMPLIANCE] Error checking {permission_type} permission: {e}")
             return False
 
-class ComplianceViewPermission(BaseCompliancePermission):
-    """Permission to view compliance items"""
-    
-    def has_permission(self, request, view):
-        return self.check_compliance_permission(request, 'view')
+# =====================================================
+# 5 MAIN COMPLIANCE FEATURE PERMISSION CLASSES
+# =====================================================
 
-class ComplianceCreatePermission(BaseCompliancePermission):
-    """Permission to create compliance items"""
+class CreateCompliancePermission(BaseCompliancePermission):
+    """Permission for CreateCompliance feature - creating new compliance items"""
     
     def has_permission(self, request, view):
-        return self.check_compliance_permission(request, 'create')
+        return self.check_compliance_permission(request, 'CreateCompliance')
 
-class ComplianceEditPermission(BaseCompliancePermission):
-    """Permission to edit compliance items"""
+class EditCompliancePermission(BaseCompliancePermission):
+    """Permission for EditCompliance feature - editing existing compliance items"""
     
     def has_permission(self, request, view):
-        return self.check_compliance_permission(request, 'edit')
+        return self.check_compliance_permission(request, 'EditCompliance')
 
-class ComplianceApprovePermission(BaseCompliancePermission):
-    """Permission to approve compliance items"""
+class ApproveCompliancePermission(BaseCompliancePermission):
+    """Permission for ApproveCompliance feature - approving compliance items"""
     
     def has_permission(self, request, view):
-        return self.check_compliance_permission(request, 'approve')
+        return self.check_compliance_permission(request, 'ApproveCompliance')
 
-class ComplianceAnalyticsPermission(BaseCompliancePermission):
-    """Permission to view compliance analytics"""
+class ViewAllCompliancePermission(BaseCompliancePermission):
+    """Permission for ViewAllCompliance feature - viewing compliance data"""
     
     def has_permission(self, request, view):
-        return self.check_compliance_permission(request, 'analytics') 
+        return self.check_compliance_permission(request, 'ViewAllCompliance')
+
+class CompliancePerformanceAnalyticsPermission(BaseCompliancePermission):
+    """Permission for CompliancePerformanceAnalytics feature - analytics and reporting"""
+    
+    def has_permission(self, request, view):
+        return self.check_compliance_permission(request, 'CompliancePerformanceAnalytics')
+
+# =====================================================
+# LEGACY PERMISSION CLASS ALIASES (for backward compatibility)
+# =====================================================
+
+# Main feature aliases
+ComplianceViewPermission = ViewAllCompliancePermission
+ComplianceCreatePermission = CreateCompliancePermission
+ComplianceEditPermission = EditCompliancePermission
+ComplianceApprovePermission = ApproveCompliancePermission
+ComplianceAnalyticsPermission = CompliancePerformanceAnalyticsPermission
+
+# =====================================================
+# OPERATION-SPECIFIC PERMISSION ALIASES 
+# (mapped to the 5 main features)
+# =====================================================
+
+# EditCompliance operations
+class ComplianceAssignPermission(EditCompliancePermission):
+    """Permission to assign compliance items (uses EditCompliance)"""
+    pass
+
+class ComplianceDeletePermission(EditCompliancePermission):
+    """Permission to delete compliance items (uses EditCompliance)"""
+    pass
+
+class ComplianceTogglePermission(EditCompliancePermission):
+    """Permission to toggle compliance status (uses EditCompliance)"""
+    pass
+
+class ComplianceDeactivatePermission(EditCompliancePermission):
+    """Permission to deactivate compliance items (uses EditCompliance)"""
+    pass
+
+class ComplianceCategoryPermission(EditCompliancePermission):
+    """Permission to manage compliance categories (uses EditCompliance)"""
+    pass
+
+class ComplianceBusinessUnitPermission(EditCompliancePermission):
+    """Permission to manage compliance business units (uses EditCompliance)"""
+    pass
+
+# ViewAllCompliance operations
+class ComplianceExportPermission(ViewAllCompliancePermission):
+    """Permission to export compliance data (uses ViewAllCompliance)"""
+    pass
+
+class ComplianceDashboardPermission(ViewAllCompliancePermission):
+    """Permission to view compliance dashboard (uses ViewAllCompliance)"""
+    pass
+
+class ComplianceVersioningPermission(ViewAllCompliancePermission):
+    """Permission to view compliance versioning (uses ViewAllCompliance)"""
+    pass
+
+class ComplianceFrameworkPermission(ViewAllCompliancePermission):
+    """Permission to access compliance frameworks (uses ViewAllCompliance)"""
+    pass
+
+class ComplianceNotificationPermission(ViewAllCompliancePermission):
+    """Permission to view compliance notifications (uses ViewAllCompliance)"""
+    pass
+
+class ComplianceAuditPermission(ViewAllCompliancePermission):
+    """Permission to view compliance audit information (uses ViewAllCompliance)"""
+    pass
+
+# ApproveCompliance operations
+class ComplianceReviewPermission(ApproveCompliancePermission):
+    """Permission to review compliance items (uses ApproveCompliance)"""
+    pass
+
+# CreateCompliance operations
+class ComplianceClonePermission(CreateCompliancePermission):
+    """Permission to clone compliance items (uses CreateCompliance)"""
+    pass
+
+# CompliancePerformanceAnalytics operations
+class ComplianceKPIPermission(CompliancePerformanceAnalyticsPermission):
+    """Permission to view compliance KPIs (uses CompliancePerformanceAnalytics)"""
+    pass 

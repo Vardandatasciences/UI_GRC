@@ -113,7 +113,7 @@
               <div class="helper-text">Date when the framework implementation begins</div>
             </div>
             <div class="form-group date">
-              <label>Effective End Date <span class="required-star">*</span></label>
+              <label>Effective End Date</label>
               <input
                 type="date"
                 v-model="newFramework.EndDate"
@@ -408,7 +408,7 @@
                 <div class="helper-text">Date when this policy takes effect and becomes enforceable</div>
               </div>
               <div class="form-group">
-                <label>End Date <span class="required-star">*</span></label>
+                <label>End Date</label>
                 <div class="input-with-icon">
                   <input
                     type="date"
@@ -538,17 +538,14 @@
         <div class="approval-form">
           <div class="form-group">
             <label>Created By <span class="required-star">*</span></label>
-            <select
-              v-model="approvalForm.createdBy"
+            <input
+              type="text"
+              v-model="approvalForm.createdByName"
+              readonly
               :disabled="loading"
-              title="Select the person who created or is responsible for this framework/policy"
-            >
-              <option value="">Select Creator</option>
-              <option v-for="user in users" :key="user.UserId" :value="user.UserId">
-                {{ user.UserName }}
-              </option>
-            </select>
-            <div class="helper-text">Select the person who created or is responsible for this framework/policy. This person will be recorded as the creator in the system.</div>
+              title="This policy will be created under your username"
+            />
+            <div class="helper-text">This policy will be created under your username.</div>
           </div>
           <div class="form-group">
             <label>Reviewer <span class="required-star">*</span></label>
@@ -578,7 +575,7 @@
           <button 
             class="create-btn" 
             @click="handleFinalSubmit"
-            :disabled="loading || !approvalForm.createdBy || !approvalForm.reviewer"
+            :disabled="loading || !approvalForm.reviewer"
             title="Submit the framework/policy for review and approval"
           >
             {{ loading ? 'Submitting...' : 'Submit for Review' }}
@@ -617,6 +614,7 @@ export default {
     const showFrameworkForm = ref(false)
     const approvalForm = ref({
       createdBy: '',
+      createdByName: localStorage.getItem('username') || '', // Initialize with logged-in username
       reviewer: ''
     })
     const frameworks = ref([])
@@ -1157,11 +1155,11 @@ export default {
         }
 
         // Find the selected creator and reviewer users
-        const creatorUser = users.value.find(u => u.UserId === approvalForm.value.createdBy)
+        const creatorUser = users.value.find(u => u.UserName === approvalForm.value.createdByName)
         const reviewerUser = users.value.find(u => u.UserId === approvalForm.value.reviewer)
 
-        if (!creatorUser) {
-          PopupService.error('Please select a creator', 'Validation Error')
+        if (!approvalForm.value.createdByName) {
+          PopupService.error('Creator name not found. Please try logging in again.', 'Validation Error')
           loading.value = false
           return
         }

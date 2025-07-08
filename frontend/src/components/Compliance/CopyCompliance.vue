@@ -292,7 +292,7 @@
         <div class="field-group-title">Risk Information</div>
         <div class="compliance-field full-width">
           <label>
-            Possible Damage
+            Possible Impact
             <span class="required">*</span>
             <span class="field-requirements">(Minimum 20 characters)</span>
           </label>

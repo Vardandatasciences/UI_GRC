@@ -80,7 +80,7 @@ const login = async () => {
     
     // Send login request with credentials to create Django session  
     const response = await axios.post('/api/login/', {
-      username: username.value,
+      username: username.value,  // Backend expects username field
       password: password.value
     })  // withCredentials configured globally in main.js
     
@@ -89,23 +89,22 @@ const login = async () => {
       localStorage.setItem('isAuthenticated', 'true')
       localStorage.setItem('user', JSON.stringify(response.data.user))
       
-      // Store user_id for RBAC debugging (not the primary auth method)
-      localStorage.setItem('user_id', response.data.user.id)
+      // Store user_id for RBAC (primary auth method now)
+      localStorage.setItem('user_id', response.data.user.id || '1')
       
-      // Store username for display purposes
-      localStorage.setItem('username', response.data.user.username)
+      // Store email for display purposes
+      localStorage.setItem('user_email', response.data.user.email)
       
-      // Store full name if available
-      if (response.data.user.full_name) {
-        localStorage.setItem('fullName', response.data.user.full_name)
-      } else if (response.data.user.first_name && response.data.user.last_name) {
-        localStorage.setItem('fullName', `${response.data.user.first_name} ${response.data.user.last_name}`)
-      }
+      // Store name for display purposes
+      localStorage.setItem('user_name', response.data.user.username)
+      
+      // Set login flag
+      localStorage.setItem('is_logged_in', 'true')
       
       console.log('🔐 Login successful! Session created:', {
         user_id: response.data.user.id,
-        username: response.data.user.username,
-        session_key: response.data.user.session_key
+        email: response.data.user.email,
+        username: response.data.user.username
       })
       
       // Emit auth change event for App.vue to listen

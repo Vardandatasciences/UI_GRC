@@ -187,6 +187,7 @@ import {
 } from 'chart.js'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import { complianceService } from '@/services/api'
+import AccessUtils, { SessionUtils } from '@/utils/accessUtils'
 
 ChartJS.register(
   CategoryScale,
@@ -230,6 +231,15 @@ export default {
     }
   },
   mounted() {
+    // Check if user is logged in
+    if (!SessionUtils.isLoggedIn()) {
+      console.warn('[COMPLIANCE_DASHBOARD] User not logged in, redirecting to login');
+      this.$router.push('/login');
+      return;
+    }
+    
+    console.log('[COMPLIANCE_DASHBOARD] User session:', SessionUtils.getUserSession());
+    
     // Fetch data first, then initialize chart
     this.fetchDashboardData().then(() => {
       // Ensure chart is initialized after data is loaded
@@ -472,6 +482,12 @@ export default {
         console.log(`Loaded ${this.recentActivities.length} recent activities`)
         
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showViewAllComplianceDenied();
+          return;
+        }
+        
         console.error('Error fetching recent activities:', error)
         // Set fallback activities on error
         this.recentActivities = [{
@@ -585,6 +601,12 @@ export default {
           throw new Error(dashboardResponse.data.message || analyticsResponse.data.message || 'API request failed')
         }
       } catch (error) {
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showViewAllComplianceDenied();
+          return;
+        }
+        
         console.error('Error in fetchDashboardData:', error)
         // Set default values on error
         this.dashboardData = {

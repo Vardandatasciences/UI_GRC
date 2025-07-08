@@ -192,12 +192,72 @@ class RBACUtils:
                 'get_policy_version': 'view_all_policy',
                 'get_subpolicy_version': 'view_all_policy',
                 'get_policy_version_history': 'view_all_policy',
-                'all_policies_get_frameworks': 'view_all_policy',
-                'all_policies_get_policies': 'view_all_policy',
-                'all_policies_get_subpolicies': 'view_all_policy',
-                'all_policies_get_policy_versions': 'view_all_policy',
-                'all_policies_get_framework_versions': 'view_all_policy',
                 'get_policy_categories': 'view_all_policy',
+                
+                # ===== COMPLIANCE MODULE ENDPOINTS (5 MAIN FEATURES) =====
+                
+                # CreateCompliance endpoints
+                'create_compliance': 'create_compliance',
+                'clone_compliance': 'create_compliance',
+                'add_category_value': 'create_compliance',
+                'initialize_default_categories': 'create_compliance',
+                'add_category_business_unit': 'create_compliance',
+                
+                # EditCompliance endpoints
+                'edit_compliance': 'edit_compliance',
+                'toggle_compliance_version': 'edit_compliance',
+                'deactivate_compliance': 'edit_compliance',
+                
+                # ApproveCompliance endpoints
+                'submit_compliance_review': 'approve_compliance',
+                'resubmit_compliance_approval': 'approve_compliance',
+                'get_policy_approvals_by_reviewer': 'approve_compliance',
+                'get_rejected_approvals': 'approve_compliance',
+                'approve_compliance_deactivation': 'approve_compliance',
+                'reject_compliance_deactivation': 'approve_compliance',
+                
+                # ViewAllCompliance endpoints
+                'get_compliance_dashboard': 'view_all_compliance',
+                'get_compliances_by_subpolicy': 'view_all_compliance',
+                'get_compliance_versioning': 'view_all_compliance',
+                'get_compliance_details': 'view_all_compliance',
+                'get_compliance_framework_info': 'view_all_compliance',
+                'export_compliances': 'view_all_compliance',
+                'get_subpolicy_compliances': 'view_all_compliance',
+                'get_framework_compliances': 'view_all_compliance',
+                'get_policy_compliances': 'view_all_compliance',
+                'get_compliances_by_type': 'view_all_compliance',
+                'get_category_values': 'view_all_compliance',
+                'get_category_business_units': 'view_all_compliance',
+                'test_notification': 'view_all_compliance',
+                'get_frameworks': 'view_all_compliance',
+                'get_policies': 'view_all_compliance',
+                'get_subpolicies': 'view_all_compliance',
+                'get_all_users': 'view_all_compliance',
+                'all_policies_get_frameworks': 'view_all_compliance',
+                'all_policies_get_framework_version_policies': 'view_all_compliance',
+                'all_policies_get_policies': 'view_all_compliance',
+                'all_policies_get_subpolicies': 'view_all_compliance',
+                'all_policies_get_subpolicy_details': 'view_all_compliance',
+                'all_policies_get_framework_versions': 'view_all_compliance',
+                'all_policies_get_policy_version_subpolicies': 'view_all_compliance',
+                'all_policies_get_subpolicy_compliances': 'view_all_compliance',
+                'all_policies_get_compliance_versions': 'view_all_compliance',
+                'get_compliance_audit_info': 'view_all_compliance',
+                
+                # CompliancePerformanceAnalytics endpoints
+                'get_compliance_analytics': 'compliance_performance_analytics',
+                'get_compliance_kpi': 'compliance_performance_analytics',
+                'get_maturity_level_kpi': 'compliance_performance_analytics',
+                'get_non_compliance_count': 'compliance_performance_analytics',
+                'get_mitigated_risks_count': 'compliance_performance_analytics',
+                'get_automated_controls_count': 'compliance_performance_analytics',
+                'get_non_compliance_repetitions': 'compliance_performance_analytics',
+                'get_ontime_mitigation_percentage': 'compliance_performance_analytics',
+                'get_compliance_status_overview': 'compliance_performance_analytics',
+                'get_reputational_impact_assessment': 'compliance_performance_analytics',
+                'get_remediation_cost_kpi': 'compliance_performance_analytics',
+                'get_non_compliant_incidents_by_time': 'compliance_performance_analytics',
                 'save_policy_category': 'create_policy',
                 'acknowledge_policy': 'view_all_policy',
                 'list_users': 'view_all_policy',
@@ -477,7 +537,8 @@ class RBACUtils:
     def has_compliance_permission(user_id, permission_type):
         """
         Check if user has specific compliance permission with detailed debugging
-        permission_type: 'create', 'view', 'edit', 'approve', 'analytics'
+        permission_type: 'CreateCompliance', 'EditCompliance', 'ApproveCompliance', 'ViewAllCompliance', 'CompliancePerformanceAnalytics'
+        or legacy types: 'create', 'view', 'edit', 'approve', 'analytics'
         """
         try:
             logger.debug(f"[RBAC] Checking compliance permission: {permission_type} for user {user_id}")
@@ -487,8 +548,16 @@ class RBACUtils:
                 logger.warning(f"[RBAC] Compliance permission check failed - no RBAC record for user {user_id}")
                 return False
             
-            # Map permission types to model fields
+            # Map permission types to model fields (5 main features + legacy support)
             permission_field_map = {
+                # 5 Main Features (exact field names from RBAC table)
+                'CreateCompliance': 'create_compliance',
+                'EditCompliance': 'edit_compliance', 
+                'ApproveCompliance': 'approve_compliance',
+                'ViewAllCompliance': 'view_all_compliance',
+                'CompliancePerformanceAnalytics': 'compliance_performance_analytics',
+                
+                # Legacy support (map to main features)
                 'create': 'create_compliance',
                 'view': 'view_all_compliance',
                 'edit': 'edit_compliance',
@@ -807,6 +876,9 @@ class RBACUtils:
                     'COMPLIANCE_EDIT': 'edit_compliance',
                     'COMPLIANCE_APPROVE': 'approve_compliance',
                     'COMPLIANCE_ANALYTICS': 'compliance_performance_analytics',
+                    'COMPLIANCE_VIEW_REQUIRED': 'view_all_compliance',
+                    'VIEW_ALL_COMPLIANCE': 'view_all_compliance',
+                    'VIEWALLCOMPLIANCE': 'view_all_compliance',
                 }
                 
                 required_permission = action_permission_map.get(action)

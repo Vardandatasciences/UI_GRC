@@ -805,16 +805,16 @@ export default {
       } else {
         delete validationErrors.value.Date
       }
-      }
-      
+    }
+    
     const validateTime = () => {
       if (!formData.value.Time) {
         validationErrors.value.Time = "Time is required"
       } else {
         delete validationErrors.value.Time
       }
-      }
-      
+    }
+    
     const validateRiskPriority = () => {
       const allowedPriorities = ['High', 'Medium', 'Low']
       if (!formData.value.RiskPriority) {
@@ -1005,30 +1005,36 @@ export default {
     }
 
     const validateForm = () => {
-      // Run all individual validations to ensure everything is validated
-      validateIncidentTitle()
-      validateDescription()
-      validateOrigin()
-      validateDate()
-      validateTime()
-      validateRiskPriority()
-      validateRiskCategory()
-      validateCriticality()
-      validateCost()
-      validatePossibleDamage()
-      validateBusinessUnit()
-      validateGeographicLocation()
-      validateSystemsInvolved()
-      validateInitialImpact()
-      validateMitigation()
-      validateComments()
-      validateInternalContacts()
-      validateExternalParties()
-      validateRegulatoryBodies()
-      validateViolatedPolicies()
-      validateControlFailures()
+      // Reset validation errors
+      validationErrors.value = {}
       
-      return Object.keys(validationErrors.value).length === 0
+      // Required fields
+      const requiredFields = [
+        'IncidentTitle', 'Description', 'IncidentType', 'IncidentOrigin', 
+        'DetectedBy', 'ReportedBy', 'DateDetected', 'DateReported'
+      ]
+      
+      let isValid = true
+      
+      // Check required fields
+      for (const field of requiredFields) {
+        if (!formData.value[field] || (typeof formData.value[field] === 'string' && !formData.value[field].trim())) {
+          validationErrors.value[field] = `${field.replace(/([A-Z])/g, ' $1').trim()} is required`
+          isValid = false
+        }
+      }
+      
+      return isValid
+    }
+    
+    // Function to show validation summary in console
+    const showValidationSummary = () => {
+      console.log('Validation errors:', validationErrors.value)
+      
+      // Log each error with field name
+      Object.entries(validationErrors.value).forEach(([field, error]) => {
+        console.log(`${field}: ${error}`)
+      })
     }
 
     // Methods
@@ -1138,8 +1144,6 @@ export default {
       console.log('Form validation passed, submitting...')
       await submitForm()
     }
-
-
 
     const submitForm = async () => {
       try {
@@ -1585,8 +1589,6 @@ export default {
       }
     }
 
-
-
     // Load compliances when component mounts if needed
     onMounted(() => {
       // Fetch categories and business units on component mount
@@ -1666,7 +1668,7 @@ export default {
       filterBusinessUnits,
       toggleBusinessUnit,
       removeBusinessUnit,
-            addCustomBusinessUnit,
+      addCustomBusinessUnit,
       updateFormDataBusinessUnits,
       initializeSelectedData,
       // Validation methods
@@ -1822,7 +1824,6 @@ label.required span::after {
   background-color: #bdc3c7 !important;
   transform: none !important;
 }
-
 
 </style>
   

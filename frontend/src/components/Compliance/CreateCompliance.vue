@@ -241,7 +241,7 @@
         <div class="field-group risk-fields">
           <div class="field-group-title">Risk Information</div>
           <div class="compliance-field full-width">
-            <label>Possible Damage</label>
+            <label>Possible Impact</label>
             <textarea
               v-model="compliance.PossibleDamage" 
               @input="onFieldChange(idx, 'PossibleDamage', $event)"
@@ -273,7 +273,7 @@
                   v-model="step.description"
                   @input="onMitigationStepChange(idx)"
                   class="compliance-input"
-                  placeholder="Describe this mitigation step"
+                  placeholder="Describe this mitigation step (minimum 10 characters)"
                   rows="2"
                   required
                 ></textarea>
@@ -284,7 +284,7 @@
                 </button>
               </div>
             </div>
-            <small>Define specific steps or actions to reduce, control, or eliminate the identified risk</small>
+            <small>Define specific steps or actions to reduce, control, or eliminate the identified risk (minimum 10 characters per step)</small>
             <div v-if="compliance.validationErrors && compliance.validationErrors.mitigation" 
                  class="validation-error">
               {{ compliance.validationErrors.mitigation.join(', ') }}
@@ -555,6 +555,7 @@ import { complianceService } from '@/services/api';
   import { PopupService, PopupModal } from '@/modules/popup';
   import { CompliancePopups } from './utils/popupUtils';
   import CustomDropdown from '@/components/CustomDropdown.vue';
+  import AccessUtils from '@/utils/accessUtils';
 
 export default {
   name: 'CreateCompliance',
@@ -718,18 +719,27 @@ export default {
     }
   },
   async created() {
-    await this.loadFrameworks();
-    await this.loadUsers();
-    await this.loadCategoryOptions();
-    
-    // Initialize search arrays with empty strings for the first compliance item
-    this.businessUnitSearch = [''];
-    this.riskTypeSearch = [''];
-    this.riskCategorySearch = [''];
-    this.riskBusinessImpactSearch = [''];
-    
-    // Add click event listener to close dropdowns when clicking outside
-    document.addEventListener('click', this.handleClickOutside);
+    try {
+      await this.loadFrameworks();
+      await this.loadUsers();
+      await this.loadCategoryOptions();
+      
+      // Initialize search arrays with empty strings for the first compliance item
+      this.businessUnitSearch = [''];
+      this.riskTypeSearch = [''];
+      this.riskCategorySearch = [''];
+      this.riskBusinessImpactSearch = [''];
+      
+      // Add click event listener to close dropdowns when clicking outside
+      document.addEventListener('click', this.handleClickOutside);
+    } catch (error) {
+      // If there's an overall access error during component initialization
+      if (error.response && [401, 403].includes(error.response.status)) {
+        AccessUtils.showComplianceCreateDenied();
+        return;
+      }
+      console.error('Error initializing CreateCompliance component:', error);
+    }
   },
   
   beforeUnmount() {
@@ -969,10 +979,14 @@ export default {
               result.errors.push('At least one mitigation step is required for risks');
             }
             
-            // Check if all steps have descriptions
-            const emptySteps = compliance.mitigationSteps.some(step => !step.description.trim());
-            if (emptySteps) {
-              result.errors.push('All mitigation steps must have descriptions');
+            // Check if all steps have descriptions and meet minimum length
+            const invalidSteps = compliance.mitigationSteps.filter(step => {
+              const description = step.description.trim();
+              return !description || description.length < 10;
+            });
+            
+            if (invalidSteps.length > 0) {
+              result.errors.push('Each mitigation step must have at least 10 characters');
             }
           }
           break;
@@ -1163,6 +1177,13 @@ export default {
         }
       } catch (error) {
         console.error('Error loading frameworks:', error);
+        
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showComplianceFrameworkDenied();
+          return;
+        }
+        
         PopupService.error('Failed to load frameworks. Please refresh the page and try again.');
       } finally {
         this.loading = false;
@@ -1188,6 +1209,13 @@ export default {
         }
       } catch (error) {
         console.error('Error loading policies:', error);
+        
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showCompliancePolicyDenied();
+          return;
+        }
+        
         PopupService.error('Failed to load policies. Please try selecting a different framework.');
       } finally {
         this.loading = false;
@@ -1212,6 +1240,13 @@ export default {
         }
       } catch (error) {
         console.error('Error loading sub-policies:', error);
+        
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showComplianceSubpolicyDenied();
+          return;
+        }
+        
         PopupService.error('Failed to load sub-policies. Please try selecting a different policy.');
       } finally {
         this.loading = false;
@@ -1559,22 +1594,33 @@ export default {
           console.log('Submitting compliance data:', complianceData);
           const response = await complianceService.createCompliance(complianceData);
           console.log('Compliance creation response:', response);
+          console.log('Response data:', response.data);
 
           if (!response.data.success) {
             throw new Error(response.data.message || 'Failed to create compliance');
           }
 
           // Show success popup using CompliancePopups
-          CompliancePopups.complianceCreated({
-            ComplianceId: response.data.compliance_id,
-            ComplianceItemDescription: complianceData.ComplianceItemDescription
-          });
+          const popupData = {
+            ComplianceId: complianceData.ComplianceId,
+            ComplianceItemDescription: complianceData.ComplianceItemDescription,
+            Identifier: response.data.Identifier
+          };
+          console.log('Popup data:', popupData);
+          CompliancePopups.complianceCreated(popupData);
 
           // Clear form instead of navigating away
           this.resetForm();
         }
       } catch (error) {
         console.error('Error creating compliance:', error);
+        
+        // Check if it's an access control error
+        if (error.response && [401, 403].includes(error.response.status)) {
+          AccessUtils.showComplianceCreateDenied();
+          return;
+        }
+        
         this.$toast?.error(error.response?.data?.message || error.message || 'Failed to create compliance items');
       } finally {
         this.loading = false;
@@ -1599,18 +1645,21 @@ export default {
     
     onMitigationStepChange(complianceIndex) {
       const compliance = this.complianceList[complianceIndex];
-      // Create the JSON structure for mitigation
-      const mitigationData = {
-        steps: compliance.mitigationSteps.map(step => ({
-          stepNumber: step.stepNumber,
-          description: step.description.trim()
-        })),
-        totalSteps: compliance.mitigationSteps.length,
-        lastUpdated: new Date().toISOString(),
-        version: '2.0'
-      };
-      // Store the stringified JSON in the mitigation field
-      compliance.mitigation = JSON.stringify(mitigationData);
+      let mitigationData = {};
+      
+      compliance.mitigationSteps.forEach((step, idx) => {
+        const stepText = step.description.trim();
+        if (stepText) {
+          mitigationData[idx + 1] = stepText;
+        }
+      });
+      
+      compliance.mitigation = JSON.stringify(mitigationData)
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, '\\')
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t');
+      
       // Validate the field
       this.validateComplianceField(compliance, 'mitigation', compliance.mitigation);
     },

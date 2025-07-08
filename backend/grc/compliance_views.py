@@ -8,6 +8,23 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from .rbac.decorators import (
+    compliance_view_required, compliance_create_required, compliance_edit_required,
+    compliance_approve_required, compliance_delete_required, compliance_analytics_required,
+    compliance_dashboard_required, compliance_kpi_required, compliance_audit_required,
+    compliance_versioning_required, compliance_toggle_required, compliance_deactivate_required,
+    compliance_framework_required, compliance_policy_required, compliance_subpolicy_required,
+    compliance_review_required, compliance_clone_required, compliance_export_required,
+    compliance_notification_required, compliance_category_required, compliance_business_unit_required
+)
+from .rbac.permissions import (
+    ComplianceViewPermission, ComplianceCreatePermission, ComplianceEditPermission,
+    ComplianceApprovePermission, ComplianceAnalyticsPermission, ComplianceDashboardPermission,
+    ComplianceKPIPermission, ComplianceAuditPermission, ComplianceVersioningPermission,
+    ComplianceTogglePermission, ComplianceDeactivatePermission, ComplianceFrameworkPermission,
+    ComplianceReviewPermission, ComplianceClonePermission, ComplianceExportPermission,
+    ComplianceNotificationPermission, ComplianceCategoryPermission, ComplianceBusinessUnitPermission
+)
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserSerializer
@@ -676,12 +693,19 @@ def login(request):
    
     # Hardcoded credentials
     if email == "admin@example.com" and password == "password123":
+        # Set user_id in session for RBAC
+        request.session['user_id'] = 1  # Default admin user ID
+        request.session['email'] = email
+        request.session['name'] = 'Admin User'
+        request.session.save()  # Ensure session is saved
+        
         return Response({
             'success': True,
             'message': 'Login successful',
             'user': {
                 'email': email,
-                'name': 'Admin User'
+                'name': 'Admin User',
+                'user_id': 1
             }
         })
     else:
@@ -785,6 +809,7 @@ def test_connection(request):
 
  
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_frameworks(request):
     print(f"\n=== GET_FRAMEWORKS DEBUG ===")
     
@@ -836,6 +861,7 @@ def get_frameworks(request):
         }, status=500)
  
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_policies(request, framework_id):
     print(f"\n=== GET_POLICIES DEBUG ===")
     print(f"Received framework_id: {framework_id} (type: {type(framework_id)})")
@@ -883,6 +909,7 @@ def get_policies(request, framework_id):
         }, status=500)
  
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_subpolicies(request, policy_id):
     print(f"\n=== GET_SUBPOLICIES DEBUG ===")
     print(f"Received policy_id: {policy_id} (type: {type(policy_id)})")
@@ -968,9 +995,15 @@ def ensure_user_has_email(user_id, default_email=None):
         return False
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def create_compliance(request):
 
     print(f"Received request data: {request.data}")
+    
+    # Get user_id from session for logging and tracking
+    user_id = request.session.get('user_id', 1)  # Default to 1 if no session
+    print(f"User ID from session: {user_id}")
+    
     try:
         # Validate input data using centralized validator
         validated_data = ComplianceInputValidator.validate_compliance_data(request.data)
@@ -1068,11 +1101,11 @@ def create_compliance(request):
             'ApprovalDueDate': approval_due_date
         }
        
-        # Create policy approval
-        user_id = int(validated_data.get('CreatedByName', 1))  # Use CreatedByName as UserId if available
+        # Use session user_id or fall back to validated data
+        session_user_id = user_id or int(validated_data.get('CreatedByName', 1))
         
         # Ensure users have emails for notifications
-        ensure_user_has_email(user_id, "system@example.com")
+        ensure_user_has_email(session_user_id, "system@example.com")
         reviewer_has_email = ensure_user_has_email(reviewer_id, f"reviewer{reviewer_id}@example.com")
         if not reviewer_has_email:
             print(f"WARNING: Reviewer {reviewer_id} has no email, notifications may fail")
@@ -1084,7 +1117,7 @@ def create_compliance(request):
         policy_approval = PolicyApproval.objects.create(
             Identifier=validated_data['Identifier'],
             ExtractedData=extracted_data,
-            UserId=user_id,
+            UserId=session_user_id,
             ReviewerId=reviewer_id,
             ApprovedNot=None,
             Version="u1",
@@ -1164,6 +1197,7 @@ def create_compliance(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_compliance_dashboard(request):
     try:
         # Get all filter parameters from request
@@ -1255,6 +1289,7 @@ def get_compliance_dashboard(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_compliances_by_subpolicy(request, subpolicy_id):
     try:
         # Verify subpolicy exists first
@@ -1574,6 +1609,8 @@ def resubmit_compliance_approval(request, approval_id):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
  
 @api_view(['GET'])
+@permission_classes([ComplianceVersioningPermission])
+@compliance_versioning_required
 def get_compliance_versioning(request):
     """
     Returns compliance versioning data for the frontend.
@@ -1593,10 +1630,16 @@ def get_compliance_versioning(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_policy_approvals_by_reviewer(request):
     try:
-        # Get reviewer ID from request or use default
-        reviewer_id = request.query_params.get('reviewer_id', 2)
+        # Get reviewer ID from session first, then from request params, then default
+        reviewer_id = request.session.get('user_id')
+        if not reviewer_id:
+            reviewer_id = request.query_params.get('reviewer_id', 1)
+        
+        print(f"Session user_id: {request.session.get('user_id')}")
+        print(f"Using reviewer_id: {reviewer_id}")
         print(f"\n\n==== DEBUGGING DEACTIVATION REQUESTS ====")
         print(f"Fetching approvals for reviewer_id: {reviewer_id}")
         
@@ -1872,8 +1915,17 @@ def get_policy_approvals_by_reviewer(request):
         }, status=status.HTTP_400_BAD_REQUEST)
  
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_rejected_approvals(request, reviewer_id):
     try:
+        # Use session user_id if available, otherwise use URL parameter
+        session_user_id = request.session.get('user_id')
+        if session_user_id:
+            reviewer_id = session_user_id
+            print(f"Using session user_id: {reviewer_id}")
+        else:
+            print(f"Using URL parameter reviewer_id: {reviewer_id}")
+        
         print(f"Fetching rejected approvals for reviewer_id: {reviewer_id}")
         
         # Get all policy approvals that have been rejected for this reviewer
@@ -1934,6 +1986,7 @@ def get_rejected_approvals(request, reviewer_id):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
  
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_all_users(request):
     """
     Get all users from the database except system user.
@@ -1972,6 +2025,8 @@ def get_all_users(request):
         }, status=500)
  
 @api_view(['POST'])
+@permission_classes([ComplianceTogglePermission])
+@compliance_toggle_required
 def toggle_compliance_version(request, compliance_id):
     try:
         print(f"\n=== TOGGLE_COMPLIANCE_VERSION DEBUG ===")
@@ -2137,7 +2192,8 @@ def toggle_compliance_version(request, compliance_id):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceDeactivatePermission])
+@compliance_deactivate_required
 def deactivate_compliance(request, compliance_id):
     try:
         print("\n\n==== DEBUGGING DEACTIVATE_COMPLIANCE ====")
@@ -2254,7 +2310,8 @@ def deactivate_compliance(request, compliance_id):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceApprovePermission])
+@compliance_approve_required
 def approve_compliance_deactivation(request, approval_id):
     try:
         print(f"\n\n==== DEBUGGING APPROVE_DEACTIVATION ====")
@@ -2346,7 +2403,8 @@ def approve_compliance_deactivation(request, approval_id):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceApprovePermission])
+@compliance_approve_required
 def reject_compliance_deactivation(request, approval_id):
     try:
         print(f"\n\n==== DEBUGGING REJECT_DEACTIVATION ====")
@@ -2584,6 +2642,7 @@ def get_compliance_analytics(request):
  #---------------------------------KPI Dashboard---------------------------------
  
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_compliance_kpi(request):
     try:
         # Get all compliances
@@ -2663,6 +2722,7 @@ def get_compliance_kpi(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_maturity_level_kpi(request):
     try:
         # Get only active and approved compliances
@@ -2698,6 +2758,7 @@ def get_maturity_level_kpi(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_non_compliance_count(request):
     try:
         # Count records with non-zero count
@@ -2720,6 +2781,7 @@ def get_non_compliance_count(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_mitigated_risks_count(request):
     try:
         # Count risks that have been mitigated (MitigationStatus = 'Completed')
@@ -2742,6 +2804,7 @@ def get_mitigated_risks_count(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_automated_controls_count(request):
     try:
         # Get base queryset for active and approved compliances
@@ -2778,6 +2841,7 @@ def get_automated_controls_count(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_non_compliance_repetitions(request):
     try:
         # Get items with non-zero count
@@ -2825,7 +2889,8 @@ def get_non_compliance_repetitions(request):
     
 #----------------------------------Compliance List---------------------------------
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
 def all_policies_get_frameworks(request):
     """
     API endpoint to get all frameworks for AllPolicies.vue component.
@@ -2865,7 +2930,8 @@ def all_policies_get_frameworks(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceFrameworkPermission])
+@compliance_framework_required
 def all_policies_get_framework_version_policies(request, version_id):
     """
     API endpoint to get all policies for a specific framework version for AllPolicies.vue component.
@@ -2913,7 +2979,8 @@ def all_policies_get_framework_version_policies(request, version_id):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
 def all_policies_get_policies(request):
     """
     API endpoint to get all policies for AllPolicies.vue component.
@@ -2961,7 +3028,8 @@ def all_policies_get_policies(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceFrameworkPermission])
+@compliance_policy_required
 def all_policies_get_policy_versions(request, policy_id):
     """
     API endpoint to get all versions of a specific policy for AllPolicies.vue component.
@@ -3086,7 +3154,8 @@ def all_policies_get_policy_versions(request, policy_id):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
 def all_policies_get_subpolicies(request):
     """
     API endpoint to get all subpolicies for AllPolicies.vue component.
@@ -3156,7 +3225,8 @@ def all_policies_get_subpolicies(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceViewPermission])
+@compliance_subpolicy_required
 def all_policies_get_subpolicy_details(request, subpolicy_id):
     """
     API endpoint to get details of a specific subpolicy for AllPolicies.vue component.
@@ -3186,7 +3256,8 @@ def all_policies_get_subpolicy_details(request, subpolicy_id):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceFrameworkPermission])
+@compliance_framework_required
 def all_policies_get_framework_versions(request, framework_id):
     try:
         print(f"Request received for framework versions, framework_id: {framework_id}")
@@ -3255,7 +3326,8 @@ def all_policies_get_framework_versions(request, framework_id):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
  
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceFrameworkPermission])
+@compliance_subpolicy_required
 def all_policies_get_policy_version_subpolicies(request, version_id):
     """
     API endpoint to get all subpolicies for a specific policy version for AllPolicies.vue component.
@@ -3327,7 +3399,8 @@ def all_policies_get_policy_version_subpolicies(request, version_id):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
 def all_policies_get_subpolicy_compliances(request, subpolicy_id):
     """Get all compliances for a specific subpolicy"""
     try:
@@ -3367,7 +3440,8 @@ def all_policies_get_subpolicy_compliances(request, subpolicy_id):
         }, status=500)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceVersioningPermission])
+@compliance_versioning_required
 def all_policies_get_compliance_versions(request, compliance_id):
     """
     API endpoint to get all versions of a specific compliance.
@@ -3428,6 +3502,8 @@ from django.db import connection
 import logging
 
 @api_view(['GET'])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
 def get_framework_compliances(request, framework_id):
     """Get all compliances under a framework"""
 
@@ -3476,6 +3552,8 @@ def get_framework_compliances(request, framework_id):
 
 
 @api_view(['GET'])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
 def get_policy_compliances(request, policy_id):
     """Get all compliances under a policy"""
     try:
@@ -3515,7 +3593,8 @@ def get_policy_compliances(request, policy_id):
 
 @api_view(['GET'])
 @csrf_exempt
-@permission_classes([AllowAny])
+@permission_classes([ComplianceExportPermission])
+@compliance_export_required
 def export_compliances(request, export_format, item_type=None, item_id=None):
     """Export compliances based on format and optional filters"""
     try:
@@ -3757,6 +3836,8 @@ def process_export_task(task_id, item_type=None, item_id=None):
             pass
 
 @api_view(['GET'])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
 def get_subpolicy_compliances(request, subpolicy_id):
     """Get all compliances for a specific subpolicy"""
     try:
@@ -3795,6 +3876,7 @@ def get_subpolicy_compliances(request, subpolicy_id):
         }, status=500)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_ontime_mitigation_percentage(request):
     try:
         # Get all risk instances that have been completed
@@ -3843,6 +3925,7 @@ def get_ontime_mitigation_percentage(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_compliance_status_overview(request):
     try:
         # Get all compliances
@@ -3880,6 +3963,7 @@ def get_compliance_status_overview(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_reputational_impact_assessment(request):
     try:
         import json
@@ -3944,7 +4028,8 @@ def get_reputational_impact_assessment(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceAuditPermission])
+@compliance_audit_required
 def get_compliance_audit_info(request, compliance_id):
     """
     Get audit information for a specific compliance:
@@ -4084,7 +4169,8 @@ def get_compliance_audit_info(request, compliance_id):
         }, status=500)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
 def get_compliance_details(request, compliance_id):
     """
     Get detailed information for a specific compliance by ID.
@@ -4149,6 +4235,7 @@ def get_compliance_details(request, compliance_id):
         }, status=500)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_remediation_cost_kpi(request):
     try:
         import json
@@ -4260,6 +4347,8 @@ def get_remediation_cost_kpi(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@permission_classes([ComplianceAnalyticsPermission])
+@compliance_analytics_required
 def get_non_compliant_incidents_by_time(request):
     try:
         # Get time period filter from request
@@ -4443,7 +4532,8 @@ def get_non_compliant_incidents_by_time(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceNotificationPermission])
+@compliance_notification_required
 def test_notification(request):
     """Test endpoint to check if notifications are working"""
     try:
@@ -4570,6 +4660,8 @@ def test_notification(request):
         }, status=500)
 
 @api_view(['GET'])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
 def get_compliance_framework_info(request, compliance_id):
     """
     Get framework information for a compliance item to restrict copying within the same framework
@@ -4615,7 +4707,8 @@ def get_compliance_framework_info(request, compliance_id):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceCategoryPermission])
+@compliance_category_required
 def get_category_values(request, source):
     """
     Get all values for a specific category source from CategoryBusinessUnit table
@@ -4647,6 +4740,8 @@ def get_category_values(request, source):
 
 @require_http_methods(["POST"])
 @csrf_exempt
+@permission_classes([ComplianceCategoryPermission])
+@compliance_category_required
 def add_category_value(request):
     """
     Add a new value to CategoryBusinessUnit table
@@ -4708,7 +4803,8 @@ def add_category_value(request):
         }, status=500)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceCategoryPermission])
+@compliance_category_required
 def initialize_default_categories(request):
     print("Initializing default categories")
     try:
@@ -4816,7 +4912,8 @@ def get_category_business_units(request):
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceBusinessUnitPermission])
+@compliance_business_unit_required
 def add_category_business_unit(request):
     """
     API endpoint to add a new CategoryBusinessUnit
@@ -4971,7 +5068,8 @@ def edit_compliance(request, compliance_id):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([ComplianceClonePermission])
+@compliance_clone_required
 def clone_compliance(request, compliance_id):
     """
     Clone an existing compliance item
@@ -5224,6 +5322,8 @@ def clone_compliance(request, compliance_id):
 # for temporary use
 
 @api_view(['GET'])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
 def get_compliances_by_type(request, type, id):
     print(f"\n=== GET_COMPLIANCES_BY_TYPE DEBUG ===")
     print(f"Received type: '{type}', id: {id} (type: {type(id)})")
