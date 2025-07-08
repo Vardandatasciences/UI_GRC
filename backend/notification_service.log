@@ -19366,3 +19366,658 @@ django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'testserver'. Y
 2025-07-08 08:55:42,828 - mysql.connector - INFO - package: mysql.connector.plugins
 2025-07-08 08:55:42,828 - mysql.connector - INFO - plugin_name: caching_sha2_password
 2025-07-08 08:55:42,828 - mysql.connector - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2025-07-08 09:13:38,815 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:13:38,815 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:13:38,825 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:13:38,831 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:13:38,831 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyDashboardPermission check result: True
+2025-07-08 09:13:38,831 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:13:38,835 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 09:13:38,835 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 09:13:38,839 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 09:13:38,839 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 09:13:38,839 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 09:13:38,839 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 09:13:38.839314
+2025-07-08 09:13:38,854 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:13:38,854 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 09:13:38,854 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 09:13:38,854 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 09:13:38,869 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 09:13:38,871 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 09:13:39,763 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:13:39,770 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:13:39,772 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 09:13:39,772 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 09:13:39,774 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 09:13:39,775 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 09:13:39,775 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 09:13:39,779 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 09:13:39.779669
+2025-07-08 09:13:39,787 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:13:39,790 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:13:39,792 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 09:13:39,795 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 09:13:39,798 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 09:13:39,800 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:13:39,800 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 09:13:39,801 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:13:39,801 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 09:13:39,801 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyDashboardPermission check result: True
+2025-07-08 09:14:07,832 - grc.views - INFO - Login attempt for user: vikram.patel
+2025-07-08 09:14:08,586 - grc.rbac.utils - INFO - [RBAC] ===== USER LOGIN PERMISSIONS AUDIT =====
+2025-07-08 09:14:08,586 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:14:08,586 - grc.rbac.utils - INFO - [RBAC] User ID: 2
+2025-07-08 09:14:08,586 - grc.rbac.utils - INFO - [RBAC] Username: vikram.patel
+2025-07-08 09:14:08,586 - grc.rbac.utils - INFO - [RBAC] Role: GRC Administrator
+2025-07-08 09:14:08,597 - grc.rbac.utils - INFO - [RBAC] Account Status: ACTIVE
+2025-07-08 09:14:08,597 - grc.rbac.utils - INFO - [RBAC] Login Time: 2025-07-08 09:14:08.597009
+2025-07-08 09:14:08,597 - grc.rbac.utils - INFO - [RBAC] 
+2025-07-08 09:14:08,597 - grc.rbac.utils - INFO - [RBAC] === INCIDENT MODULE PERMISSIONS ===
+2025-07-08 09:14:08,597 - grc.rbac.utils - INFO - [RBAC] Create Incidents: YES
+2025-07-08 09:14:08,597 - grc.rbac.utils - INFO - [RBAC] View All Incidents: YES
+2025-07-08 09:14:08,602 - grc.rbac.utils - INFO - [RBAC] Edit Incidents: YES
+2025-07-08 09:14:08,602 - grc.rbac.utils - INFO - [RBAC] Assign Incidents: YES
+2025-07-08 09:14:08,602 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Incidents: YES
+2025-07-08 09:14:08,602 - grc.rbac.utils - INFO - [RBAC] Escalate to Risk: YES
+2025-07-08 09:14:08,602 - grc.rbac.utils - INFO - [RBAC] Incident Analytics: YES
+2025-07-08 09:14:08,602 - grc.rbac.utils - INFO - [RBAC] === POLICY MODULE PERMISSIONS ===
+2025-07-08 09:14:08,602 - grc.rbac.utils - INFO - [RBAC] Create Policy: YES
+2025-07-08 09:14:08,609 - grc.rbac.utils - INFO - [RBAC] View All Policy: YES
+2025-07-08 09:14:08,609 - grc.rbac.utils - INFO - [RBAC] Edit Policy: YES
+2025-07-08 09:14:08,609 - grc.rbac.utils - INFO - [RBAC] Approve Policy: YES
+2025-07-08 09:14:08,609 - grc.rbac.utils - INFO - [RBAC] Create Framework: YES
+2025-07-08 09:14:08,609 - grc.rbac.utils - INFO - [RBAC] Approve Framework: YES
+2025-07-08 09:14:08,609 - grc.rbac.utils - INFO - [RBAC] Policy Analytics: YES
+2025-07-08 09:14:08,609 - grc.rbac.utils - INFO - [RBAC] === AUDIT MODULE PERMISSIONS ===
+2025-07-08 09:14:08,609 - grc.rbac.utils - INFO - [RBAC] Assign Audit: YES
+2025-07-08 09:14:08,618 - grc.rbac.utils - INFO - [RBAC] Conduct Audit: YES
+2025-07-08 09:14:08,618 - grc.rbac.utils - INFO - [RBAC] Review Audit: YES
+2025-07-08 09:14:08,618 - grc.rbac.utils - INFO - [RBAC] View Audit Reports: YES
+2025-07-08 09:14:08,618 - grc.rbac.utils - INFO - [RBAC] Audit Analytics: YES
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] === RISK MODULE PERMISSIONS ===
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] Create Risk: YES
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] View All Risk: YES
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] Edit Risk: YES
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] Approve Risk: YES
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] Assign Risk: YES
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Risk: YES
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] Risk Analytics: YES
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] === COMPLIANCE MODULE PERMISSIONS ===
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] Create Compliance: YES
+2025-07-08 09:14:08,621 - grc.rbac.utils - INFO - [RBAC] View All Compliance: YES
+2025-07-08 09:14:08,631 - grc.rbac.utils - INFO - [RBAC] Edit Compliance: YES
+2025-07-08 09:14:08,631 - grc.rbac.utils - INFO - [RBAC] Approve Compliance: YES
+2025-07-08 09:14:08,634 - grc.rbac.utils - INFO - [RBAC] Compliance Analytics: YES
+2025-07-08 09:14:08,634 - grc.rbac.utils - INFO - [RBAC] ===============================================
+2025-07-08 09:14:08,634 - grc.views - INFO - Successful login for user: vikram.patel
+2025-07-08 09:14:08,735 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:14:08,739 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:14:08,742 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:14:08,749 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:14:08,751 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyDashboardPermission check result: True
+2025-07-08 09:14:08,752 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:14:08,754 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 09:14:08,754 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 09:14:08,757 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 09:14:08,757 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 09:14:08,759 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 09:14:08,766 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 09:14:08.766717
+2025-07-08 09:14:08,775 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:14:08,778 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 09:14:08,782 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 09:14:08,783 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 09:14:08,793 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 09:14:08,793 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 09:14:11,996 - django.request - WARNING - Not Found: /api/user-permissions/
+2025-07-08 09:14:12,001 - django.request - WARNING - Not Found: /api/user-role/
+2025-07-08 09:14:13,609 - django.request - WARNING - Not Found: /api/user-permissions/
+2025-07-08 09:14:13,629 - django.request - WARNING - Not Found: /api/user-role/
+2025-07-08 09:14:20,806 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:14:20,807 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:14:20,817 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:14:20,818 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:14:20,820 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:14:20,821 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:14:20,821 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:14:20,822 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:14:20,829 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:14:20,831 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:14:20,835 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:14:20,836 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:14:20,848 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:14:22,044 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:14:22,046 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:14:22,046 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:14:22,049 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:14:22,056 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:14:22,062 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:14:22,068 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:14:22,069 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:14:22,071 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:14:22,071 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:14:22,072 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:14:22,074 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:14:22,078 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:14:24,622 - django.request - WARNING - Not Found: /api/user-permissions/
+2025-07-08 09:14:24,638 - django.request - WARNING - Not Found: /api/user-role/
+2025-07-08 09:30:04,594 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:30:04,596 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:30:04,622 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:30:04,624 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:30:04,624 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyDashboardPermission check result: True
+2025-07-08 09:30:04,636 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:30:04,639 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 09:30:04,644 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 09:30:04,645 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 09:30:04,649 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 09:30:04,651 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 09:30:04,653 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 09:30:04.653138
+2025-07-08 09:30:04,663 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:30:04,671 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 09:30:04,672 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 09:30:04,679 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 09:30:04,679 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 09:30:04,679 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 09:30:05,841 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:30:05,848 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:30:05,849 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:30:05,849 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyDashboardPermission check result: True
+2025-07-08 09:30:05,865 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:30:05,874 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:30:05,882 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 09:30:05,895 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 09:30:05,897 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 09:30:05,897 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 09:30:05,898 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 09:30:05,898 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 09:30:05.898964
+2025-07-08 09:30:05,902 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:30:05,902 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 09:30:05,902 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 09:30:05,904 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 09:30:05,904 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 09:30:05,905 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 09:30:11,870 - grc.views - INFO - Login attempt for user: syam
+2025-07-08 09:30:12,529 - grc.rbac.utils - INFO - [RBAC] ===== USER LOGIN PERMISSIONS AUDIT =====
+2025-07-08 09:30:12,529 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 61: role=End User
+2025-07-08 09:30:12,529 - grc.rbac.utils - INFO - [RBAC] User ID: 61
+2025-07-08 09:30:12,529 - grc.rbac.utils - INFO - [RBAC] Username: syam
+2025-07-08 09:30:12,529 - grc.rbac.utils - INFO - [RBAC] Role: End User
+2025-07-08 09:30:12,529 - grc.rbac.utils - INFO - [RBAC] Account Status: ACTIVE
+2025-07-08 09:30:12,529 - grc.rbac.utils - INFO - [RBAC] Login Time: 2025-07-08 09:30:12.529967
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] 
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] === INCIDENT MODULE PERMISSIONS ===
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] Create Incidents: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] View All Incidents: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] Edit Incidents: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] Assign Incidents: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Incidents: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] Escalate to Risk: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] Incident Analytics: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] === POLICY MODULE PERMISSIONS ===
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] Create Policy: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] View All Policy: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] Edit Policy: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] Approve Policy: NO
+2025-07-08 09:30:12,544 - grc.rbac.utils - INFO - [RBAC] Create Framework: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Approve Framework: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Policy Analytics: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] === AUDIT MODULE PERMISSIONS ===
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Assign Audit: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Conduct Audit: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Review Audit: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] View Audit Reports: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Audit Analytics: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] === RISK MODULE PERMISSIONS ===
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Create Risk: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] View All Risk: YES
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Edit Risk: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Approve Risk: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Assign Risk: NO
+2025-07-08 09:30:12,560 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Risk: NO
+2025-07-08 09:30:12,576 - grc.rbac.utils - INFO - [RBAC] Risk Analytics: NO
+2025-07-08 09:30:12,577 - grc.rbac.utils - INFO - [RBAC] === COMPLIANCE MODULE PERMISSIONS ===
+2025-07-08 09:30:12,577 - grc.rbac.utils - INFO - [RBAC] Create Compliance: NO
+2025-07-08 09:30:12,577 - grc.rbac.utils - INFO - [RBAC] View All Compliance: NO
+2025-07-08 09:30:12,577 - grc.rbac.utils - INFO - [RBAC] Edit Compliance: NO
+2025-07-08 09:30:12,579 - grc.rbac.utils - INFO - [RBAC] Approve Compliance: NO
+2025-07-08 09:30:12,585 - grc.rbac.utils - INFO - [RBAC] Compliance Analytics: YES
+2025-07-08 09:30:12,585 - grc.rbac.utils - INFO - [RBAC] ===============================================
+2025-07-08 09:30:12,585 - grc.views - INFO - Successful login for user: syam
+2025-07-08 09:30:12,673 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:30:12,680 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:30:12,682 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:30:12,688 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:30:12,690 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyDashboardPermission check result: False
+2025-07-08 09:30:12,761 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 61: role=End User
+2025-07-08 09:30:12,769 - django.request - WARNING - Unauthorized: /api/policy-dashboard/
+2025-07-08 09:30:12,768 - grc.rbac.utils - INFO - [RBAC] User 61 (End User) incident.analytics = DENIED
+2025-07-08 09:30:12,784 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 09:30:12,788 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 61
+2025-07-08 09:30:12,788 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 09:30:12,788 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 09:30:12,790 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 09:30:12.790831
+2025-07-08 09:30:12,796 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 61: role=End User
+2025-07-08 09:30:12,796 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: End User
+2025-07-08 09:30:12,796 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 09:30:12,799 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': False, 'VIEW_INCIDENT': False, 'EDIT_INCIDENT': False, 'ASSIGN_INCIDENT': False, 'EVALUATE_INCIDENT': False, 'ESCALATE_INCIDENT': False, 'INCIDENT_ANALYTICS': False}
+2025-07-08 09:30:12,801 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': DENIED
+2025-07-08 09:30:12,804 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 09:30:12,807 - django.request - WARNING - Unauthorized: /api/incidents/counts/
+2025-07-08 09:32:26,024 - django.request - WARNING - Not Found: /api/user-permissions/
+2025-07-08 09:32:26,107 - django.request - WARNING - Not Found: /api/user-role/
+2025-07-08 09:32:27,633 - django.request - WARNING - Not Found: /api/user-permissions/
+2025-07-08 09:32:27,649 - django.request - WARNING - Not Found: /api/user-role/
+2025-07-08 09:34:04,964 - django.request - WARNING - Not Found: /api/user-permissions/
+2025-07-08 09:34:04,968 - django.request - WARNING - Not Found: /api/user-role/
+2025-07-08 09:34:09,076 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:09,124 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:09,124 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:09,126 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:09,126 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:09,135 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: False
+2025-07-08 09:34:09,139 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:09,144 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:09,151 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:09,161 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:09,162 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:09,162 - django.request - WARNING - Unauthorized: /api/frameworks/
+2025-07-08 09:34:09,162 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: False
+2025-07-08 09:34:09,164 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:09,164 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: False
+2025-07-08 09:34:09,178 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:09,185 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: False
+2025-07-08 09:34:09,192 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:09,191 - django.request - WARNING - Unauthorized: /api/policy-users/
+2025-07-08 09:34:09,195 - django.request - WARNING - Unauthorized: /api/frameworks/
+2025-07-08 09:34:09,216 - django.request - WARNING - Unauthorized: /api/entities/
+2025-07-08 09:34:09,217 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:09,221 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:09,222 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: False
+2025-07-08 09:34:09,233 - django.request - WARNING - Unauthorized: /api/policy-categories/
+2025-07-08 09:34:15,198 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:15,210 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:15,211 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:15,211 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:15,211 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:15,215 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: False
+2025-07-08 09:34:15,236 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:15,239 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:15,239 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:15,241 - django.request - WARNING - Unauthorized: /api/frameworks/
+2025-07-08 09:34:15,242 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:15,244 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: False
+2025-07-08 09:34:15,245 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: False
+2025-07-08 09:34:15,258 - django.request - WARNING - Unauthorized: /api/entities/
+2025-07-08 09:34:15,261 - django.request - WARNING - Unauthorized: /api/policy-categories/
+2025-07-08 09:34:22,058 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:22,073 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:22,073 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:22,073 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:22,073 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: False
+2025-07-08 09:34:22,073 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:22,094 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:22,095 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: False
+2025-07-08 09:34:22,101 - django.request - WARNING - Unauthorized: /api/frameworks/
+2025-07-08 09:34:22,101 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:22,106 - django.request - WARNING - Unauthorized: /api/policy-categories/
+2025-07-08 09:34:22,108 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:22,110 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:22,117 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: False
+2025-07-08 09:34:22,118 - django.request - WARNING - Unauthorized: /api/entities/
+2025-07-08 09:34:38,521 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:38,521 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:38,521 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:38,521 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:38,543 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyDashboardPermission check result: False
+2025-07-08 09:34:38,543 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 61: role=End User
+2025-07-08 09:34:38,543 - grc.rbac.utils - INFO - [RBAC] User 61 (End User) incident.analytics = DENIED
+2025-07-08 09:34:38,543 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 09:34:38,543 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 61
+2025-07-08 09:34:38,543 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 09:34:38,553 - django.request - WARNING - Unauthorized: /api/policy-dashboard/
+2025-07-08 09:34:38,556 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 09:34:38,557 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 09:34:38.557331
+2025-07-08 09:34:38,557 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 61: role=End User
+2025-07-08 09:34:38,557 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: End User
+2025-07-08 09:34:38,557 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 09:34:38,566 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': False, 'VIEW_INCIDENT': False, 'EDIT_INCIDENT': False, 'ASSIGN_INCIDENT': False, 'EVALUATE_INCIDENT': False, 'ESCALATE_INCIDENT': False, 'INCIDENT_ANALYTICS': False}
+2025-07-08 09:34:38,566 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': DENIED
+2025-07-08 09:34:38,566 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 09:34:38,576 - django.request - WARNING - Unauthorized: /api/incidents/counts/
+2025-07-08 09:34:41,289 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:41,291 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 61
+2025-07-08 09:34:41,295 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 61: role=End User
+2025-07-08 09:34:41,295 - grc.rbac.permissions - INFO - [RBAC POLICY] User 61 policy.view = DENIED
+2025-07-08 09:34:41,302 - grc.rbac.utils - INFO - [RBAC] User 61 (End User) incident.analytics = DENIED
+2025-07-08 09:34:41,302 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+2025-07-08 09:34:41,302 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 09:34:41,303 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyDashboardPermission check result: False
+2025-07-08 09:34:41,303 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 61
+2025-07-08 09:34:41,305 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 09:34:41,307 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 09:34:41,307 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 09:34:41.307201
+2025-07-08 09:34:41,311 - django.request - WARNING - Unauthorized: /api/policy-dashboard/
+2025-07-08 09:34:41,312 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 61: role=End User
+2025-07-08 09:34:41,319 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: End User
+2025-07-08 09:34:41,320 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 09:34:41,320 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': False, 'VIEW_INCIDENT': False, 'EDIT_INCIDENT': False, 'ASSIGN_INCIDENT': False, 'EVALUATE_INCIDENT': False, 'ESCALATE_INCIDENT': False, 'INCIDENT_ANALYTICS': False}
+2025-07-08 09:34:41,322 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': DENIED
+2025-07-08 09:34:41,322 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 09:34:41,332 - django.request - WARNING - Unauthorized: /api/incidents/counts/
+2025-07-08 09:34:56,382 - grc.views - INFO - Login attempt for user: vikram.patel
+2025-07-08 09:34:57,021 - grc.rbac.utils - INFO - [RBAC] ===== USER LOGIN PERMISSIONS AUDIT =====
+2025-07-08 09:34:57,021 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:34:57,021 - grc.rbac.utils - INFO - [RBAC] User ID: 2
+2025-07-08 09:34:57,021 - grc.rbac.utils - INFO - [RBAC] Username: vikram.patel
+2025-07-08 09:34:57,021 - grc.rbac.utils - INFO - [RBAC] Role: GRC Administrator
+2025-07-08 09:34:57,021 - grc.rbac.utils - INFO - [RBAC] Account Status: ACTIVE
+2025-07-08 09:34:57,021 - grc.rbac.utils - INFO - [RBAC] Login Time: 2025-07-08 09:34:57.021999
+2025-07-08 09:34:57,021 - grc.rbac.utils - INFO - [RBAC] 
+2025-07-08 09:34:57,021 - grc.rbac.utils - INFO - [RBAC] === INCIDENT MODULE PERMISSIONS ===
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Create Incidents: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] View All Incidents: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Edit Incidents: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Assign Incidents: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Incidents: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Escalate to Risk: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Incident Analytics: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] === POLICY MODULE PERMISSIONS ===
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Create Policy: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] View All Policy: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Edit Policy: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Approve Policy: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Create Framework: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Approve Framework: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Policy Analytics: YES
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] === AUDIT MODULE PERMISSIONS ===
+2025-07-08 09:34:57,037 - grc.rbac.utils - INFO - [RBAC] Assign Audit: YES
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] Conduct Audit: YES
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] Review Audit: YES
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] View Audit Reports: YES
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] Audit Analytics: YES
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] === RISK MODULE PERMISSIONS ===
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] Create Risk: YES
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] View All Risk: YES
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] Edit Risk: YES
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] Approve Risk: YES
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] Assign Risk: YES
+2025-07-08 09:34:57,053 - grc.rbac.utils - INFO - [RBAC] Evaluate Assigned Risk: YES
+2025-07-08 09:34:57,061 - grc.rbac.utils - INFO - [RBAC] Risk Analytics: YES
+2025-07-08 09:34:57,061 - grc.rbac.utils - INFO - [RBAC] === COMPLIANCE MODULE PERMISSIONS ===
+2025-07-08 09:34:57,061 - grc.rbac.utils - INFO - [RBAC] Create Compliance: YES
+2025-07-08 09:34:57,061 - grc.rbac.utils - INFO - [RBAC] View All Compliance: YES
+2025-07-08 09:34:57,061 - grc.rbac.utils - INFO - [RBAC] Edit Compliance: YES
+2025-07-08 09:34:57,061 - grc.rbac.utils - INFO - [RBAC] Approve Compliance: YES
+2025-07-08 09:34:57,061 - grc.rbac.utils - INFO - [RBAC] Compliance Analytics: YES
+2025-07-08 09:34:57,069 - grc.rbac.utils - INFO - [RBAC] ===============================================
+2025-07-08 09:34:57,069 - grc.views - INFO - Successful login for user: vikram.patel
+2025-07-08 09:34:57,151 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:34:57,154 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:34:57,179 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:34:57,180 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:34:57,183 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:34:57,183 - grc.rbac.utils - INFO - [RBAC] User 2 (GRC Administrator) incident.analytics = ALLOWED
+2025-07-08 09:34:57,183 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyDashboardPermission check result: True
+2025-07-08 09:34:57,184 - grc.rbac.utils - INFO - [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+2025-07-08 09:34:57,185 - grc.rbac.utils - INFO - [RBAC DEBUG] User ID: 2
+2025-07-08 09:34:57,187 - grc.rbac.utils - INFO - [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+2025-07-08 09:34:57,188 - grc.rbac.utils - INFO - [RBAC DEBUG] Resource: incident (ID: None)
+2025-07-08 09:34:57,190 - grc.rbac.utils - INFO - [RBAC DEBUG] Timestamp: 2025-07-08 09:34:57.190537
+2025-07-08 09:34:57,205 - grc.rbac.utils - INFO - [RBAC] Found active RBAC record for user 2: role=GRC Administrator
+2025-07-08 09:34:57,205 - grc.rbac.utils - INFO - [RBAC DEBUG] User Role: GRC Administrator
+2025-07-08 09:34:57,214 - grc.rbac.utils - INFO - [RBAC DEBUG] User Active: Y
+2025-07-08 09:34:57,214 - grc.rbac.utils - INFO - [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+2025-07-08 09:34:57,217 - grc.rbac.utils - INFO - [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+2025-07-08 09:34:57,220 - grc.rbac.utils - INFO - [RBAC DEBUG] ========================================
+2025-07-08 09:35:14,981 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:14,986 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:14,995 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:15,021 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:15,021 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:15,021 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:15,021 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:15,029 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:15,031 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:15,031 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:35:15,034 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:15,039 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:16,230 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:35:16,261 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:16,262 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:16,275 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:16,276 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:16,276 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:16,276 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:16,276 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:35:16,276 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:16,308 - grc.routes.policy - INFO - Successfully retrieved 232 frameworks
+2025-07-08 09:35:23,257 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:23,275 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:23,283 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:23,294 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:23,297 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:35:23,299 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:23,306 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:23,307 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:23,307 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:23,314 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:23,314 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:23,320 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:35:23,314 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:30,273 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:30,275 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:30,283 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:30,283 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:30,292 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:30,299 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:30,304 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:30,304 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:30,324 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:30,324 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:35:30,329 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:30,335 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:30,335 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:30,340 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:30,340 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:30,340 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:30,350 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:30,352 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:30,352 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:35:30,355 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:30,387 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:35:30,442 - grc.routes.policy - INFO - Successfully retrieved 232 frameworks
+2025-07-08 09:35:37,262 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:37,271 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:37,275 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:37,293 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:37,295 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:37,295 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:37,298 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:37,299 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:35:37,300 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:37,303 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:37,308 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:37,308 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:37,324 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:35:38,306 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:38,306 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:38,306 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:38,306 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:35:38,342 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:35:38,857 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:38,857 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:38,857 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:38,857 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:35:38,877 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:35:39,966 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:39,984 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:39,998 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:39,998 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:40,000 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:35:40,012 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:40,012 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:40,012 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:40,012 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:35:40,031 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:40,043 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:35:40,043 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:40,043 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:40,056 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:40,061 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:35:40,064 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:40,064 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:40,081 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:35:40,081 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:40,091 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:35:40,098 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:35:40,161 - grc.routes.policy - INFO - Successfully retrieved 232 frameworks
+2025-07-08 09:36:14,481 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:36:14,490 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:36:14,491 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:36:14,493 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:36:14,494 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:36:14,504 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:36:14,505 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:36:14,505 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:37:08,662 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:37:08,665 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:37:08,672 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:37:08,685 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:37:08,687 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:37:08,687 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:37:08,687 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:37:08,696 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:37:08,698 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:37:08,704 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:37:08,718 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:37:08,721 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:37:08,723 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:37:08,723 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:37:08,723 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:37:08,729 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:37:08,733 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:37:08,738 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:37:08,738 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:37:08,738 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:37:08,781 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:37:08,849 - grc.routes.policy - INFO - Successfully retrieved 232 frameworks
+2025-07-08 09:37:29,591 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:37:29,591 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:37:29,603 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:37:29,605 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:37:29,605 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:37:29,607 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:37:29,607 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:37:29,608 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:37:39,255 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:37:39,255 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:37:39,255 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:37:39,268 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:37:39,271 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:37:39,273 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:37:39,274 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:37:39,274 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:37:39,275 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:37:39,278 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:37:39,282 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:37:39,283 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:37:39,313 - grc.routes.policy - INFO - Successfully retrieved 213 frameworks
+2025-07-08 09:56:56,112 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:56:56,128 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:56:56,128 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:56:56,128 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:56:56,128 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 09:56:56,145 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:56:56,161 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:56:56,161 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:56:56,161 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:56:56,161 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:56:56,161 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:56:56,172 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 09:56:56,174 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:56:56,172 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:56:56,174 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:56:56,174 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:56:56,174 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 09:56:56,174 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:56:56,174 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 09:56:56,192 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 09:56:56,224 - grc.routes.policy - INFO - Successfully retrieved 13 frameworks
+2025-07-08 09:56:56,324 - grc.routes.policy - INFO - Successfully retrieved 232 frameworks
+2025-07-08 10:16:24,709 - django.request - WARNING - Not Found: /api/user-permissions/
+2025-07-08 10:16:24,709 - django.request - WARNING - Not Found: /api/user-role/
+2025-07-08 10:16:29,084 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:16:29,088 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:16:29,096 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:16:29,097 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:16:29,098 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:16:29,098 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:16:29,104 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:16:29,104 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 10:16:29,105 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:16:29,105 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:16:29,107 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:16:29,107 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:16:29,139 - grc.routes.policy - INFO - Successfully retrieved 213 frameworks
+2025-07-08 10:16:31,420 - django.request - WARNING - Not Found: /api/user-role/
+2025-07-08 10:16:31,420 - django.request - WARNING - Not Found: /api/user-permissions/
+2025-07-08 10:17:02,316 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:17:02,322 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:17:02,324 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:17:02,324 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:17:02,326 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:17:02,329 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 10:17:02,333 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:17:02,333 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:17:02,340 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:17:02,344 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:17:02,346 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:17:02,350 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:17:02,362 - grc.routes.policy - INFO - Successfully retrieved 213 frameworks
+2025-07-08 10:17:06,885 - django.request - WARNING - Not Found: /api/user-role/
+2025-07-08 10:17:06,885 - django.request - WARNING - Not Found: /api/user-permissions/
+2025-07-08 10:18:52,747 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:18:52,750 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:18:52,750 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:18:52,850 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:18:53,655 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:18:53,655 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:18:53,657 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:18:53,658 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 10:18:53,663 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:18:54,400 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:18:54,403 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:18:54,404 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:18:57,150 - grc.routes.policy - INFO - Successfully retrieved 213 frameworks
+2025-07-08 10:19:06,989 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:19:06,989 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:19:07,001 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:19:07,003 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:19:07,003 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:19:07,004 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:19:07,008 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:19:07,009 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:19:07,016 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:19:07,026 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:19:07,029 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:19:07,030 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+2025-07-08 10:19:07,056 - grc.routes.policy - INFO - Successfully retrieved 213 frameworks
+2025-07-08 10:19:13,844 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:19:13,845 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:19:13,850 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:19:13,851 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:19:13,852 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:19:13,852 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:19:13,852 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:19:13,859 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:19:13,943 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:19:13,953 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:19:13,953 - grc.rbac.utils - INFO - [RBAC] Successfully retrieved user_id from session: 2
+2025-07-08 10:19:13,959 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:19:13,963 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:19:13,963 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:19:13,963 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:19:13,963 - grc.rbac.permissions - INFO - [RBAC POLICY] User 2 policy.view = ALLOWED
+2025-07-08 10:19:13,963 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:19:13,963 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
+2025-07-08 10:19:13,963 - grc.rbac.permissions - INFO - [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+2025-07-08 10:19:13,981 - grc.rbac.permissions - INFO - [RBAC POLICY] PolicyViewPermission check result: True
