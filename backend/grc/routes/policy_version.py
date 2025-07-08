@@ -492,26 +492,31 @@ def create_policy_version(request, policy_id):
                     from ..notification_service import NotificationService
                     notification_service = NotificationService()
                     
-                    # Get reviewer's email
-                    reviewer_email = None
-                    reviewer = Users.objects.filter(UserId=reviewer_id).first()
+                    # First get the reviewer's UserId from their username
+                    reviewer = Users.objects.filter(UserName=reviewer_name).first()
                     if reviewer:
-                        reviewer_email = reviewer.Email
-                    
-                    if reviewer_email:
-                        # Security: XSS Protection - Escape HTML content before building email template
-                        notification_data = {
-                            'notification_type': 'policyNewVersion',
-                            'email': reviewer_email,
-                            'email_type': 'gmail',
-                            'template_data': [
-                                escape_html(reviewer_name),  # Escape reviewer name for HTML context
-                                escape_html(new_policy.PolicyName),  # Escape policy name for HTML context
-                                new_version,  # Version number is safe
-                                escape_html(new_policy.CreatedByName)  # Escape submitter name for HTML context
-                            ]
-                        }
-                        notification_service.send_multi_channel_notification(notification_data)
+                        reviewer_id = reviewer.UserId
+                        # Now get the email using the correct UserId
+                        reviewer_email = notification_service.get_user_email(reviewer_id)
+                        
+                        if reviewer_email:
+                            # Security: XSS Protection - Escape HTML content before building email template
+                            notification_data = {
+                                'notification_type': 'policyNewVersion',
+                                'email': reviewer_email,
+                                'email_type': 'gmail',
+                                'template_data': [
+                                    escape_html(reviewer_name),  # Escape reviewer name for HTML context
+                                    escape_html(new_policy.PolicyName),  # Escape policy name for HTML context
+                                    new_version,  # Version number is safe
+                                    escape_html(new_policy.CreatedByName)  # Escape submitter name for HTML context
+                                ]
+                            }
+                            notification_service.send_multi_channel_notification(notification_data)
+                        else:
+                            print(f"No email found for reviewer with ID: {reviewer_id}")
+                    else:
+                        print(f"No user found with username: {reviewer_name}")
                 except Exception as e:
                     print(f"Failed to send notification: {str(e)}")
             

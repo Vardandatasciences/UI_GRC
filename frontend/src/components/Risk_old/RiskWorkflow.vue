@@ -18,15 +18,31 @@
         </button>
       </div>
       
-      <div class="risk-workflow-user-filter">
+      <!-- Debug info (remove after testing) -->
+      <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; font-size: 12px;">
+        <strong>Debug Info:</strong><br>
+        User Role: {{ userRole }}<br>
+        Is GRC Administrator: {{ isGRCAdministrator }}<br>
+        Show User Dropdown (computed): {{ showUserDropdown }}<br>
+        Role Initialized: {{ roleInitialized }}<br>
+        Current User: {{ currentUser?.name || currentUser?.UserName || 'Not loaded' }}
+      </div>
+      
+      <!-- Show user dropdown only for GRC Administrators -->
+      <div v-if="showUserDropdown" class="risk-workflow-user-filter">
         <label for="user-select">Select User:</label>
         <div v-if="loading && users.length === 0" class="risk-workflow-loading-indicator">Loading users...</div>
         <select id="user-select" v-model="selectedUserId" @change="fetchData" class="risk-workflow-user-dropdown" :disabled="loading && users.length === 0">
           <option value="">All Users</option>
-          <option v-for="user in users" :key="user.user_id" :value="user.user_id">
-            {{ user.user_name }} {{ user.department ? `(${user.department})` : '' }}
+                  <option v-for="user in users" :key="user.UserId" :value="user.UserId">
+          {{ user.UserName }} {{ user.department ? `(${user.department})` : '' }}
           </option>
         </select>
+      </div>
+      
+      <!-- Show current user info for non-GRC Administrators -->
+      <div v-else-if="currentUser" class="risk-workflow-current-user-info">
+        <p><strong>Viewing tasks for:</strong> {{ currentUser.name || currentUser.UserName }}</p>
       </div>
       
       <!-- Tabs for User Tasks and Reviewer Tasks -->
@@ -57,11 +73,12 @@
       
       <!-- User Tasks Section -->
       <div v-if="activeTab === 'user'">
-        <div v-if="!selectedUserId" class="risk-workflow-no-data">
+        <div v-if="!selectedUserId && isGRCAdministrator" class="risk-workflow-no-data">
           <p>Please select a user to view their assigned risks.</p>
         </div>
         <div v-else-if="userRisks.length === 0" class="risk-workflow-no-data">
-          <p>No risks assigned to this user.</p>
+          <p v-if="isGRCAdministrator">No risks assigned to this user.</p>
+          <p v-else>You have no risks assigned to you.</p>
         </div>
         <div v-else>
           <div class="risk-workflow-user-tasks-table-responsive">
@@ -113,11 +130,12 @@
       
       <!-- Reviewer Tasks Section -->
       <div v-if="activeTab === 'reviewer'">
-        <div v-if="!selectedUserId" class="risk-workflow-no-data">
+        <div v-if="!selectedUserId && isGRCAdministrator" class="risk-workflow-no-data">
           <p>Please select a user to view their reviewer tasks.</p>
         </div>
         <div v-else-if="reviewerTasks.length === 0" class="risk-workflow-no-data">
-          <p>No review tasks assigned to this user.</p>
+          <p v-if="isGRCAdministrator">No review tasks assigned to this user.</p>
+          <p v-else>You have no review tasks assigned to you.</p>
         </div>
         <div v-else>
           <div class="risk-workflow-user-tasks-table-responsive">
@@ -966,6 +984,7 @@
 <script>
 import axios from 'axios';
 import './RiskWorkflow.css'; // Import the CSS file
+import { SessionUtils } from '@/utils/accessUtils';
 
 export default {
   name: 'UserTasks',
@@ -977,6 +996,11 @@ export default {
       selectedUserId: '',
       loading: true,
       error: null,
+      // Role-based access control
+      userRole: null,
+      isGRCAdministrator: false,
+      currentUser: null,
+      roleInitialized: false,
       showMitigationWorkflow: false,
       showReviewerWorkflow: false,
       loadingMitigations: false,
@@ -1025,6 +1049,17 @@ export default {
       console.log('Current users in data:', this.users.length, this.users);
       return this.users.length;
     },
+    
+    // Force reactive computed property for role checking
+    showUserDropdown() {
+      console.log('showUserDropdown computed called');
+      console.log('  - isGRCAdministrator:', this.isGRCAdministrator);
+      console.log('  - userRole:', this.userRole);
+      console.log('  - roleInitialized:', this.roleInitialized);
+      const result = this.isGRCAdministrator === true;
+      console.log('  - returning:', result);
+      return result;
+    },
     allStepsCompleted() {
       const stepsToCheck = this.mitigationSteps.filter(step => Boolean(step.approved) !== true);
       return stepsToCheck.length > 0 && 
@@ -1069,19 +1104,80 @@ export default {
       );
     }
   },
-  mounted() {
-    // Fetch users immediately when component mounts
-    this.fetchUsers();
+  async mounted() {
+    // Initialize user role and session data
+    await this.initializeUserRole();
     
-    // Set a small delay to ensure the DOM is fully rendered
-    setTimeout(() => {
-      // Force a re-render of the dropdown
-      if (this.users.length === 0) {
-        this.fetchUsers();
+    // For GRC Administrators, fetch users immediately
+    if (this.isGRCAdministrator) {
+      this.fetchUsers();
+      
+      // Set a small delay to ensure the DOM is fully rendered
+      setTimeout(() => {
+        // Force a re-render of the dropdown
+        if (this.users.length === 0) {
+          this.fetchUsers();
+        }
+      }, 500);
+    } else {
+      // For non-GRC Administrators, set selectedUserId to current user and fetch their data
+      this.selectedUserId = this.currentUser?.user_id || this.currentUser?.UserId;
+      if (this.selectedUserId) {
+        this.fetchData();
       }
-    }, 500);
+    }
   },
   methods: {
+    async initializeUserRole() {
+      try {
+        console.log('=== INITIALIZING USER ROLE ===');
+        
+        // Get current user session data
+        this.currentUser = SessionUtils.getUserSession();
+        console.log('Current user session:', this.currentUser);
+        
+        // Fetch user role from backend
+        const roleResponse = await axios.get('http://localhost:8000/api/user-role/');
+        console.log('User role response:', roleResponse.data);
+        
+        if (roleResponse.data.success) {
+          this.userRole = roleResponse.data.role;
+          this.isGRCAdministrator = this.userRole === 'GRC Administrator';
+          
+          console.log('=== ROLE DETECTION RESULTS ===');
+          console.log('User role:', this.userRole);
+          console.log('Is GRC Administrator:', this.isGRCAdministrator);
+          console.log('Expected: isGRCAdministrator should be', this.userRole === 'GRC Administrator');
+          
+          // Set initialization flag
+          this.roleInitialized = true;
+          
+          // Force Vue reactivity update
+          this.$nextTick(() => {
+            console.log('After nextTick - isGRCAdministrator:', this.isGRCAdministrator);
+            console.log('After nextTick - showUserDropdown computed:', this.showUserDropdown);
+          });
+          
+        } else {
+          console.error('Failed to fetch user role:', roleResponse.data.error);
+          this.userRole = null;
+          this.isGRCAdministrator = false;
+          this.roleInitialized = true;
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+        this.userRole = null;
+        this.isGRCAdministrator = false;
+        this.roleInitialized = true;
+        this.error = 'Failed to fetch user role information';
+      }
+      
+      console.log('=== ROLE INITIALIZATION COMPLETE ===');
+      console.log('Final isGRCAdministrator value:', this.isGRCAdministrator);
+      console.log('Final showUserDropdown computed value:', this.showUserDropdown);
+      console.log('Final roleInitialized value:', this.roleInitialized);
+    },
+    
     fetchUsers() {
       console.log('Fetching users...');
       this.loading = true;
@@ -1112,6 +1208,11 @@ export default {
         });
     },
     fetchData() {
+      // For non-GRC Administrators, ensure selectedUserId is set to current user
+      if (!this.isGRCAdministrator && !this.selectedUserId) {
+        this.selectedUserId = this.currentUser?.user_id || this.currentUser?.UserId;
+      }
+      
       if (!this.selectedUserId) {
         this.userRisks = [];
         this.reviewerTasks = [];
@@ -1179,8 +1280,8 @@ export default {
       });
     },
     getUserName(userId) {
-      const user = this.users.find(u => u.user_id == userId);
-      return user ? user.user_name : 'Unknown';
+      const user = this.users.find(u => u.UserId == userId);
+      return user ? user.UserName : 'Unknown';
     },
     startWork(riskId) {
       this.loading = true;
@@ -2863,6 +2964,25 @@ export default {
   font-weight: 600;
   display: inline-block;
   margin-right: 5px;
+}
+
+/* Current user info styling for non-GRC Administrators */
+.risk-workflow-current-user-info {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.risk-workflow-current-user-info p {
+  margin: 0;
+  font-size: 16px;
+  color: #495057;
+}
+
+.risk-workflow-current-user-info strong {
+  color: #007bff;
 }
 
 /* Add these new styles for status badges */

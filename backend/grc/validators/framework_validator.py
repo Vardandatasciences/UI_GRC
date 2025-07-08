@@ -61,10 +61,11 @@ def validate_date(value: Any, field_name: str, allow_none: bool = False) -> Opti
     Raises:
         ValidationError: If validation fails
     """
-    if value is None:
+    # Treat None or empty string as None
+    if value is None or (isinstance(value, str) and not value.strip()):
         if allow_none:
             return None
-        raise ValidationError(f"{field_name} cannot be None")
+        raise ValidationError(f"{field_name} cannot be None or empty")
     
     if isinstance(value, date):
         return value
@@ -208,7 +209,7 @@ def validate_framework_post_data(data: Dict[str, Any]) -> Dict[str, Any]:
     validated['EndDate'] = validate_date(
         data.get('EndDate'), 
         'EndDate', 
-        allow_none=False
+        allow_none=True
     )
     
     # Creator fields
@@ -299,7 +300,7 @@ def validate_policy_data(data: Dict[str, Any], index: int) -> Dict[str, Any]:
     validated['EndDate'] = validate_date(
         data.get('EndDate'), 
         f'EndDate for policy {index}', 
-        allow_none=False
+        allow_none=True
     )
     
     # Optional fields
@@ -575,7 +576,7 @@ def validate_policy_for_add(data: Dict[str, Any], index: int) -> Dict[str, Any]:
     validated['EndDate'] = validate_date(
         data.get('EndDate'), 
         f'EndDate for policy {index}', 
-        allow_none=False
+        allow_none=True
     )
     
     # Optional fields
@@ -852,7 +853,7 @@ def validate_tailored_framework_data(data: Dict[str, Any]) -> Dict[str, Any]:
     validated['endDate'] = validate_date(
         data.get('endDate'), 
         'endDate', 
-        allow_none=False
+        allow_none=True
     )
     
     # Validate policies if present
@@ -922,7 +923,7 @@ def validate_tailored_policy_data(data: Dict[str, Any], index: int) -> Dict[str,
     validated['endDate'] = validate_date(
         data.get('endDate'), 
         f'endDate for policy {index}', 
-        allow_none=False
+        allow_none=True
     )
     
     # All fields are required
@@ -1229,7 +1230,7 @@ def validate_tailored_policy_request_data(data: Dict[str, Any]) -> Dict[str, Any
     validated['EndDate'] = validate_date(
         data.get('EndDate'), 
         'EndDate', 
-        allow_none=False
+        allow_none=True
     )
     
     # Policy category fields
@@ -1490,7 +1491,7 @@ def validate_framework_version_data(data: Dict[str, Any]) -> Dict[str, Any]:
     validated['EndDate'] = validate_date(
         data.get('EndDate'), 
         'EndDate', 
-        allow_none=False
+        allow_none=True
     )
     
     # Validate policies if present
@@ -1583,7 +1584,7 @@ def validate_framework_version_policy_data(data: Dict[str, Any], index: int) -> 
     validated['EndDate'] = validate_date(
         data.get('EndDate'), 
         f'EndDate for policy {index}', 
-        allow_none=False
+        allow_none=True
     )
     
     # Optional fields
@@ -1782,7 +1783,7 @@ def validate_framework_version_new_policy_data(data: Dict[str, Any], index: int)
     validated['EndDate'] = validate_date(
         data.get('EndDate'), 
         f'EndDate for new policy {index}', 
-        allow_none=False
+        allow_none=True
     )
     
     # Optional fields
@@ -2138,7 +2139,7 @@ def validate_policy_version_data(data: Dict[str, Any]) -> Dict[str, Any]:
     validated['EndDate'] = validate_date(
         data.get('EndDate'), 
         'EndDate', 
-        allow_none=False
+        allow_none=True
     )
     
     # All fields are required except for DocURL, PermanentTemporary, and excluded subpolicies
@@ -2273,7 +2274,7 @@ def validate_policy_version_data(data: Dict[str, Any]) -> Dict[str, Any]:
     # Validate new subpolicies if present
     if 'new_subpolicies' in data:
         if not isinstance(data['new_subpolicies'], list):
-            raise ValidationError("New subpolicies must be a list")
+            raise ValidationError(f"New subpolicies must be a list")
         
         validated_new_subpolicies = []
         for i, subpolicy_data in enumerate(data['new_subpolicies']):

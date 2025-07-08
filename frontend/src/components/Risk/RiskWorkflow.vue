@@ -1082,8 +1082,8 @@ export default {
         this.userDropdownConfig.values = [
           { value: '', label: 'All Users' },
           ...newUsers.map(user => ({
-            value: user.user_id,
-            label: `${user.user_name}${user.department ? ` (${user.department})` : ''}`
+            value: user.UserId,
+            label: `${user.UserName}${user.department ? ` (${user.department})` : ''}`
           }))
         ];
       }
@@ -1199,8 +1199,8 @@ export default {
       });
     },
     getUserName(userId) {
-      const user = this.users.find(u => u.user_id == userId);
-      return user ? user.user_name : 'Unknown';
+      const user = this.users.find(u => u.UserId == userId);
+      return user ? user.UserName : 'Unknown';
     },
     startWork(riskId) {
       this.loading = true;

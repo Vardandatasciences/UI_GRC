@@ -98,11 +98,8 @@
           <div class="VV-row">
             <div class="VV-form-group VV-half">
               <label class="VV-label">CREATED BY *</label>
-              <select class="VV-input" v-model="frameworkForm.createdByName" required>
-                <option value="">Select Creator</option>
-                <option v-for="user in users" :key="user.id" :value="user.name">{{ user.name }}</option>
-              </select>
-              <small class="VV-desc">Select who created this framework</small>
+              <input class="VV-input" :value="loggedInUsername" type="text" disabled />
+              <small class="VV-desc">Automatically set to logged in user</small>
             </div>
             <div class="VV-form-group VV-half">
               <label class="VV-label">REVIEWER *</label>
@@ -310,15 +307,8 @@
               <div v-if="selectedTab === 'policy'" class="VV-row">
                 <div class="VV-form-group VV-half">
                   <label class="VV-label">CREATED BY *</label>
-                  <select 
-                    class="VV-input" 
-                    v-model="policyTabs[activePolicyTab].createdByName" 
-                    required
-                  >
-                    <option value="">Select Creator</option>
-                    <option v-for="user in users" :key="user.id" :value="user.name">{{ user.name }}</option>
-                  </select>
-                  <small class="VV-desc">Select who created this policy</small>
+                  <input class="VV-input" :value="loggedInUsername" type="text" disabled />
+                  <small class="VV-desc">Automatically set to logged in user</small>
                 </div>
                 <div class="VV-form-group VV-half">
                   <label class="VV-label">REVIEWER *</label>
@@ -602,15 +592,8 @@
               <div class="VV-row">
                 <div class="VV-form-group VV-half">
                   <label class="VV-label">CREATED BY *</label>
-                  <select 
-                    class="VV-input" 
-                    v-model="policyTabs[activePolicyTab].createdByName" 
-                    required
-                  >
-                    <option value="">Select Creator</option>
-                    <option v-for="user in users" :key="user.id" :value="user.name">{{ user.name }}</option>
-                  </select>
-                  <small class="VV-desc">Select who created this policy</small>
+                  <input class="VV-input" :value="loggedInUsername" type="text" disabled />
+                  <small class="VV-desc">Automatically set to logged in user</small>
                 </div>
                 <div class="VV-form-group VV-half">
                   <label class="VV-label">REVIEWER *</label>
@@ -711,6 +694,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
         policyData: [], // Store all policy category data
         users: [], // Add users array
         entities: [], // Initialize as empty array
+        loggedInUsername: localStorage.getItem('username') || '', // Add loggedInUsername
         frameworkForm: {
           name: '',
           description: '',
@@ -720,7 +704,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
           file: null,
           startDate: '',
           endDate: '',
-          createdByName: '',
+          createdByName: localStorage.getItem('username') || '', // Initialize with logged in username
           reviewer: ''
         },
         policyTabs: [],
@@ -788,42 +772,15 @@ const API_BASE_URL = 'http://localhost:8000/api'
         })
         this.policyTabs[policyIdx].activeSubPolicyTab = this.policyTabs[policyIdx].subPolicies.length - 1
       },
-      // Add method to handle policy file upload
-      async handlePolicyFileUpload(e, idx) {
-        const file = e.target.files[0];
-        if (file) {
-          this.policyTabs[idx].file = file;
-          
-          // If we need to upload immediately, we can use the following code:
-          // try {
-          //   const userId = localStorage.getItem('user_id') || 'default-user';
-          //   const uploadResponse = await policyService.uploadPolicyDocument(
-          //     file,
-          //     userId,
-          //     this.policyTabs[idx].name || 'Unnamed Policy',
-          //     'policy'
-          //   );
-          //   
-          //   if (uploadResponse.data.success) {
-          //     this.policyTabs[idx].docUrl = uploadResponse.data.file.url;
-          //     PopupService.success('Document uploaded successfully', 'Upload Success');
-          //   }
-          // } catch (error) {
-          //   console.error('Error uploading policy document:', error);
-          //   PopupService.error('Failed to upload document: ' + (error.response?.data?.error || error.message), 'Upload Error');
-          // }
-        }
-      },
       // Add method to handle policy tab addition
       addPolicyTab() {
         const newPolicyId = `new-policy-${Date.now()}`;
         console.log('Creating new policy with ID:', newPolicyId);
         
-        const createdByName = this.selectedTab === 'framework' ? this.frameworkForm.createdByName : '';
         const reviewer = this.selectedTab === 'framework' ? this.frameworkForm.reviewer : '';
         
         this.policyTabs.push({
-          id: newPolicyId, // Use the new ID format
+          id: newPolicyId,
           name: '',
           identifier: '',
           description: '',
@@ -839,17 +796,17 @@ const API_BASE_URL = 'http://localhost:8000/api'
           startDate: '',
           endDate: '',
           file: null,
-          createdByName: createdByName,
+          createdByName: this.loggedInUsername, // Use loggedInUsername
           reviewer: reviewer,
           exclude: false,
           subPolicies: [
             {
-              id: `new-subpolicy-${Date.now()}`, // Use new ID format for subpolicy
+              id: `new-subpolicy-${Date.now()}`,
               name: '',
               identifier: '',
               control: '',
               description: '',
-              createdByName: createdByName,
+              createdByName: this.loggedInUsername, // Use loggedInUsername
               exclude: false
             }
           ],
@@ -1423,7 +1380,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
           file: null,
           startDate: '',
           endDate: '',
-          createdByName: '',
+          createdByName: localStorage.getItem('username') || '', // Initialize with logged in username
           reviewer: ''
         }
           this.policyTabs = []

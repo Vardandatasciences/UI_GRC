@@ -20,6 +20,7 @@ export default {
                     active_policies: 0,
                     inactive_policies: 0,
                     total_subpolicies: 0,
+                    active_subpolicies: 0,
                     approval_rate: 0,
                     policies: []
                 }

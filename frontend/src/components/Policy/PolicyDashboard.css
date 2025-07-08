@@ -196,6 +196,10 @@
   color: var(--danger-color);
 }
 
+.summary-tab-trend.neutral {
+  color: var(--text-secondary);
+}
+
 .summary-tab-trend i {
   font-size: 10px;
 }
@@ -344,6 +348,16 @@
 .activity-icon {
   background: #f0f7ff;
   color: var(--primary-color);
+}
+
+.activity-icon.create {
+  background: #f0f7ff;
+  color: var(--primary-color);
+}
+
+.activity-icon.approved {
+  background: #f0fdf4;
+  color: var(--success-color);
 }
 
 .activity-icon.update {

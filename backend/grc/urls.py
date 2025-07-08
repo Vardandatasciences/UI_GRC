@@ -33,7 +33,6 @@ from .routes.policy import (
     update_policy_approval,
     submit_policy_review,
     resubmit_policy_approval,
-    debug_policy_status,
     list_users,
     get_framework_explorer_data,
     get_framework_policies,
@@ -217,7 +216,7 @@ policy_urlpatterns = [
     path('policy-versions/rejected/', get_rejected_policy_versions, name='get-rejected-policy-versions'),
     path('policy-versions/rejected/<int:user_id>/', get_rejected_policy_versions, name='get-rejected-policy-versions-by-user'),
     path('policies/<int:policy_id>/resubmit-approval/', resubmit_policy_approval, name='resubmit-policy-approval'),
-    path('policies/<int:policy_id>/debug-status/', debug_policy_status, name='debug-policy-status'),
+    # path('policies/<int:policy_id>/debug-status/', debug_policy_status, name='debug-policy-status'),
     path('policy-approvals/<int:approval_id>/reject/', submit_policy_review, name='reject-policy-approval'),
     
     # Subpolicy Management
@@ -437,6 +436,7 @@ compliance_urlpatterns = [
     
     # User Management
     path('compliance-users/', compliance_views.get_all_users, name='get-compliance-users'),
+    path('api/compliance-users/', compliance_views.get_all_users, name='api-get-compliance-users'),
     
     # Categories
     path('categories/<str:source>/', compliance_views.get_category_values, name='get-category-values'),
@@ -602,6 +602,7 @@ incident_urlpatterns = [
     
     # User Management  
     path('custom-users/', incident_views.list_users, name='custom-users'),
+    path('api/custom-users/', incident_views.list_users, name='api-custom-users'),
     path('incident-users/', incident_views.list_users, name='list-users'),
     path('incidents-users/', incident_views.list_users, name='incidents-users'),
     
@@ -697,6 +698,7 @@ risk_urlpatterns = [
     
     # User Management
     path('users/', risk_views.get_users, name='get-users'),
+    path('api/users/', risk_views.get_users, name='api-get-users'),
     path('risk-custom-users/', risk_views.get_custom_users, name='risk-custom-users'),
     path('risk-custom-users/<int:user_id>/', risk_views.get_custom_user, name='risk-custom-user'),
     path('user-risks/<int:user_id>/', risk_views.get_user_risks, name='user-risks'),

@@ -20842,3 +20842,751 @@ INFO 2025-07-08 21:10:40,776 utils 17704 2340 [RBAC] Successfully retrieved user
 INFO 2025-07-08 21:10:40,782 permissions 17704 2340 [RBAC POLICY] User 3 policy.view = ALLOWED
 INFO 2025-07-08 21:10:40,789 permissions 17704 2340 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
 INFO 2025-07-08 21:10:40,790 permissions 17704 2340 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:36:17,265 utils 17704 18140 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:36:17,271 permissions 17704 18140 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:36:17,273 permissions 17704 18140 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:36:17,276 permissions 17704 18140 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:36:19,873 utils 17704 18140 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:36:19,878 permissions 17704 18140 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:36:19,878 permissions 17704 18140 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:36:19,878 permissions 17704 18140 [RBAC POLICY] PolicyListPermission check result: True
+INFO 2025-07-08 21:40:57,278 utils 17704 18140 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:40:57,307 permissions 17704 18140 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:40:57,309 permissions 17704 18140 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:40:57,309 permissions 17704 18140 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:40:57,516 utils 17704 18140 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:40:57,518 permissions 17704 18140 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:40:57,518 permissions 17704 18140 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:40:57,518 permissions 17704 18140 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:41:13,266 utils 17704 18140 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:41:13,272 permissions 17704 18140 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:41:13,275 permissions 17704 18140 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:41:13,277 permissions 17704 18140 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:41:13,357 utils 17704 18140 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:41:13,360 permissions 17704 18140 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:41:13,363 permissions 17704 18140 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:41:13,363 permissions 17704 18140 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:41:23,200 utils 17704 18140 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:41:23,204 permissions 17704 18140 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:41:23,207 permissions 17704 18140 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:41:23,209 permissions 17704 18140 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:41:23,313 utils 17704 15292 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:41:23,327 permissions 17704 15292 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:41:23,331 permissions 17704 15292 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:41:23,333 permissions 17704 15292 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:41:33,356 utils 17704 15292 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:41:33,361 permissions 17704 15292 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:41:33,371 permissions 17704 15292 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:41:33,371 permissions 17704 15292 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:41:33,433 utils 17704 15292 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:41:33,441 permissions 17704 15292 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:41:33,445 permissions 17704 15292 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:41:33,448 permissions 17704 15292 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:41:44,229 utils 17704 15292 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:41:44,234 permissions 17704 15292 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:41:44,236 permissions 17704 15292 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:41:44,243 permissions 17704 15292 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:45:57,483 utils 17704 15292 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:45:57,487 permissions 17704 15292 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:45:57,489 permissions 17704 15292 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:45:57,489 permissions 17704 15292 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 21:49:54,326 utils 17704 18140 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 21:49:54,333 permissions 17704 18140 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 21:49:54,337 permissions 17704 18140 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 21:49:54,339 permissions 17704 18140 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 22:01:30,779 utils 5308 13556 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:01:30,787 utils 5308 13556 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:01:30,789 utils 5308 13556 [RBAC] User 3 (GRC Administrator) incident.analytics = ALLOWED
+INFO 2025-07-08 22:01:30,789 utils 5308 13556 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-08 22:01:30,790 utils 5308 13556 [RBAC DEBUG] User ID: 3
+INFO 2025-07-08 22:01:30,790 utils 5308 13556 [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+INFO 2025-07-08 22:01:30,791 utils 5308 13556 [RBAC DEBUG] Resource: incident (ID: None)
+INFO 2025-07-08 22:01:30,791 utils 5308 13556 [RBAC DEBUG] Timestamp: 2025-07-08 22:01:30.791340
+INFO 2025-07-08 22:01:30,794 utils 5308 13556 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:01:30,796 utils 5308 13556 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-08 22:01:30,796 utils 5308 29008 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:01:30,797 utils 5308 13556 [RBAC DEBUG] User Active: Y
+INFO 2025-07-08 22:01:30,798 utils 5308 13556 [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+INFO 2025-07-08 22:01:30,799 utils 5308 13556 [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+INFO 2025-07-08 22:01:30,799 utils 5308 13556 [RBAC DEBUG] ========================================
+INFO 2025-07-08 22:01:30,801 permissions 5308 29008 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:01:30,803 permissions 5308 29008 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:01:30,804 permissions 5308 29008 [RBAC POLICY] PolicyDashboardPermission check result: True
+INFO 2025-07-08 22:01:33,860 utils 5308 13556 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:01:33,861 utils 5308 29008 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:01:33,867 permissions 5308 13556 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:01:33,869 permissions 5308 13556 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:01:33,869 utils 5308 29008 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:01:33,870 permissions 5308 13556 [RBAC POLICY] PolicyDashboardPermission check result: True
+INFO 2025-07-08 22:01:33,871 utils 5308 29008 [RBAC] User 3 (GRC Administrator) incident.analytics = ALLOWED
+INFO 2025-07-08 22:01:33,871 utils 5308 29008 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-08 22:01:33,873 utils 5308 29008 [RBAC DEBUG] User ID: 3
+INFO 2025-07-08 22:01:33,874 utils 5308 29008 [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+INFO 2025-07-08 22:01:33,876 utils 5308 29008 [RBAC DEBUG] Resource: incident (ID: None)
+INFO 2025-07-08 22:01:33,876 utils 5308 29008 [RBAC DEBUG] Timestamp: 2025-07-08 22:01:33.876171
+INFO 2025-07-08 22:01:33,882 utils 5308 29008 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:01:33,884 utils 5308 29008 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-08 22:01:33,885 utils 5308 29008 [RBAC DEBUG] User Active: Y
+INFO 2025-07-08 22:01:33,886 utils 5308 29008 [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+INFO 2025-07-08 22:01:33,890 utils 5308 29008 [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+INFO 2025-07-08 22:01:33,894 utils 5308 29008 [RBAC DEBUG] ========================================
+INFO 2025-07-08 22:01:44,411 utils 5308 29008 [RBAC] ===== USER LOGIN PERMISSIONS AUDIT =====
+INFO 2025-07-08 22:01:44,417 utils 5308 29008 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:01:44,418 utils 5308 29008 [RBAC] User ID: 3
+INFO 2025-07-08 22:01:44,419 utils 5308 29008 [RBAC] Username: priya.gupta
+INFO 2025-07-08 22:01:44,419 utils 5308 29008 [RBAC] Role: GRC Administrator
+INFO 2025-07-08 22:01:44,420 utils 5308 29008 [RBAC] Account Status: ACTIVE
+INFO 2025-07-08 22:01:44,421 utils 5308 29008 [RBAC] Login Time: 2025-07-08 22:01:44.421641
+INFO 2025-07-08 22:01:44,422 utils 5308 29008 [RBAC] 
+INFO 2025-07-08 22:01:44,423 utils 5308 29008 [RBAC] === INCIDENT MODULE PERMISSIONS ===
+INFO 2025-07-08 22:01:44,424 utils 5308 29008 [RBAC] Create Incidents: YES
+INFO 2025-07-08 22:01:44,425 utils 5308 29008 [RBAC] View All Incidents: YES
+INFO 2025-07-08 22:01:44,426 utils 5308 29008 [RBAC] Edit Incidents: YES
+INFO 2025-07-08 22:01:44,427 utils 5308 29008 [RBAC] Assign Incidents: YES
+INFO 2025-07-08 22:01:44,430 utils 5308 29008 [RBAC] Evaluate Assigned Incidents: YES
+INFO 2025-07-08 22:01:44,431 utils 5308 29008 [RBAC] Escalate to Risk: YES
+INFO 2025-07-08 22:01:44,432 utils 5308 29008 [RBAC] Incident Analytics: YES
+INFO 2025-07-08 22:01:44,433 utils 5308 29008 [RBAC] === POLICY MODULE PERMISSIONS ===
+INFO 2025-07-08 22:01:44,434 utils 5308 29008 [RBAC] Create Policy: YES
+INFO 2025-07-08 22:01:44,435 utils 5308 29008 [RBAC] View All Policy: YES
+INFO 2025-07-08 22:01:44,436 utils 5308 29008 [RBAC] Edit Policy: YES
+INFO 2025-07-08 22:01:44,437 utils 5308 29008 [RBAC] Approve Policy: YES
+INFO 2025-07-08 22:01:44,438 utils 5308 29008 [RBAC] Create Framework: YES
+INFO 2025-07-08 22:01:44,439 utils 5308 29008 [RBAC] Approve Framework: YES
+INFO 2025-07-08 22:01:44,440 utils 5308 29008 [RBAC] Policy Analytics: YES
+INFO 2025-07-08 22:01:44,441 utils 5308 29008 [RBAC] === AUDIT MODULE PERMISSIONS ===
+INFO 2025-07-08 22:01:44,442 utils 5308 29008 [RBAC] Assign Audit: YES
+INFO 2025-07-08 22:01:44,444 utils 5308 29008 [RBAC] Conduct Audit: YES
+INFO 2025-07-08 22:01:44,445 utils 5308 29008 [RBAC] Review Audit: YES
+INFO 2025-07-08 22:01:44,445 utils 5308 29008 [RBAC] View Audit Reports: YES
+INFO 2025-07-08 22:01:44,446 utils 5308 29008 [RBAC] Audit Analytics: YES
+INFO 2025-07-08 22:01:44,446 utils 5308 29008 [RBAC] === RISK MODULE PERMISSIONS ===
+INFO 2025-07-08 22:01:44,448 utils 5308 29008 [RBAC] Create Risk: YES
+INFO 2025-07-08 22:01:44,449 utils 5308 29008 [RBAC] View All Risk: YES
+INFO 2025-07-08 22:01:44,449 utils 5308 29008 [RBAC] Edit Risk: YES
+INFO 2025-07-08 22:01:44,451 utils 5308 29008 [RBAC] Approve Risk: YES
+INFO 2025-07-08 22:01:44,451 utils 5308 29008 [RBAC] Assign Risk: YES
+INFO 2025-07-08 22:01:44,452 utils 5308 29008 [RBAC] Evaluate Assigned Risk: YES
+INFO 2025-07-08 22:01:44,453 utils 5308 29008 [RBAC] Risk Analytics: YES
+INFO 2025-07-08 22:01:44,454 utils 5308 29008 [RBAC] === COMPLIANCE MODULE PERMISSIONS ===
+INFO 2025-07-08 22:01:44,455 utils 5308 29008 [RBAC] Create Compliance: YES
+INFO 2025-07-08 22:01:44,456 utils 5308 29008 [RBAC] View All Compliance: YES
+INFO 2025-07-08 22:01:44,457 utils 5308 29008 [RBAC] Edit Compliance: YES
+INFO 2025-07-08 22:01:44,458 utils 5308 29008 [RBAC] Approve Compliance: YES
+INFO 2025-07-08 22:01:44,459 utils 5308 29008 [RBAC] Compliance Analytics: YES
+INFO 2025-07-08 22:01:44,460 utils 5308 29008 [RBAC] ===============================================
+INFO 2025-07-08 22:01:44,509 utils 5308 29008 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:01:44,510 utils 5308 13556 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:01:44,521 utils 5308 29008 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:01:44,522 permissions 5308 13556 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:01:44,524 utils 5308 29008 [RBAC] User 3 (GRC Administrator) incident.analytics = ALLOWED
+INFO 2025-07-08 22:01:44,525 permissions 5308 13556 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:01:44,525 utils 5308 29008 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-08 22:01:44,526 permissions 5308 13556 [RBAC POLICY] PolicyDashboardPermission check result: True
+INFO 2025-07-08 22:01:44,526 utils 5308 29008 [RBAC DEBUG] User ID: 3
+INFO 2025-07-08 22:01:44,527 utils 5308 29008 [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+INFO 2025-07-08 22:01:44,532 utils 5308 29008 [RBAC DEBUG] Resource: incident (ID: None)
+INFO 2025-07-08 22:01:44,532 utils 5308 29008 [RBAC DEBUG] Timestamp: 2025-07-08 22:01:44.532921
+INFO 2025-07-08 22:01:44,537 utils 5308 29008 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:01:44,539 utils 5308 29008 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-08 22:01:44,540 utils 5308 29008 [RBAC DEBUG] User Active: Y
+INFO 2025-07-08 22:01:44,541 utils 5308 29008 [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+INFO 2025-07-08 22:01:44,542 utils 5308 29008 [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+INFO 2025-07-08 22:01:44,543 utils 5308 29008 [RBAC DEBUG] ========================================
+INFO 2025-07-08 22:02:13,856 utils 5308 13556 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:13,902 utils 5308 29008 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:13,909 utils 5308 30728 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:13,911 permissions 5308 29008 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:13,913 permissions 5308 29008 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:13,915 permissions 5308 29008 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:13,919 permissions 5308 30728 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:13,921 permissions 5308 30728 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:13,921 permissions 5308 30728 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:13,968 utils 5308 30728 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:13,975 permissions 5308 30728 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:13,976 permissions 5308 30728 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:13,976 permissions 5308 30728 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:17,443 utils 5308 29008 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:17,443 utils 5308 13556 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:17,455 permissions 5308 13556 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:17,458 permissions 5308 29008 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:17,458 permissions 5308 13556 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:17,460 permissions 5308 29008 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:17,462 permissions 5308 13556 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:17,469 permissions 5308 29008 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:18,007 utils 5308 13556 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:18,007 utils 5308 17020 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:18,017 permissions 5308 17020 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:18,018 permissions 5308 13556 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:18,023 permissions 5308 17020 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:18,023 permissions 5308 13556 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:18,026 permissions 5308 17020 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:18,026 permissions 5308 13556 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:21,210 utils 5308 13556 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:21,215 permissions 5308 13556 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:21,216 permissions 5308 13556 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:21,217 permissions 5308 13556 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 22:02:42,585 utils 5308 17020 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:42,590 permissions 5308 17020 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:42,591 permissions 5308 17020 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:42,592 permissions 5308 17020 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 22:02:46,493 utils 5308 13556 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:46,498 permissions 5308 13556 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:46,499 permissions 5308 13556 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:46,499 permissions 5308 13556 [RBAC POLICY] PolicyFrameworkPermission (GET) check result: True
+INFO 2025-07-08 22:02:47,209 utils 5308 13556 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:47,212 permissions 5308 13556 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:47,213 permissions 5308 13556 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:47,214 permissions 5308 13556 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:47,233 utils 5308 17020 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:47,236 permissions 5308 17020 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:47,237 permissions 5308 17020 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:47,237 permissions 5308 17020 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:48,568 utils 5308 17020 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:48,652 utils 5308 17020 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:48,652 utils 5308 13556 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:48,657 permissions 5308 17020 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:48,658 permissions 5308 13556 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:48,658 permissions 5308 17020 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:48,659 permissions 5308 13556 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:48,659 permissions 5308 17020 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:48,660 permissions 5308 13556 [RBAC POLICY] PolicyApprovalWorkflowPermission (GET) check result: True
+INFO 2025-07-08 22:02:49,310 utils 5308 29008 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:49,310 utils 5308 17020 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:49,318 permissions 5308 17020 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:49,321 permissions 5308 17020 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:49,322 permissions 5308 29008 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:49,329 permissions 5308 17020 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:49,330 permissions 5308 29008 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:49,333 permissions 5308 29008 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:02:51,032 utils 5308 31588 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:51,074 utils 5308 31588 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:51,077 permissions 5308 31588 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:51,077 permissions 5308 31588 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:51,077 permissions 5308 31588 [RBAC POLICY] PolicyApprovalWorkflowPermission (GET) check result: True
+INFO 2025-07-08 22:02:51,100 utils 5308 31588 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:02:51,103 permissions 5308 31588 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:02:51,104 permissions 5308 31588 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:02:51,104 permissions 5308 31588 [RBAC POLICY] PolicyViewPermission check result: True
+INFO 2025-07-08 22:03:34,251 utils 5308 34348 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:03:34,252 utils 5308 31588 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:03:34,263 permissions 5308 31588 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-08 22:03:34,265 utils 5308 34348 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:34,265 permissions 5308 31588 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-08 22:03:34,267 permissions 5308 31588 [RBAC POLICY] PolicyDashboardPermission check result: True
+INFO 2025-07-08 22:03:34,267 utils 5308 34348 [RBAC] User 3 (GRC Administrator) incident.analytics = ALLOWED
+INFO 2025-07-08 22:03:34,268 utils 5308 34348 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-08 22:03:34,270 utils 5308 34348 [RBAC DEBUG] User ID: 3
+INFO 2025-07-08 22:03:34,271 utils 5308 34348 [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+INFO 2025-07-08 22:03:34,271 utils 5308 34348 [RBAC DEBUG] Resource: incident (ID: None)
+INFO 2025-07-08 22:03:34,272 utils 5308 34348 [RBAC DEBUG] Timestamp: 2025-07-08 22:03:34.272787
+INFO 2025-07-08 22:03:34,285 utils 5308 34348 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:34,286 utils 5308 34348 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-08 22:03:34,287 utils 5308 34348 [RBAC DEBUG] User Active: Y
+INFO 2025-07-08 22:03:34,288 utils 5308 34348 [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+INFO 2025-07-08 22:03:34,289 utils 5308 34348 [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+INFO 2025-07-08 22:03:34,295 utils 5308 34348 [RBAC DEBUG] ========================================
+INFO 2025-07-08 22:03:40,747 utils 5308 34348 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:03:40,756 utils 5308 34348 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:40,757 utils 5308 34348 [RBAC] User 3 (GRC Administrator) risk.view = ALLOWED
+INFO 2025-07-08 22:03:40,757 utils 5308 34348 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-08 22:03:40,758 utils 5308 34348 [RBAC DEBUG] User ID: 3
+INFO 2025-07-08 22:03:40,758 utils 5308 34348 [RBAC DEBUG] Action: RISK_VIEW
+INFO 2025-07-08 22:03:40,758 utils 5308 34348 [RBAC DEBUG] Resource: risk (ID: None)
+INFO 2025-07-08 22:03:40,759 utils 5308 34348 [RBAC DEBUG] Timestamp: 2025-07-08 22:03:40.759857
+INFO 2025-07-08 22:03:40,762 utils 5308 34348 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:40,762 utils 5308 34348 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-08 22:03:40,763 utils 5308 34348 [RBAC DEBUG] User Active: Y
+INFO 2025-07-08 22:03:40,763 utils 5308 34348 [RBAC DEBUG] Risk Permissions: {'CREATE_RISK': True, 'VIEW_RISK': True, 'EDIT_RISK': True, 'APPROVE_RISK': True, 'ASSIGN_RISK': True, 'EVALUATE_RISK': True, 'RISK_ANALYTICS': True}
+INFO 2025-07-08 22:03:40,765 utils 5308 34348 [RBAC DEBUG] Action 'RISK_VIEW' requires 'view_all_risk': GRANTED
+INFO 2025-07-08 22:03:40,765 utils 5308 34348 [RBAC DEBUG] ========================================
+INFO 2025-07-08 22:03:42,335 utils 5308 31588 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:03:42,348 utils 5308 31588 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:42,350 utils 5308 31588 [RBAC] User 3 (GRC Administrator) risk.view = ALLOWED
+INFO 2025-07-08 22:03:42,354 utils 5308 31588 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-08 22:03:42,355 utils 5308 31588 [RBAC DEBUG] User ID: 3
+INFO 2025-07-08 22:03:42,359 utils 5308 31588 [RBAC DEBUG] Action: RISK_VIEW
+INFO 2025-07-08 22:03:42,360 utils 5308 31588 [RBAC DEBUG] Resource: risk (ID: None)
+INFO 2025-07-08 22:03:42,360 utils 5308 31588 [RBAC DEBUG] Timestamp: 2025-07-08 22:03:42.360064
+INFO 2025-07-08 22:03:42,364 utils 5308 31588 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:42,365 utils 5308 31588 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-08 22:03:42,365 utils 5308 31588 [RBAC DEBUG] User Active: Y
+INFO 2025-07-08 22:03:42,366 utils 5308 31588 [RBAC DEBUG] Risk Permissions: {'CREATE_RISK': True, 'VIEW_RISK': True, 'EDIT_RISK': True, 'APPROVE_RISK': True, 'ASSIGN_RISK': True, 'EVALUATE_RISK': True, 'RISK_ANALYTICS': True}
+INFO 2025-07-08 22:03:42,366 utils 5308 31588 [RBAC DEBUG] Action 'RISK_VIEW' requires 'view_all_risk': GRANTED
+INFO 2025-07-08 22:03:42,367 utils 5308 31588 [RBAC DEBUG] ========================================
+INFO 2025-07-08 22:03:43,635 utils 5308 27168 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:03:43,639 utils 5308 27168 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:43,639 utils 5308 27168 [RBAC] User 3 (GRC Administrator) risk.view = ALLOWED
+INFO 2025-07-08 22:03:43,640 utils 5308 27168 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-08 22:03:43,640 utils 5308 27168 [RBAC DEBUG] User ID: 3
+INFO 2025-07-08 22:03:43,642 utils 5308 27168 [RBAC DEBUG] Action: RISK_VIEW
+INFO 2025-07-08 22:03:43,642 utils 5308 27168 [RBAC DEBUG] Resource: risk (ID: None)
+INFO 2025-07-08 22:03:43,643 utils 5308 27168 [RBAC DEBUG] Timestamp: 2025-07-08 22:03:43.643521
+INFO 2025-07-08 22:03:43,647 utils 5308 27168 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:43,648 utils 5308 27168 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-08 22:03:43,648 utils 5308 27168 [RBAC DEBUG] User Active: Y
+INFO 2025-07-08 22:03:43,648 utils 5308 27168 [RBAC DEBUG] Risk Permissions: {'CREATE_RISK': True, 'VIEW_RISK': True, 'EDIT_RISK': True, 'APPROVE_RISK': True, 'ASSIGN_RISK': True, 'EVALUATE_RISK': True, 'RISK_ANALYTICS': True}
+INFO 2025-07-08 22:03:43,649 utils 5308 27168 [RBAC DEBUG] Action 'RISK_VIEW' requires 'view_all_risk': GRANTED
+INFO 2025-07-08 22:03:43,649 utils 5308 27168 [RBAC DEBUG] ========================================
+INFO 2025-07-08 22:03:43,650 utils 5308 27168 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-08 22:03:43,650 utils 5308 27168 [RBAC] Endpoint: risk_instances_view
+INFO 2025-07-08 22:03:43,651 utils 5308 27168 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-08 22:03:43,651 utils 5308 27168 [RBAC] Request Path: /api/risk-instances/
+INFO 2025-07-08 22:03:43,653 utils 5308 27168 [RBAC] Request Method: GET
+INFO 2025-07-08 22:03:43,654 utils 5308 27168 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:03:43,660 utils 5308 27168 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:43,660 utils 5308 27168 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-08 22:03:43,661 utils 5308 27168 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-08 22:03:43,661 utils 5308 27168 [RBAC] Role: GRC Administrator
+INFO 2025-07-08 22:03:43,662 utils 5308 27168 [RBAC] Endpoint: risk_instances_view
+INFO 2025-07-08 22:03:43,662 utils 5308 27168 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-08 22:03:43,662 utils 5308 27168 [RBAC] Permission Value: True
+INFO 2025-07-08 22:03:43,662 utils 5308 27168 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-08 22:03:43,663 utils 5308 27168 [RBAC] =====================================
+INFO 2025-07-08 22:03:43,663 decorators 5308 27168 [RBAC DECORATOR] Access granted to risk_instances_view for user 3
+INFO 2025-07-08 22:03:44,556 utils 5308 27168 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:03:44,559 utils 5308 27168 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:44,560 utils 5308 27168 [RBAC] User 3 (GRC Administrator) risk.view = ALLOWED
+INFO 2025-07-08 22:03:44,560 utils 5308 27168 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-08 22:03:44,561 utils 5308 27168 [RBAC DEBUG] User ID: 3
+INFO 2025-07-08 22:03:44,561 utils 5308 27168 [RBAC DEBUG] Action: RISK_VIEW
+INFO 2025-07-08 22:03:44,561 utils 5308 27168 [RBAC DEBUG] Resource: risk (ID: None)
+INFO 2025-07-08 22:03:44,562 utils 5308 27168 [RBAC DEBUG] Timestamp: 2025-07-08 22:03:44.562027
+INFO 2025-07-08 22:03:44,565 utils 5308 27168 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:44,565 utils 5308 27168 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-08 22:03:44,565 utils 5308 27168 [RBAC DEBUG] User Active: Y
+INFO 2025-07-08 22:03:44,566 utils 5308 27168 [RBAC DEBUG] Risk Permissions: {'CREATE_RISK': True, 'VIEW_RISK': True, 'EDIT_RISK': True, 'APPROVE_RISK': True, 'ASSIGN_RISK': True, 'EVALUATE_RISK': True, 'RISK_ANALYTICS': True}
+INFO 2025-07-08 22:03:44,568 utils 5308 27168 [RBAC DEBUG] Action 'RISK_VIEW' requires 'view_all_risk': GRANTED
+INFO 2025-07-08 22:03:44,568 utils 5308 27168 [RBAC DEBUG] ========================================
+INFO 2025-07-08 22:03:44,570 utils 5308 27168 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-08 22:03:44,571 utils 5308 27168 [RBAC] Endpoint: risk_instances_view
+INFO 2025-07-08 22:03:44,571 utils 5308 27168 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-08 22:03:44,571 utils 5308 27168 [RBAC] Request Path: /api/risk-instances/
+INFO 2025-07-08 22:03:44,572 utils 5308 27168 [RBAC] Request Method: GET
+INFO 2025-07-08 22:03:44,573 utils 5308 27168 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:03:44,576 utils 5308 27168 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:44,577 utils 5308 27168 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-08 22:03:44,578 utils 5308 27168 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-08 22:03:44,579 utils 5308 27168 [RBAC] Role: GRC Administrator
+INFO 2025-07-08 22:03:44,579 utils 5308 27168 [RBAC] Endpoint: risk_instances_view
+INFO 2025-07-08 22:03:44,580 utils 5308 27168 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-08 22:03:44,580 utils 5308 27168 [RBAC] Permission Value: True
+INFO 2025-07-08 22:03:44,581 utils 5308 27168 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-08 22:03:44,581 utils 5308 27168 [RBAC] =====================================
+INFO 2025-07-08 22:03:44,582 decorators 5308 27168 [RBAC DECORATOR] Access granted to risk_instances_view for user 3
+INFO 2025-07-08 22:03:46,422 utils 5308 27168 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:03:46,426 utils 5308 27168 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:46,428 utils 5308 27168 [RBAC] User 3 (GRC Administrator) risk.view = ALLOWED
+INFO 2025-07-08 22:03:46,428 utils 5308 27168 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-08 22:03:46,430 utils 5308 27168 [RBAC DEBUG] User ID: 3
+INFO 2025-07-08 22:03:46,431 utils 5308 27168 [RBAC DEBUG] Action: RISK_VIEW
+INFO 2025-07-08 22:03:46,432 utils 5308 27168 [RBAC DEBUG] Resource: risk (ID: None)
+INFO 2025-07-08 22:03:46,433 utils 5308 27168 [RBAC DEBUG] Timestamp: 2025-07-08 22:03:46.433589
+INFO 2025-07-08 22:03:46,439 utils 5308 27168 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:46,440 utils 5308 27168 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-08 22:03:46,441 utils 5308 27168 [RBAC DEBUG] User Active: Y
+INFO 2025-07-08 22:03:46,441 utils 5308 27168 [RBAC DEBUG] Risk Permissions: {'CREATE_RISK': True, 'VIEW_RISK': True, 'EDIT_RISK': True, 'APPROVE_RISK': True, 'ASSIGN_RISK': True, 'EVALUATE_RISK': True, 'RISK_ANALYTICS': True}
+INFO 2025-07-08 22:03:46,441 utils 5308 27168 [RBAC DEBUG] Action 'RISK_VIEW' requires 'view_all_risk': GRANTED
+INFO 2025-07-08 22:03:46,442 utils 5308 27168 [RBAC DEBUG] ========================================
+INFO 2025-07-08 22:03:46,445 utils 5308 27168 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-08 22:03:46,449 utils 5308 27168 [RBAC] Endpoint: risk_instances_view
+INFO 2025-07-08 22:03:46,453 utils 5308 27168 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-08 22:03:46,453 utils 5308 27168 [RBAC] Request Path: /api/risk-instances/
+INFO 2025-07-08 22:03:46,454 utils 5308 27168 [RBAC] Request Method: GET
+INFO 2025-07-08 22:03:46,455 utils 5308 27168 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-08 22:03:46,459 utils 5308 27168 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-08 22:03:46,460 utils 5308 27168 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-08 22:03:46,460 utils 5308 27168 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-08 22:03:46,461 utils 5308 27168 [RBAC] Role: GRC Administrator
+INFO 2025-07-08 22:03:46,462 utils 5308 27168 [RBAC] Endpoint: risk_instances_view
+INFO 2025-07-08 22:03:46,463 utils 5308 27168 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-08 22:03:46,464 utils 5308 27168 [RBAC] Permission Value: True
+INFO 2025-07-08 22:03:46,465 utils 5308 27168 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-08 22:03:46,466 utils 5308 27168 [RBAC] =====================================
+INFO 2025-07-08 22:03:46,467 decorators 5308 27168 [RBAC DECORATOR] Access granted to risk_instances_view for user 3
+INFO 2025-07-09 00:39:04,567 utils 24416 7472 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-09 00:39:04,567 utils 24416 19788 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-09 00:39:04,572 utils 24416 7472 [RBAC] Endpoint: get_user_risks
+INFO 2025-07-09 00:39:04,572 utils 24416 19788 [RBAC] Endpoint: get_reviewer_tasks
+INFO 2025-07-09 00:39:04,572 utils 24416 7472 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:04,572 utils 24416 19788 [RBAC] Required Permission: evaluate_assigned_risk
+INFO 2025-07-09 00:39:04,572 utils 24416 7472 [RBAC] Request Path: /api/user-risks/1/
+INFO 2025-07-09 00:39:04,577 utils 24416 19788 [RBAC] Request Path: /api/reviewer-tasks/1/
+INFO 2025-07-09 00:39:04,577 utils 24416 7472 [RBAC] Request Method: GET
+INFO 2025-07-09 00:39:04,577 utils 24416 19788 [RBAC] Request Method: GET
+INFO 2025-07-09 00:39:04,589 utils 24416 7472 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:39:04,605 utils 24416 19788 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:39:04,607 utils 24416 7472 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:39:04,613 utils 24416 7472 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-09 00:39:04,615 utils 24416 19788 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:39:04,617 utils 24416 7472 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-09 00:39:04,617 utils 24416 19788 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-09 00:39:04,617 utils 24416 7472 [RBAC] Role: GRC Administrator
+INFO 2025-07-09 00:39:04,621 utils 24416 19788 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-09 00:39:04,630 utils 24416 7472 [RBAC] Endpoint: get_user_risks
+INFO 2025-07-09 00:39:04,630 utils 24416 19788 [RBAC] Role: GRC Administrator
+INFO 2025-07-09 00:39:04,630 utils 24416 7472 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:04,630 utils 24416 19788 [RBAC] Endpoint: get_reviewer_tasks
+INFO 2025-07-09 00:39:04,630 utils 24416 7472 [RBAC] Permission Value: True
+INFO 2025-07-09 00:39:04,630 utils 24416 19788 [RBAC] Required Permission: evaluate_assigned_risk
+INFO 2025-07-09 00:39:04,630 utils 24416 7472 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-09 00:39:04,630 utils 24416 19788 [RBAC] Permission Value: True
+INFO 2025-07-09 00:39:04,630 utils 24416 7472 [RBAC] =====================================
+INFO 2025-07-09 00:39:04,637 utils 24416 19788 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-09 00:39:04,637 decorators 24416 7472 [RBAC DECORATOR] Access granted to get_user_risks for user 3
+INFO 2025-07-09 00:39:04,638 utils 24416 19788 [RBAC] =====================================
+INFO 2025-07-09 00:39:04,641 decorators 24416 19788 [RBAC DECORATOR] Access granted to get_reviewer_tasks for user 3
+INFO 2025-07-09 00:39:04,711 utils 24416 19788 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-09 00:39:04,712 utils 24416 7472 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-09 00:39:04,712 utils 24416 19788 [RBAC] Endpoint: get_latest_review
+INFO 2025-07-09 00:39:04,717 utils 24416 7472 [RBAC] Endpoint: get_latest_review
+INFO 2025-07-09 00:39:04,717 utils 24416 19788 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:04,717 utils 24416 7472 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:04,717 utils 24416 19788 [RBAC] Request Path: /api/latest-review/68/
+INFO 2025-07-09 00:39:04,720 utils 24416 7472 [RBAC] Request Path: /api/latest-review/15/
+INFO 2025-07-09 00:39:04,722 utils 24416 19788 [RBAC] Request Method: GET
+INFO 2025-07-09 00:39:04,722 utils 24416 7472 [RBAC] Request Method: GET
+INFO 2025-07-09 00:39:04,740 utils 24416 7472 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:39:04,740 utils 24416 19788 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:39:04,757 utils 24416 7472 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:39:04,757 utils 24416 19788 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:39:04,757 utils 24416 7472 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-09 00:39:04,757 utils 24416 19788 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-09 00:39:04,762 utils 24416 7472 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-09 00:39:04,762 utils 24416 19788 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-09 00:39:04,762 utils 24416 7472 [RBAC] Role: GRC Administrator
+INFO 2025-07-09 00:39:04,762 utils 24416 19788 [RBAC] Role: GRC Administrator
+INFO 2025-07-09 00:39:04,762 utils 24416 7472 [RBAC] Endpoint: get_latest_review
+INFO 2025-07-09 00:39:04,767 utils 24416 19788 [RBAC] Endpoint: get_latest_review
+INFO 2025-07-09 00:39:04,767 utils 24416 7472 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:04,767 utils 24416 19788 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:04,767 utils 24416 7472 [RBAC] Permission Value: True
+INFO 2025-07-09 00:39:04,770 utils 24416 19788 [RBAC] Permission Value: True
+INFO 2025-07-09 00:39:04,770 utils 24416 7472 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-09 00:39:04,770 utils 24416 19788 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-09 00:39:04,773 utils 24416 7472 [RBAC] =====================================
+INFO 2025-07-09 00:39:04,773 utils 24416 19788 [RBAC] =====================================
+INFO 2025-07-09 00:39:04,773 decorators 24416 7472 [RBAC DECORATOR] Access granted to get_latest_review for user 3
+INFO 2025-07-09 00:39:04,773 decorators 24416 19788 [RBAC DECORATOR] Access granted to get_latest_review for user 3
+INFO 2025-07-09 00:39:43,261 utils 24416 7472 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-09 00:39:43,263 utils 24416 19788 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-09 00:39:43,263 utils 24416 7472 [RBAC] Endpoint: get_reviewer_tasks
+INFO 2025-07-09 00:39:43,263 utils 24416 19788 [RBAC] Endpoint: get_user_risks
+INFO 2025-07-09 00:39:43,263 utils 24416 7472 [RBAC] Required Permission: evaluate_assigned_risk
+INFO 2025-07-09 00:39:43,263 utils 24416 19788 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:43,263 utils 24416 7472 [RBAC] Request Path: /api/reviewer-tasks/1/
+INFO 2025-07-09 00:39:43,263 utils 24416 19788 [RBAC] Request Path: /api/user-risks/1/
+INFO 2025-07-09 00:39:43,263 utils 24416 7472 [RBAC] Request Method: GET
+INFO 2025-07-09 00:39:43,269 utils 24416 19788 [RBAC] Request Method: GET
+INFO 2025-07-09 00:39:43,277 utils 24416 19788 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:39:43,277 utils 24416 7472 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:39:43,277 utils 24416 19788 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:39:43,285 utils 24416 19788 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-09 00:39:43,285 utils 24416 7472 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:39:43,287 utils 24416 19788 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-09 00:39:43,287 utils 24416 7472 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-09 00:39:43,287 utils 24416 19788 [RBAC] Role: GRC Administrator
+INFO 2025-07-09 00:39:43,287 utils 24416 7472 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-09 00:39:43,287 utils 24416 19788 [RBAC] Endpoint: get_user_risks
+INFO 2025-07-09 00:39:43,287 utils 24416 7472 [RBAC] Role: GRC Administrator
+INFO 2025-07-09 00:39:43,287 utils 24416 19788 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:43,291 utils 24416 7472 [RBAC] Endpoint: get_reviewer_tasks
+INFO 2025-07-09 00:39:43,291 utils 24416 19788 [RBAC] Permission Value: True
+INFO 2025-07-09 00:39:43,293 utils 24416 7472 [RBAC] Required Permission: evaluate_assigned_risk
+INFO 2025-07-09 00:39:43,293 utils 24416 19788 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-09 00:39:43,294 utils 24416 7472 [RBAC] Permission Value: True
+INFO 2025-07-09 00:39:43,295 utils 24416 19788 [RBAC] =====================================
+INFO 2025-07-09 00:39:43,295 utils 24416 7472 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-09 00:39:43,295 decorators 24416 19788 [RBAC DECORATOR] Access granted to get_user_risks for user 3
+INFO 2025-07-09 00:39:43,295 utils 24416 7472 [RBAC] =====================================
+INFO 2025-07-09 00:39:43,295 decorators 24416 7472 [RBAC DECORATOR] Access granted to get_reviewer_tasks for user 3
+INFO 2025-07-09 00:39:43,326 utils 24416 7472 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-09 00:39:43,326 utils 24416 19788 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-09 00:39:43,326 utils 24416 7472 [RBAC] Endpoint: get_latest_review
+INFO 2025-07-09 00:39:43,326 utils 24416 19788 [RBAC] Endpoint: get_latest_review
+INFO 2025-07-09 00:39:43,326 utils 24416 7472 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:43,326 utils 24416 19788 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:43,326 utils 24416 7472 [RBAC] Request Path: /api/latest-review/15/
+INFO 2025-07-09 00:39:43,334 utils 24416 19788 [RBAC] Request Path: /api/latest-review/68/
+INFO 2025-07-09 00:39:43,334 utils 24416 7472 [RBAC] Request Method: GET
+INFO 2025-07-09 00:39:43,334 utils 24416 19788 [RBAC] Request Method: GET
+INFO 2025-07-09 00:39:43,359 utils 24416 7472 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:39:43,367 utils 24416 19788 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:39:43,369 utils 24416 7472 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:39:43,369 utils 24416 19788 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:39:43,369 utils 24416 7472 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-09 00:39:43,375 utils 24416 19788 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-09 00:39:43,375 utils 24416 7472 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-09 00:39:43,375 utils 24416 19788 [RBAC] User: 3 (priya.gupta)
+INFO 2025-07-09 00:39:43,375 utils 24416 7472 [RBAC] Role: GRC Administrator
+INFO 2025-07-09 00:39:43,375 utils 24416 19788 [RBAC] Role: GRC Administrator
+INFO 2025-07-09 00:39:43,375 utils 24416 7472 [RBAC] Endpoint: get_latest_review
+INFO 2025-07-09 00:39:43,375 utils 24416 19788 [RBAC] Endpoint: get_latest_review
+INFO 2025-07-09 00:39:43,375 utils 24416 7472 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:43,375 utils 24416 19788 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:39:43,375 utils 24416 7472 [RBAC] Permission Value: True
+INFO 2025-07-09 00:39:43,375 utils 24416 19788 [RBAC] Permission Value: True
+INFO 2025-07-09 00:39:43,375 utils 24416 7472 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-09 00:39:43,375 utils 24416 19788 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-09 00:39:43,384 utils 24416 7472 [RBAC] =====================================
+INFO 2025-07-09 00:39:43,384 utils 24416 19788 [RBAC] =====================================
+INFO 2025-07-09 00:39:43,384 decorators 24416 7472 [RBAC DECORATOR] Access granted to get_latest_review for user 3
+INFO 2025-07-09 00:39:43,384 decorators 24416 19788 [RBAC DECORATOR] Access granted to get_latest_review for user 3
+INFO 2025-07-09 00:39:54,105 utils 24416 7472 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:39:54,111 utils 24416 19788 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:39:54,123 permissions 24416 7472 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-09 00:39:54,125 permissions 24416 7472 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-09 00:39:54,125 utils 24416 19788 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:39:54,133 permissions 24416 7472 [RBAC POLICY] PolicyDashboardPermission check result: True
+INFO 2025-07-09 00:39:54,133 utils 24416 19788 [RBAC] User 3 (GRC Administrator) incident.analytics = ALLOWED
+INFO 2025-07-09 00:39:54,138 utils 24416 19788 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-09 00:39:54,141 utils 24416 19788 [RBAC DEBUG] User ID: 3
+INFO 2025-07-09 00:39:54,141 utils 24416 19788 [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+INFO 2025-07-09 00:39:54,144 utils 24416 19788 [RBAC DEBUG] Resource: incident (ID: None)
+INFO 2025-07-09 00:39:54,145 utils 24416 19788 [RBAC DEBUG] Timestamp: 2025-07-09 00:39:54.145359
+INFO 2025-07-09 00:39:54,162 utils 24416 19788 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:39:54,167 utils 24416 19788 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-09 00:39:54,168 utils 24416 19788 [RBAC DEBUG] User Active: Y
+INFO 2025-07-09 00:39:54,170 utils 24416 19788 [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+INFO 2025-07-09 00:39:54,170 utils 24416 19788 [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+INFO 2025-07-09 00:39:54,170 utils 24416 19788 [RBAC DEBUG] ========================================
+INFO 2025-07-09 00:40:18,305 utils 24416 19788 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:40:18,306 utils 24416 7472 [RBAC] Successfully retrieved user_id from session: 3
+INFO 2025-07-09 00:40:18,314 permissions 24416 19788 [RBAC POLICY] User 3 policy.view = ALLOWED
+INFO 2025-07-09 00:40:18,316 utils 24416 7472 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:40:18,316 permissions 24416 19788 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-09 00:40:18,319 permissions 24416 19788 [RBAC POLICY] PolicyDashboardPermission check result: True
+INFO 2025-07-09 00:40:18,320 utils 24416 7472 [RBAC] User 3 (GRC Administrator) incident.analytics = ALLOWED
+INFO 2025-07-09 00:40:18,324 utils 24416 7472 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-09 00:40:18,329 utils 24416 7472 [RBAC DEBUG] User ID: 3
+INFO 2025-07-09 00:40:18,329 utils 24416 7472 [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+INFO 2025-07-09 00:40:18,329 utils 24416 7472 [RBAC DEBUG] Resource: incident (ID: None)
+INFO 2025-07-09 00:40:18,329 utils 24416 7472 [RBAC DEBUG] Timestamp: 2025-07-09 00:40:18.329069
+INFO 2025-07-09 00:40:18,345 utils 24416 7472 [RBAC] Found active RBAC record for user 3: role=GRC Administrator
+INFO 2025-07-09 00:40:18,352 utils 24416 7472 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-09 00:40:18,353 utils 24416 7472 [RBAC DEBUG] User Active: Y
+INFO 2025-07-09 00:40:18,356 utils 24416 7472 [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+INFO 2025-07-09 00:40:18,356 utils 24416 7472 [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+INFO 2025-07-09 00:40:18,362 utils 24416 7472 [RBAC DEBUG] ========================================
+INFO 2025-07-09 00:40:24,318 utils 24416 7472 [RBAC] ===== USER LOGIN PERMISSIONS AUDIT =====
+INFO 2025-07-09 00:40:24,333 utils 24416 7472 [RBAC] Found active RBAC record for user 61: role=End User
+INFO 2025-07-09 00:40:24,333 utils 24416 7472 [RBAC] User ID: 61
+INFO 2025-07-09 00:40:24,335 utils 24416 7472 [RBAC] Username: syam
+INFO 2025-07-09 00:40:24,335 utils 24416 7472 [RBAC] Role: End User
+INFO 2025-07-09 00:40:24,335 utils 24416 7472 [RBAC] Account Status: ACTIVE
+INFO 2025-07-09 00:40:24,338 utils 24416 7472 [RBAC] Login Time: 2025-07-09 00:40:24.338415
+INFO 2025-07-09 00:40:24,338 utils 24416 7472 [RBAC] 
+INFO 2025-07-09 00:40:24,341 utils 24416 7472 [RBAC] === INCIDENT MODULE PERMISSIONS ===
+INFO 2025-07-09 00:40:24,341 utils 24416 7472 [RBAC] Create Incidents: NO
+INFO 2025-07-09 00:40:24,341 utils 24416 7472 [RBAC] View All Incidents: NO
+INFO 2025-07-09 00:40:24,343 utils 24416 7472 [RBAC] Edit Incidents: NO
+INFO 2025-07-09 00:40:24,343 utils 24416 7472 [RBAC] Assign Incidents: NO
+INFO 2025-07-09 00:40:24,343 utils 24416 7472 [RBAC] Evaluate Assigned Incidents: NO
+INFO 2025-07-09 00:40:24,343 utils 24416 7472 [RBAC] Escalate to Risk: NO
+INFO 2025-07-09 00:40:24,351 utils 24416 7472 [RBAC] Incident Analytics: NO
+INFO 2025-07-09 00:40:24,351 utils 24416 7472 [RBAC] === POLICY MODULE PERMISSIONS ===
+INFO 2025-07-09 00:40:24,351 utils 24416 7472 [RBAC] Create Policy: NO
+INFO 2025-07-09 00:40:24,351 utils 24416 7472 [RBAC] View All Policy: NO
+INFO 2025-07-09 00:40:24,351 utils 24416 7472 [RBAC] Edit Policy: NO
+INFO 2025-07-09 00:40:24,356 utils 24416 7472 [RBAC] Approve Policy: NO
+INFO 2025-07-09 00:40:24,356 utils 24416 7472 [RBAC] Create Framework: NO
+INFO 2025-07-09 00:40:24,359 utils 24416 7472 [RBAC] Approve Framework: NO
+INFO 2025-07-09 00:40:24,359 utils 24416 7472 [RBAC] Policy Analytics: NO
+INFO 2025-07-09 00:40:24,359 utils 24416 7472 [RBAC] === AUDIT MODULE PERMISSIONS ===
+INFO 2025-07-09 00:40:24,359 utils 24416 7472 [RBAC] Assign Audit: NO
+INFO 2025-07-09 00:40:24,365 utils 24416 7472 [RBAC] Conduct Audit: NO
+INFO 2025-07-09 00:40:24,367 utils 24416 7472 [RBAC] Review Audit: NO
+INFO 2025-07-09 00:40:24,368 utils 24416 7472 [RBAC] View Audit Reports: NO
+INFO 2025-07-09 00:40:24,368 utils 24416 7472 [RBAC] Audit Analytics: NO
+INFO 2025-07-09 00:40:24,368 utils 24416 7472 [RBAC] === RISK MODULE PERMISSIONS ===
+INFO 2025-07-09 00:40:24,368 utils 24416 7472 [RBAC] Create Risk: NO
+INFO 2025-07-09 00:40:24,368 utils 24416 7472 [RBAC] View All Risk: YES
+INFO 2025-07-09 00:40:24,368 utils 24416 7472 [RBAC] Edit Risk: NO
+INFO 2025-07-09 00:40:24,368 utils 24416 7472 [RBAC] Approve Risk: NO
+INFO 2025-07-09 00:40:24,376 utils 24416 7472 [RBAC] Assign Risk: NO
+INFO 2025-07-09 00:40:24,376 utils 24416 7472 [RBAC] Evaluate Assigned Risk: NO
+INFO 2025-07-09 00:40:24,378 utils 24416 7472 [RBAC] Risk Analytics: NO
+INFO 2025-07-09 00:40:24,378 utils 24416 7472 [RBAC] === COMPLIANCE MODULE PERMISSIONS ===
+INFO 2025-07-09 00:40:24,382 utils 24416 7472 [RBAC] Create Compliance: NO
+INFO 2025-07-09 00:40:24,383 utils 24416 7472 [RBAC] View All Compliance: NO
+INFO 2025-07-09 00:40:24,384 utils 24416 7472 [RBAC] Edit Compliance: NO
+INFO 2025-07-09 00:40:24,385 utils 24416 7472 [RBAC] Approve Compliance: NO
+INFO 2025-07-09 00:40:24,385 utils 24416 7472 [RBAC] Compliance Analytics: YES
+INFO 2025-07-09 00:40:24,385 utils 24416 7472 [RBAC] ===============================================
+INFO 2025-07-09 00:40:24,486 utils 24416 19788 [RBAC] Successfully retrieved user_id from session: 61
+INFO 2025-07-09 00:40:24,489 utils 24416 7472 [RBAC] Successfully retrieved user_id from session: 61
+INFO 2025-07-09 00:40:24,507 permissions 24416 19788 [RBAC POLICY] User 61 policy.view = DENIED
+INFO 2025-07-09 00:40:24,517 permissions 24416 19788 [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+INFO 2025-07-09 00:40:24,517 utils 24416 7472 [RBAC] Found active RBAC record for user 61: role=End User
+INFO 2025-07-09 00:40:24,521 permissions 24416 19788 [RBAC POLICY] PolicyDashboardPermission check result: False
+INFO 2025-07-09 00:40:24,523 utils 24416 7472 [RBAC] User 61 (End User) incident.analytics = DENIED
+INFO 2025-07-09 00:40:24,535 utils 24416 7472 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-09 00:40:24,535 utils 24416 7472 [RBAC DEBUG] User ID: 61
+INFO 2025-07-09 00:40:24,535 utils 24416 7472 [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+INFO 2025-07-09 00:40:24,538 utils 24416 7472 [RBAC DEBUG] Resource: incident (ID: None)
+INFO 2025-07-09 00:40:24,541 utils 24416 7472 [RBAC DEBUG] Timestamp: 2025-07-09 00:40:24.541722
+INFO 2025-07-09 00:40:24,551 utils 24416 7472 [RBAC] Found active RBAC record for user 61: role=End User
+INFO 2025-07-09 00:40:24,554 utils 24416 7472 [RBAC DEBUG] User Role: End User
+INFO 2025-07-09 00:40:24,554 utils 24416 7472 [RBAC DEBUG] User Active: Y
+INFO 2025-07-09 00:40:24,554 utils 24416 7472 [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': False, 'VIEW_INCIDENT': False, 'EDIT_INCIDENT': False, 'ASSIGN_INCIDENT': False, 'EVALUATE_INCIDENT': False, 'ESCALATE_INCIDENT': False, 'INCIDENT_ANALYTICS': False}
+INFO 2025-07-09 00:40:24,557 utils 24416 7472 [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': DENIED
+INFO 2025-07-09 00:40:24,558 utils 24416 7472 [RBAC DEBUG] ========================================
+INFO 2025-07-09 00:40:30,518 utils 24416 7472 [RBAC] Successfully retrieved user_id from session: 61
+INFO 2025-07-09 00:40:30,534 utils 24416 7472 [RBAC] Found active RBAC record for user 61: role=End User
+INFO 2025-07-09 00:40:30,538 utils 24416 7472 [RBAC] User 61 (End User) risk.view = ALLOWED
+INFO 2025-07-09 00:40:30,542 utils 24416 7472 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-09 00:40:30,542 utils 24416 7472 [RBAC DEBUG] User ID: 61
+INFO 2025-07-09 00:40:30,548 utils 24416 7472 [RBAC DEBUG] Action: RISK_VIEW
+INFO 2025-07-09 00:40:30,551 utils 24416 7472 [RBAC DEBUG] Resource: risk (ID: None)
+INFO 2025-07-09 00:40:30,551 utils 24416 7472 [RBAC DEBUG] Timestamp: 2025-07-09 00:40:30.551070
+INFO 2025-07-09 00:40:30,568 utils 24416 7472 [RBAC] Found active RBAC record for user 61: role=End User
+INFO 2025-07-09 00:40:30,575 utils 24416 7472 [RBAC DEBUG] User Role: End User
+INFO 2025-07-09 00:40:30,580 utils 24416 7472 [RBAC DEBUG] User Active: Y
+INFO 2025-07-09 00:40:30,580 utils 24416 7472 [RBAC DEBUG] Risk Permissions: {'CREATE_RISK': False, 'VIEW_RISK': True, 'EDIT_RISK': False, 'APPROVE_RISK': False, 'ASSIGN_RISK': False, 'EVALUATE_RISK': False, 'RISK_ANALYTICS': False}
+INFO 2025-07-09 00:40:30,580 utils 24416 7472 [RBAC DEBUG] Action 'RISK_VIEW' requires 'view_all_risk': GRANTED
+INFO 2025-07-09 00:40:30,583 utils 24416 7472 [RBAC DEBUG] ========================================
+INFO 2025-07-09 00:40:30,588 utils 24416 7472 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-09 00:40:30,592 utils 24416 7472 [RBAC] Endpoint: risk_instances_view
+INFO 2025-07-09 00:40:30,593 utils 24416 7472 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:40:30,593 utils 24416 7472 [RBAC] Request Path: /api/risk-instances/
+INFO 2025-07-09 00:40:30,595 utils 24416 7472 [RBAC] Request Method: GET
+INFO 2025-07-09 00:40:30,595 utils 24416 7472 [RBAC] Successfully retrieved user_id from session: 61
+INFO 2025-07-09 00:40:30,608 utils 24416 7472 [RBAC] Found active RBAC record for user 61: role=End User
+INFO 2025-07-09 00:40:30,608 utils 24416 7472 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-09 00:40:30,608 utils 24416 7472 [RBAC] User: 61 (syam)
+INFO 2025-07-09 00:40:30,613 utils 24416 7472 [RBAC] Role: End User
+INFO 2025-07-09 00:40:30,613 utils 24416 7472 [RBAC] Endpoint: risk_instances_view
+INFO 2025-07-09 00:40:30,613 utils 24416 7472 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 00:40:30,616 utils 24416 7472 [RBAC] Permission Value: True
+INFO 2025-07-09 00:40:30,618 utils 24416 7472 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-09 00:40:30,618 utils 24416 7472 [RBAC] =====================================
+INFO 2025-07-09 00:40:30,622 decorators 24416 7472 [RBAC DECORATOR] Access granted to risk_instances_view for user 61
+INFO 2025-07-09 01:18:11,628 utils 24416 24092 [RBAC] Successfully retrieved user_id from session: 61
+INFO 2025-07-09 01:18:11,656 utils 24416 29176 [RBAC] Successfully retrieved user_id from session: 61
+INFO 2025-07-09 01:18:11,665 permissions 24416 29176 [RBAC POLICY] User 61 policy.view = DENIED
+INFO 2025-07-09 01:18:11,667 utils 24416 24092 [RBAC] Found active RBAC record for user 61: role=End User
+INFO 2025-07-09 01:18:11,669 permissions 24416 29176 [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+INFO 2025-07-09 01:18:11,669 permissions 24416 29176 [RBAC POLICY] PolicyDashboardPermission check result: False
+INFO 2025-07-09 01:18:11,669 utils 24416 24092 [RBAC] User 61 (End User) incident.analytics = DENIED
+INFO 2025-07-09 01:18:11,675 utils 24416 24092 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-09 01:18:11,679 utils 24416 24092 [RBAC DEBUG] User ID: 61
+INFO 2025-07-09 01:18:11,681 utils 24416 24092 [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+INFO 2025-07-09 01:18:11,681 utils 24416 24092 [RBAC DEBUG] Resource: incident (ID: None)
+INFO 2025-07-09 01:18:11,681 utils 24416 24092 [RBAC DEBUG] Timestamp: 2025-07-09 01:18:11.681272
+INFO 2025-07-09 01:18:11,691 utils 24416 24092 [RBAC] Found active RBAC record for user 61: role=End User
+INFO 2025-07-09 01:18:11,691 utils 24416 24092 [RBAC DEBUG] User Role: End User
+INFO 2025-07-09 01:18:11,693 utils 24416 24092 [RBAC DEBUG] User Active: Y
+INFO 2025-07-09 01:18:11,694 utils 24416 24092 [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': False, 'VIEW_INCIDENT': False, 'EDIT_INCIDENT': False, 'ASSIGN_INCIDENT': False, 'EVALUATE_INCIDENT': False, 'ESCALATE_INCIDENT': False, 'INCIDENT_ANALYTICS': False}
+INFO 2025-07-09 01:18:11,695 utils 24416 24092 [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': DENIED
+INFO 2025-07-09 01:18:11,695 utils 24416 24092 [RBAC DEBUG] ========================================
+INFO 2025-07-09 01:18:14,855 utils 24416 24092 [RBAC] Successfully retrieved user_id from session: 61
+INFO 2025-07-09 01:18:14,855 utils 24416 29176 [RBAC] Successfully retrieved user_id from session: 61
+INFO 2025-07-09 01:18:14,864 utils 24416 24092 [RBAC] Found active RBAC record for user 61: role=End User
+INFO 2025-07-09 01:18:14,864 utils 24416 24092 [RBAC] User 61 (End User) incident.analytics = DENIED
+INFO 2025-07-09 01:18:14,867 utils 24416 24092 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-09 01:18:14,867 utils 24416 24092 [RBAC DEBUG] User ID: 61
+INFO 2025-07-09 01:18:14,870 permissions 24416 29176 [RBAC POLICY] User 61 policy.view = DENIED
+INFO 2025-07-09 01:18:14,871 utils 24416 24092 [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+INFO 2025-07-09 01:18:14,874 permissions 24416 29176 [RBAC POLICY] User Details - Role: End User, Field Checked: view_all_policy
+INFO 2025-07-09 01:18:14,875 utils 24416 24092 [RBAC DEBUG] Resource: incident (ID: None)
+INFO 2025-07-09 01:18:14,875 permissions 24416 29176 [RBAC POLICY] PolicyDashboardPermission check result: False
+INFO 2025-07-09 01:18:14,875 utils 24416 24092 [RBAC DEBUG] Timestamp: 2025-07-09 01:18:14.875729
+INFO 2025-07-09 01:18:14,885 utils 24416 24092 [RBAC] Found active RBAC record for user 61: role=End User
+INFO 2025-07-09 01:18:14,886 utils 24416 24092 [RBAC DEBUG] User Role: End User
+INFO 2025-07-09 01:18:14,889 utils 24416 24092 [RBAC DEBUG] User Active: Y
+INFO 2025-07-09 01:18:14,890 utils 24416 24092 [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': False, 'VIEW_INCIDENT': False, 'EDIT_INCIDENT': False, 'ASSIGN_INCIDENT': False, 'EVALUATE_INCIDENT': False, 'ESCALATE_INCIDENT': False, 'INCIDENT_ANALYTICS': False}
+INFO 2025-07-09 01:18:14,890 utils 24416 24092 [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': DENIED
+INFO 2025-07-09 01:18:14,890 utils 24416 24092 [RBAC DEBUG] ========================================
+INFO 2025-07-09 01:18:35,852 utils 24416 24092 [RBAC] ===== USER LOGIN PERMISSIONS AUDIT =====
+INFO 2025-07-09 01:18:35,868 utils 24416 24092 [RBAC] Found active RBAC record for user 1: role=GRC Administrator
+INFO 2025-07-09 01:18:35,868 utils 24416 24092 [RBAC] User ID: 1
+INFO 2025-07-09 01:18:35,868 utils 24416 24092 [RBAC] Username: radha.sharma
+INFO 2025-07-09 01:18:35,868 utils 24416 24092 [RBAC] Role: GRC Administrator
+INFO 2025-07-09 01:18:35,868 utils 24416 24092 [RBAC] Account Status: ACTIVE
+INFO 2025-07-09 01:18:35,868 utils 24416 24092 [RBAC] Login Time: 2025-07-09 01:18:35.868321
+INFO 2025-07-09 01:18:35,868 utils 24416 24092 [RBAC] 
+INFO 2025-07-09 01:18:35,868 utils 24416 24092 [RBAC] === INCIDENT MODULE PERMISSIONS ===
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] Create Incidents: YES
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] View All Incidents: YES
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] Edit Incidents: YES
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] Assign Incidents: YES
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] Evaluate Assigned Incidents: YES
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] Escalate to Risk: YES
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] Incident Analytics: YES
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] === POLICY MODULE PERMISSIONS ===
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] Create Policy: YES
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] View All Policy: YES
+INFO 2025-07-09 01:18:35,884 utils 24416 24092 [RBAC] Edit Policy: YES
+INFO 2025-07-09 01:18:35,893 utils 24416 24092 [RBAC] Approve Policy: YES
+INFO 2025-07-09 01:18:35,893 utils 24416 24092 [RBAC] Create Framework: YES
+INFO 2025-07-09 01:18:35,893 utils 24416 24092 [RBAC] Approve Framework: YES
+INFO 2025-07-09 01:18:35,893 utils 24416 24092 [RBAC] Policy Analytics: YES
+INFO 2025-07-09 01:18:35,893 utils 24416 24092 [RBAC] === AUDIT MODULE PERMISSIONS ===
+INFO 2025-07-09 01:18:35,893 utils 24416 24092 [RBAC] Assign Audit: YES
+INFO 2025-07-09 01:18:35,893 utils 24416 24092 [RBAC] Conduct Audit: YES
+INFO 2025-07-09 01:18:35,900 utils 24416 24092 [RBAC] Review Audit: YES
+INFO 2025-07-09 01:18:35,900 utils 24416 24092 [RBAC] View Audit Reports: YES
+INFO 2025-07-09 01:18:35,900 utils 24416 24092 [RBAC] Audit Analytics: YES
+INFO 2025-07-09 01:18:35,900 utils 24416 24092 [RBAC] === RISK MODULE PERMISSIONS ===
+INFO 2025-07-09 01:18:35,900 utils 24416 24092 [RBAC] Create Risk: YES
+INFO 2025-07-09 01:18:35,904 utils 24416 24092 [RBAC] View All Risk: YES
+INFO 2025-07-09 01:18:35,904 utils 24416 24092 [RBAC] Edit Risk: YES
+INFO 2025-07-09 01:18:35,906 utils 24416 24092 [RBAC] Approve Risk: YES
+INFO 2025-07-09 01:18:35,906 utils 24416 24092 [RBAC] Assign Risk: YES
+INFO 2025-07-09 01:18:35,908 utils 24416 24092 [RBAC] Evaluate Assigned Risk: YES
+INFO 2025-07-09 01:18:35,908 utils 24416 24092 [RBAC] Risk Analytics: YES
+INFO 2025-07-09 01:18:35,910 utils 24416 24092 [RBAC] === COMPLIANCE MODULE PERMISSIONS ===
+INFO 2025-07-09 01:18:35,910 utils 24416 24092 [RBAC] Create Compliance: YES
+INFO 2025-07-09 01:18:35,910 utils 24416 24092 [RBAC] View All Compliance: YES
+INFO 2025-07-09 01:18:35,910 utils 24416 24092 [RBAC] Edit Compliance: YES
+INFO 2025-07-09 01:18:35,910 utils 24416 24092 [RBAC] Approve Compliance: YES
+INFO 2025-07-09 01:18:35,915 utils 24416 24092 [RBAC] Compliance Analytics: YES
+INFO 2025-07-09 01:18:35,915 utils 24416 24092 [RBAC] ===============================================
+INFO 2025-07-09 01:18:35,998 utils 24416 24092 [RBAC] Successfully retrieved user_id from session: 1
+INFO 2025-07-09 01:18:36,001 utils 24416 29176 [RBAC] Successfully retrieved user_id from session: 1
+INFO 2025-07-09 01:18:36,009 utils 24416 24092 [RBAC] Found active RBAC record for user 1: role=GRC Administrator
+INFO 2025-07-09 01:18:36,014 permissions 24416 29176 [RBAC POLICY] User 1 policy.view = ALLOWED
+INFO 2025-07-09 01:18:36,015 utils 24416 24092 [RBAC] User 1 (GRC Administrator) incident.analytics = ALLOWED
+INFO 2025-07-09 01:18:36,015 permissions 24416 29176 [RBAC POLICY] User Details - Role: GRC Administrator, Field Checked: view_all_policy
+INFO 2025-07-09 01:18:36,016 utils 24416 24092 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-09 01:18:36,019 permissions 24416 29176 [RBAC POLICY] PolicyDashboardPermission check result: True
+INFO 2025-07-09 01:18:36,019 utils 24416 24092 [RBAC DEBUG] User ID: 1
+INFO 2025-07-09 01:18:36,019 utils 24416 24092 [RBAC DEBUG] Action: INCIDENT_ANALYTICS
+INFO 2025-07-09 01:18:36,022 utils 24416 24092 [RBAC DEBUG] Resource: incident (ID: None)
+INFO 2025-07-09 01:18:36,022 utils 24416 24092 [RBAC DEBUG] Timestamp: 2025-07-09 01:18:36.022876
+INFO 2025-07-09 01:18:36,033 utils 24416 24092 [RBAC] Found active RBAC record for user 1: role=GRC Administrator
+INFO 2025-07-09 01:18:36,035 utils 24416 24092 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-09 01:18:36,035 utils 24416 24092 [RBAC DEBUG] User Active: Y
+INFO 2025-07-09 01:18:36,035 utils 24416 24092 [RBAC DEBUG] Incident Permissions: {'CREATE_INCIDENT': True, 'VIEW_INCIDENT': True, 'EDIT_INCIDENT': True, 'ASSIGN_INCIDENT': True, 'EVALUATE_INCIDENT': True, 'ESCALATE_INCIDENT': True, 'INCIDENT_ANALYTICS': True}
+INFO 2025-07-09 01:18:36,035 utils 24416 24092 [RBAC DEBUG] Action 'INCIDENT_ANALYTICS' requires 'incident_performance_analytics': GRANTED
+INFO 2025-07-09 01:18:36,035 utils 24416 24092 [RBAC DEBUG] ========================================
+INFO 2025-07-09 01:18:45,807 utils 24416 24092 [RBAC] Successfully retrieved user_id from session: 1
+INFO 2025-07-09 01:18:45,815 utils 24416 24092 [RBAC] Found active RBAC record for user 1: role=GRC Administrator
+INFO 2025-07-09 01:18:45,819 utils 24416 24092 [RBAC] User 1 (GRC Administrator) risk.view = ALLOWED
+INFO 2025-07-09 01:18:45,822 utils 24416 24092 [RBAC DEBUG] ===== DETAILED PERMISSION CHECK =====
+INFO 2025-07-09 01:18:45,822 utils 24416 24092 [RBAC DEBUG] User ID: 1
+INFO 2025-07-09 01:18:45,829 utils 24416 24092 [RBAC DEBUG] Action: RISK_VIEW
+INFO 2025-07-09 01:18:45,830 utils 24416 24092 [RBAC DEBUG] Resource: risk (ID: None)
+INFO 2025-07-09 01:18:45,830 utils 24416 24092 [RBAC DEBUG] Timestamp: 2025-07-09 01:18:45.830554
+INFO 2025-07-09 01:18:45,839 utils 24416 24092 [RBAC] Found active RBAC record for user 1: role=GRC Administrator
+INFO 2025-07-09 01:18:45,849 utils 24416 24092 [RBAC DEBUG] User Role: GRC Administrator
+INFO 2025-07-09 01:18:45,849 utils 24416 24092 [RBAC DEBUG] User Active: Y
+INFO 2025-07-09 01:18:45,849 utils 24416 24092 [RBAC DEBUG] Risk Permissions: {'CREATE_RISK': True, 'VIEW_RISK': True, 'EDIT_RISK': True, 'APPROVE_RISK': True, 'ASSIGN_RISK': True, 'EVALUATE_RISK': True, 'RISK_ANALYTICS': True}
+INFO 2025-07-09 01:18:45,849 utils 24416 24092 [RBAC DEBUG] Action 'RISK_VIEW' requires 'view_all_risk': GRANTED
+INFO 2025-07-09 01:18:45,854 utils 24416 24092 [RBAC DEBUG] ========================================
+INFO 2025-07-09 01:18:45,854 utils 24416 24092 [RBAC] ===== ENDPOINT PERMISSION CHECK =====
+INFO 2025-07-09 01:18:45,859 utils 24416 24092 [RBAC] Endpoint: risk_instances_view
+INFO 2025-07-09 01:18:45,859 utils 24416 24092 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 01:18:45,859 utils 24416 24092 [RBAC] Request Path: /api/risk-instances/
+INFO 2025-07-09 01:18:45,859 utils 24416 24092 [RBAC] Request Method: GET
+INFO 2025-07-09 01:18:45,859 utils 24416 24092 [RBAC] Successfully retrieved user_id from session: 1
+INFO 2025-07-09 01:18:45,870 utils 24416 24092 [RBAC] Found active RBAC record for user 1: role=GRC Administrator
+INFO 2025-07-09 01:18:45,870 utils 24416 24092 [RBAC] ===== PERMISSION CHECK DETAILS =====
+INFO 2025-07-09 01:18:45,870 utils 24416 24092 [RBAC] User: 1 (radha.sharma)
+INFO 2025-07-09 01:18:45,870 utils 24416 24092 [RBAC] Role: GRC Administrator
+INFO 2025-07-09 01:18:45,870 utils 24416 24092 [RBAC] Endpoint: risk_instances_view
+INFO 2025-07-09 01:18:45,870 utils 24416 24092 [RBAC] Required Permission: view_all_risk
+INFO 2025-07-09 01:18:45,870 utils 24416 24092 [RBAC] Permission Value: True
+INFO 2025-07-09 01:18:45,879 utils 24416 24092 [RBAC] Result: ACCESS GRANTED
+INFO 2025-07-09 01:18:45,879 utils 24416 24092 [RBAC] =====================================
+INFO 2025-07-09 01:18:45,879 decorators 24416 24092 [RBAC DECORATOR] Access granted to risk_instances_view for user 1

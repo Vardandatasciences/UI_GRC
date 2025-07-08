@@ -115,11 +115,8 @@
           <div class="TT-row">
             <div class="TT-form-group TT-half">
               <label class="TT-label">CREATED BY *</label>
-              <select class="TT-input" v-model="frameworkForm.createdByName" required>
-                <option value="">Select Creator</option>
-                <option v-for="user in users" :key="user.id" :value="user.name">{{ user.name }}</option>
-              </select>
-              <small class="TT-desc">Select who created this framework</small>
+              <input class="TT-input" :value="loggedInUsername" type="text" disabled />
+              <small class="TT-desc">Automatically set to logged in user</small>
             </div>
             <div class="TT-form-group TT-half">
               <label class="TT-label">REVIEWER *</label>
@@ -552,11 +549,8 @@
               <div class="TT-row">
                 <div class="TT-form-group TT-half">
                   <label class="TT-label">CREATED BY *</label>
-                  <select class="TT-input" v-model="policyTabs[activePolicyTab].createdByName" required @change="handleCreatedByNameChange">
-                    <option value="">Select Creator</option>
-                    <option v-for="user in users" :key="user.id" :value="user.name">{{ user.name }}</option>
-                  </select>
-                  <small class="TT-desc">Select who created this policy</small>
+                  <input class="TT-input" :value="loggedInUsername" type="text" disabled />
+                  <small class="TT-desc">Automatically set to logged in user</small>
                 </div>
                 <div class="TT-form-group TT-half">
                   <label class="TT-label">REVIEWER *</label>
@@ -618,14 +612,15 @@
 import './TT.css'
 import CustomDropdown from '../CustomDropdown.vue'
 import axios from 'axios'
-import { PopupService } from '@/modules/popup'
+import { PopupService, PopupModal } from '@/modules/popus'
 
 const API_BASE_URL = 'http://localhost:8000/api'
 
   export default {
   name: 'TT',
   components: {
-    CustomDropdown
+    CustomDropdown,
+    PopupModal
   },
   data() {
     return {
@@ -639,6 +634,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
       policySubCategories: [],
       policyData: [], // Store all policy category data
       users: [], // Add users array
+      loggedInUsername: localStorage.getItem('username') || '', // Add logged in username
       frameworkForm: {
         name: '',
         description: '',
@@ -852,7 +848,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
           internalExternal: this.frameworkForm.internalExternal,
           startDate: this.frameworkForm.startDate,
           endDate: this.frameworkForm.endDate,
-          createdByName: this.frameworkForm.createdByName,
+          createdByName: this.loggedInUsername,
           reviewer: this.frameworkForm.reviewer,
           policies: this.policyTabs.map(policy => {
             // Convert entities to proper format
@@ -881,14 +877,14 @@ const API_BASE_URL = 'http://localhost:8000/api'
               Entities: entities,
               startDate: policy.startDate,
               endDate: policy.endDate,
-              createdByName: this.selectedTab === 'framework' ? this.frameworkForm.createdByName : policy.createdByName,
+              createdByName: this.selectedTab === 'framework' ? this.loggedInUsername : policy.createdByName,
               reviewer: this.selectedTab === 'framework' ? this.frameworkForm.reviewer : policy.reviewer,
               subPolicies: policy.subPolicies.map(sub => ({
                 title: sub.name,
                 identifier: sub.identifier,
                 description: sub.description,
                 control: sub.control,
-                createdByName: this.selectedTab === 'framework' ? this.frameworkForm.createdByName : policy.createdByName
+                createdByName: this.selectedTab === 'framework' ? this.loggedInUsername : policy.createdByName
               }))
             };
           })
@@ -1076,33 +1072,10 @@ const API_BASE_URL = 'http://localhost:8000/api'
         this.loading = false
       }
     },
-    async handlePolicyFileUpload(e, idx) {
-      const file = e.target.files[0];
-      if (file) {
-        this.policyTabs[idx].file = file;
-        
-        // If we need to upload immediately, we can use the following code:
-        // try {
-        //   const userId = localStorage.getItem('user_id') || 'default-user';
-        //   const uploadResponse = await policyService.uploadPolicyDocument(
-        //     file,
-        //     userId,
-        //     this.policyTabs[idx].name || 'Unnamed Policy',
-        //     'policy'
-        //   );
-        //   
-        //   if (uploadResponse.data.success) {
-        //     this.policyTabs[idx].docUrl = uploadResponse.data.file.url;
-        //     PopupService.success('Document uploaded successfully', 'Upload Success');
-        //   }
-        // } catch (error) {
-        //   console.error('Error uploading policy document:', error);
-        //   PopupService.error('Failed to upload document: ' + (error.response?.data?.error || error.message), 'Upload Error');
-        // }
-      }
+    handlePolicyFileUpload(e, idx) {
+      this.policyTabs[idx].file = e.target.files[0]
     },
     addPolicyTab() {
-      const createdByName = this.selectedTab === 'framework' ? this.frameworkForm.createdByName : '';
       const reviewer = this.selectedTab === 'framework' ? this.frameworkForm.reviewer : '';
       
       this.policyTabs.push({
@@ -1123,7 +1096,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
         startDate: '',
         endDate: '',
         file: null,
-        createdByName: createdByName,
+        createdByName: this.loggedInUsername,
         reviewer: reviewer,
         subPolicies: [
           {
@@ -1132,7 +1105,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
             identifier: '',
             control: '',
             description: '',
-            createdByName: createdByName // Inherit createdByName from parent policy
+            createdByName: this.loggedInUsername // Use logged in username
           }
         ],
         activeSubPolicyTab: 0
@@ -1479,7 +1452,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
           Entities: this.policyTabs[this.activePolicyTab].entities,
           StartDate: this.policyTabs[this.activePolicyTab].startDate,
           EndDate: this.policyTabs[this.activePolicyTab].endDate,
-          CreatedByName: this.policyTabs[this.activePolicyTab].createdByName,
+          CreatedByName: this.loggedInUsername,
           Reviewer: this.policyTabs[this.activePolicyTab].reviewer,
           Identifier: this.policyTabs[this.activePolicyTab].identifier,
           subpolicies: this.policyTabs[this.activePolicyTab].subPolicies.map(sub => ({
@@ -1554,8 +1527,8 @@ const API_BASE_URL = 'http://localhost:8000/api'
           PopupService.warning('Start date is required', 'Validation Error');
           return false;
         }
-        if (!this.frameworkForm.createdByName) {
-          PopupService.warning('Created By is required', 'Validation Error');
+        if (!this.loggedInUsername) {
+          PopupService.warning('You must be logged in to create a framework', 'Validation Error');
           return false;
         }
         if (!this.frameworkForm.reviewer) {
@@ -1615,8 +1588,8 @@ const API_BASE_URL = 'http://localhost:8000/api'
           PopupService.warning('Start Date is required', 'Validation Error');
           return false;
         }
-        if (!policy.createdByName) {
-          PopupService.warning('Created By is required', 'Validation Error');
+        if (!this.loggedInUsername) {
+          PopupService.warning('You must be logged in to create a policy', 'Validation Error');
           return false;
         }
         if (!policy.reviewer) {

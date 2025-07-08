@@ -72,11 +72,11 @@
           <i class="fas fa-clipboard-list"></i>
         </div>
         <div class="summary-tab-content">
-          <div class="summary-tab-label">Total SubPolicies</div>
-          <div class="summary-tab-value">{{ dashboardData.total_subpolicies }}</div>
-          <div class="summary-tab-trend">
-            <i class="fas fa-arrows-alt-h"></i>
-            Across all policies
+          <div class="summary-tab-label">Active SubPolicies</div>
+          <div class="summary-tab-value">{{ dashboardData.active_subpolicies }}</div>
+          <div class="summary-tab-trend neutral">
+            <i class="fas fa-layer-group"></i>
+            {{ dashboardData.total_subpolicies }} total subpolicies
           </div>
         </div>
       </button>
@@ -156,15 +156,15 @@
           </div>
           <div class="activity-list">
               <div v-for="(activity, index) in recentActivity" :key="index" class="activity-item">
-                <div class="activity-icon">
-                  <i class="fas fa-plus-circle"></i>
+                <div class="activity-icon" :class="getActivityIconClass(activity.type)">
+                  <i :class="activity.icon || 'fas fa-plus-circle'"></i>
             </div>
               <div class="activity-content">
-                  <div class="activity-title">Policy Activity</div>
-                  <div class="activity-desc">{{ activity.PolicyName }}</div>
+                  <div class="activity-title">{{ activity.title || 'Policy Activity' }}</div>
+                  <div class="activity-desc">{{ activity.name || activity.PolicyName }}</div>
                   <div class="activity-meta">
-                    <span class="activity-author">{{ activity.CreatedBy }}</span>
-                    <span class="activity-time">{{ new Date(activity.CreatedDate).toLocaleDateString() }}</span>
+                    <span class="activity-author">{{ activity.created_by || activity.CreatedBy }}</span>
+                    <span class="activity-time">{{ new Date(activity.date || activity.CreatedDate).toLocaleDateString() }}</span>
               </div>
             </div>
               </div>
@@ -202,6 +202,7 @@ export default {
       total_subpolicies: 0,
       active_policies: 0,
       inactive_policies: 0,
+      active_subpolicies: 0,
       approval_rate: 0,
       policies: []
     })
@@ -595,6 +596,21 @@ export default {
       return label;
     };
 
+    const getActivityIconClass = (activityType) => {
+      switch (activityType) {
+        case 'policy_created':
+          return 'create';
+        case 'policy_approved':
+          return 'approved';
+        case 'framework_created':
+          return 'create';
+        case 'framework_approved':
+          return 'approved';
+        default:
+          return '';
+      }
+    };
+
     return {
       dashboardData,
       recentActivity,
@@ -616,7 +632,8 @@ export default {
       selectedXAxis,
       selectedYAxis,
       fetchDashboardData,
-      activeTab
+      activeTab,
+      getActivityIconClass
     }
   }
 }
