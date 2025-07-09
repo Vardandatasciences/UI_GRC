@@ -33,41 +33,100 @@ from ..rbac.decorators import (
 # Global progress tracking
 processing_status = {}
 
-def update_progress(task_id, progress, message):
-    """Update processing progress"""
-    processing_status[task_id] = {
+def update_progress(task_id, progress, message, status='processing', operation=None):
+    """Update the progress of a task with detailed information."""
+    cache_key = f'task_progress_{task_id}'
+    progress_data = {
         'progress': progress,
         'message': message,
-        'timestamp': time.time()
+        'status': status,
+        'time': datetime.now().isoformat(),
+        'operation': operation or {}
     }
-    cache.set(f'processing_{task_id}', processing_status[task_id], timeout=3600)
+    cache.set(cache_key, json.dumps(progress_data), timeout=3600)
 
 def process_pdf_framework(pdf_path, task_id, output_dir):
-    """Main PDF processing function with progress tracking"""
+    """Process PDF framework with detailed progress tracking."""
     try:
-        update_progress(task_id, 5, "Starting PDF processing...")
+        def progress_callback(progress, message, operation=None):
+            update_progress(task_id, progress, message, operation=operation)
+
+        # Initialize processing
+        progress_callback(0, "Starting document processing", {
+            'file': os.path.basename(pdf_path),
+            'action': 'Initialization',
+            'progress': 0
+        })
+
+        # Extract document sections
+        progress_callback(10, "Extracting document sections", {
+            'file': os.path.basename(pdf_path),
+            'action': 'Section Extraction',
+            'progress': 10
+        })
         
-        # Call the extract_document_sections function with progress updates
-        def progress_callback(progress, message):
-            update_progress(task_id, progress, message)
+        sections = extract_document_sections(pdf_path, output_dir)
         
-        # Process the PDF using the extract_document_sections function with custom output directory
-        update_progress(task_id, 10, "Extracting document sections...")
-        result_output_dir = extract_document_sections(pdf_path, output_dir)
+        progress_callback(30, "Document sections extracted successfully", {
+            'file': os.path.basename(pdf_path),
+            'action': 'Section Extraction',
+            'progress': 30
+        })
+
+        # Process table of contents
+        progress_callback(40, "Processing table of contents", {
+            'file': os.path.basename(pdf_path),
+            'action': 'TOC Processing',
+            'progress': 40
+        })
         
-        if not result_output_dir:
-            update_progress(task_id, 100, "Error: Failed to extract document sections")
-            return False
-            
-        # Store the output directory path for later use
-        cache.set(f'output_dir_{task_id}', result_output_dir, timeout=3600)
+        toc_page = find_toc_page(pdf_path)
         
-        update_progress(task_id, 100, "PDF processing completed successfully!")
-        return True
+        progress_callback(50, "Table of contents processed", {
+            'file': os.path.basename(pdf_path),
+            'action': 'TOC Processing',
+            'progress': 50
+        })
+
+        # Extract text with styles
+        progress_callback(60, "Extracting text with styles", {
+            'file': os.path.basename(pdf_path),
+            'action': 'Style Extraction',
+            'progress': 60
+        })
         
+        text_data = extract_text_with_styles_from_pages(pdf_path, 1, get_num_pages(pdf_path))
+        
+        progress_callback(80, "Text and styles extracted", {
+            'file': os.path.basename(pdf_path),
+            'action': 'Style Extraction',
+            'progress': 80
+        })
+
+        # Final processing
+        progress_callback(90, "Finalizing document processing", {
+            'file': os.path.basename(pdf_path),
+            'action': 'Finalization',
+            'progress': 90
+        })
+
+        result = process_extracted_content(text_data, sections)
+        
+        progress_callback(100, "Document processing completed", {
+            'file': os.path.basename(pdf_path),
+            'action': 'Complete',
+            'progress': 100
+        }, status='completed')
+
+        return result
+
     except Exception as e:
-        update_progress(task_id, 100, f"Error: {str(e)}")
-        return False
+        progress_callback(0, f"Error processing document: {str(e)}", {
+            'file': os.path.basename(pdf_path),
+            'action': 'Error',
+            'progress': 0
+        }, status='error')
+        raise
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -108,20 +167,20 @@ def upload_framework_file(request):
         # Start actual PDF processing in background thread
         def background_process():
             try:
-                update_progress(task_id, 5, "Starting PDF processing...")
+                update_progress(task_id, 5, "Starting PDF processing...", status='processing', operation='upload')
                 
                 # Only process PDF files with the extraction function
                 if file_extension.lower() == '.pdf':
-                    update_progress(task_id, 10, "Extracting document sections from PDF...")
+                    update_progress(task_id, 10, "Extracting document sections from PDF...", status='processing', operation='pdf_processing')
                     result = process_pdf_framework(full_file_path, task_id, output_dir)
                     
                     if result:
-                        update_progress(task_id, 100, "PDF processing completed successfully!")
+                        update_progress(task_id, 100, "PDF processing completed successfully!", status='completed', operation='pdf_processing')
                     else:
-                        update_progress(task_id, 100, "Error: PDF processing failed")
+                        update_progress(task_id, 100, "Error: PDF processing failed", status='error', operation='pdf_processing')
                 else:
                     # For non-PDF files, create a simple structure
-                    update_progress(task_id, 20, f"Processing {file_extension} file...")
+                    update_progress(task_id, 20, f"Processing {file_extension} file...", status='processing', operation='file_processing')
                     
                     # Create basic output structure for non-PDF files
                     os.makedirs(output_dir, exist_ok=True)
@@ -169,10 +228,10 @@ def upload_framework_file(request):
                     # Store the output directory path for later use
                     cache.set(f'output_dir_{task_id}', output_dir, timeout=3600)
                     
-                    update_progress(task_id, 100, f"{file_extension.upper()} file processed successfully!")
+                    update_progress(task_id, 100, f"{file_extension.upper()} file processed successfully!", status='completed', operation='file_processing')
                     
             except Exception as e:
-                update_progress(task_id, 100, f"Error: {str(e)}")
+                update_progress(task_id, 100, f"Error: {str(e)}", status='error', operation='file_processing')
         
         thread = threading.Thread(target=background_process)
         thread.daemon = True
@@ -195,19 +254,28 @@ def upload_framework_file(request):
 @require_http_methods(["GET"])
 @policy_view_required
 def get_processing_status(request, task_id):
-    """Get processing status for a task"""
+    """Get detailed processing status for a task."""
     try:
-        status = cache.get(f'processing_{task_id}')
-        if status:
-            return JsonResponse(status)
+        cache_key = f'task_progress_{task_id}'
+        progress_data = cache.get(cache_key)
+        
+        if progress_data:
+            return JsonResponse(json.loads(progress_data))
         else:
             return JsonResponse({
                 'progress': 0,
                 'message': 'Task not found or expired',
-                'error': True
-            }, status=404)
+                'status': 'error',
+                'operation': None
+            })
+            
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({
+            'progress': 0,
+            'message': f'Error retrieving status: {str(e)}',
+            'status': 'error',
+            'operation': None
+        })
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -428,15 +496,15 @@ def create_checked_structure(request):
         # Start processing in background thread
         def background_process():
             # Process the checked sections to extract policy information
-            update_progress(task_id, 50, "Processing checked sections to extract policy information...")
+            update_progress(task_id, 50, "Processing checked sections to extract policy information...", status='processing', operation='policy_extraction')
             excel_path = process_checked_sections(task_id)
             
             if excel_path:
-                update_progress(task_id, 100, "Policy extraction completed successfully!")
+                update_progress(task_id, 100, "Policy extraction completed successfully!", status='completed', operation='policy_extraction')
                 # Cache the Excel file path for later retrieval
                 cache.set(f'policy_excel_{task_id}', excel_path, timeout=3600)
             else:
-                update_progress(task_id, 100, "Error: Failed to extract policy information")
+                update_progress(task_id, 100, "Error: Failed to extract policy information", status='error', operation='policy_extraction')
         
         thread = threading.Thread(target=background_process)
         thread.daemon = True
@@ -565,7 +633,7 @@ def direct_process_checked_sections(request):
         task_id = f"direct_{int(time())}"
         
         # Update progress status
-        update_progress(task_id, 10, "Starting direct policy extraction...")
+        update_progress(task_id, 10, "Starting direct policy extraction...", status='processing', operation='direct_policy_extraction')
         
         # Get the checked_sections directory
         checked_sections_dir = os.path.join(settings.MEDIA_ROOT, 'checked_sections')
@@ -575,15 +643,15 @@ def direct_process_checked_sections(request):
             
         # Process the checked sections in the background
         def background_process():
-            update_progress(task_id, 50, "Processing checked sections to extract policy information...")
+            update_progress(task_id, 50, "Processing checked sections to extract policy information...", status='processing', operation='direct_policy_extraction')
             excel_path = process_checked_sections(task_id)
             
             if excel_path:
-                update_progress(task_id, 100, "Policy extraction completed successfully!")
+                update_progress(task_id, 100, "Policy extraction completed successfully!", status='completed', operation='direct_policy_extraction')
                 # Cache the Excel file path for later retrieval
                 cache.set(f'policy_excel_{task_id}', excel_path, timeout=3600)
             else:
-                update_progress(task_id, 100, "Error: Failed to extract policy information")
+                update_progress(task_id, 100, "Error: Failed to extract policy information", status='error', operation='direct_policy_extraction')
         
         thread = threading.Thread(target=background_process)
         thread.daemon = True
@@ -1476,32 +1544,32 @@ def load_default_data(request):
         # Copy default data to new task directories
         def background_copy():
             try:
-                update_progress(task_id, 5, "Loading default framework data...")
+                update_progress(task_id, 5, "Loading default framework data...", status='processing', operation='loading_default_data')
                 
                 # Copy framework upload if exists
                 if os.path.exists(default_upload_dir):
                     shutil.copytree(default_upload_dir, new_upload_dir)
-                    update_progress(task_id, 15, "Framework files copied...")
+                    update_progress(task_id, 15, "Framework files copied...", status='completed', operation='loading_default_data')
                 
                 # Copy extracted sections
                 if os.path.exists(default_extracted_dir):
                     shutil.copytree(default_extracted_dir, new_extracted_dir)
-                    update_progress(task_id, 30, "Extracted sections loaded...")
+                    update_progress(task_id, 30, "Extracted sections loaded...", status='completed', operation='loading_default_data')
                 
                 # Copy checked sections (pre-selected content)
                 if os.path.exists(default_checked_sections_dir):
                     shutil.copytree(default_checked_sections_dir, new_checked_sections_dir)
-                    update_progress(task_id, 50, "Default content selections loaded...")
+                    update_progress(task_id, 50, "Default content selections loaded...", status='completed', operation='loading_default_data')
                 
                 # Copy extracted policies (pre-extracted policies)
                 if os.path.exists(default_extracted_policies_dir):
                     shutil.copytree(default_extracted_policies_dir, new_extracted_policies_dir)
-                    update_progress(task_id, 70, "Default policies loaded...")
+                    update_progress(task_id, 70, "Default policies loaded...", status='completed', operation='loading_default_data')
                 
                 # Copy complete packages if exists
                 if os.path.exists(default_complete_packages_dir):
                     shutil.copytree(default_complete_packages_dir, new_complete_packages_dir)
-                    update_progress(task_id, 90, "Complete packages loaded...")
+                    update_progress(task_id, 90, "Complete packages loaded...", status='completed', operation='loading_default_data')
                 
                 # Store the output directory path for later use
                 cache.set(f'output_dir_{task_id}', new_extracted_dir, timeout=3600)
@@ -1511,10 +1579,10 @@ def load_default_data(request):
                 cache.set(f'has_checked_sections_{task_id}', os.path.exists(default_checked_sections_dir), timeout=3600)
                 cache.set(f'has_extracted_policies_{task_id}', os.path.exists(default_extracted_policies_dir), timeout=3600)
                 
-                update_progress(task_id, 100, "All default data loaded successfully!")
+                update_progress(task_id, 100, "All default data loaded successfully!", status='completed', operation='loading_default_data')
                 
             except Exception as e:
-                update_progress(task_id, 100, f"Error loading default data: {str(e)}")
+                update_progress(task_id, 100, f"Error loading default data: {str(e)}", status='error', operation='loading_default_data')
         
         # Start background copying
         thread = threading.Thread(target=background_copy)

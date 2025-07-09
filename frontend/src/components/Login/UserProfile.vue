@@ -12,45 +12,77 @@
       </button>
     </div>
     <div class="tab-content">
-      <div v-if="activeTab === 'account'">
-        <form class="profile-form" @submit.prevent="saveAccountChanges">
-          <h2 class="section-title"><i class="fas fa-user"></i> Account Information</h2>
-          <p class="section-helper">Update your personal and organizational details. Please ensure your information is accurate for account security and communication.</p>
-          
-          <!-- Error/Success Messages -->
-          <div v-if="error" class="message error-message">
-            <i class="fas fa-exclamation-circle"></i> {{ error }}
+      <div v-if="activeTab === 'account'" class="account-section">
+        <!-- Error/Success Messages -->
+        <div v-if="error" class="message error-message">
+          <i class="fas fa-exclamation-circle"></i> {{ error }}
+        </div>
+        <div v-if="success" class="message success-message">
+          <i class="fas fa-check-circle"></i> {{ success }}
+        </div>
+
+        <div class="account-container">
+          <!-- Personal Information Section -->
+          <div class="account-section-left">
+            <form class="profile-form" @submit.prevent="savePersonalInfo">
+              <h2 class="section-title"><i class="fas fa-user"></i> Personal Information</h2>
+              <p class="section-helper">Update your personal details and contact information.</p>
+              
+              <div class="form-group">
+                <label>First Name:</label>
+                <input type="text" v-model="form.firstName" :disabled="loading" />
+              </div>
+              <div class="form-group">
+                <label>Last Name:</label>
+                <input type="text" v-model="form.lastName" :disabled="loading" />
+              </div>
+              <div class="form-group">
+                <label>Email:</label>
+                <input type="email" v-model="form.email" :disabled="loading" />
+              </div>
+              <div class="form-group">
+                <label>Phone Number:</label>
+                <input type="text" v-model="form.phone" :disabled="loading" />
+              </div>
+              <div class="form-row center">
+                <button class="submit-btn" type="submit" :disabled="loading">
+                  <i v-if="loading" class="fas fa-spinner fa-spin"></i>
+                  <i v-else class="fas fa-save"></i> 
+                  {{ loading ? 'Saving...' : 'Save Personal Info' }}
+                </button>
+              </div>
+            </form>
           </div>
-          <div v-if="success" class="message success-message">
-            <i class="fas fa-check-circle"></i> {{ success }}
+
+          <!-- Business Information Section -->
+          <div class="account-section-right">
+            <form class="profile-form" @submit.prevent="saveBusinessInfo">
+              <h2 class="section-title"><i class="fas fa-building"></i> Business Information</h2>
+              <p class="section-helper">View your organizational details and business unit information.</p>
+              
+              <div class="form-group">
+                <label>Department:</label>
+                <input type="text" v-model="businessInfo.departmentName" disabled />
+              </div>
+              <div class="form-group">
+                <label>Business Unit:</label>
+                <input type="text" v-model="businessInfo.businessUnitName" disabled />
+              </div>
+              <div class="form-group">
+                <label>Entity:</label>
+                <input type="text" v-model="businessInfo.entityName" disabled />
+              </div>
+              <div class="form-group">
+                <label>Location:</label>
+                <input type="text" v-model="businessInfo.location" disabled />
+              </div>
+              <div class="form-group">
+                <label>Department Head:</label>
+                <input type="text" v-model="businessInfo.departmentHead" disabled />
+              </div>
+            </form>
           </div>
-          
-          <div class="form-row">
-            <label>User Name:</label>
-            <input type="text" v-model="form.username" :disabled="loading" />
-            <label>Role:</label>
-            <input type="text" v-model="form.role" :disabled="loading" />
-          </div>
-          <div class="form-row">
-            <label>Phone Number:</label>
-            <input type="text" v-model="form.phone" :disabled="loading" />
-            <label>Email :</label>
-            <input type="email" v-model="form.email" :disabled="loading" />
-          </div>
-          <div class="form-row">
-            <label>Organization:</label>
-            <input type="text" v-model="form.organization" :disabled="loading" />
-            <label>Country :</label>
-            <input type="text" v-model="form.country" :disabled="loading" />
-          </div>
-          <div class="form-row center">
-            <button class="submit-btn" type="submit" :disabled="loading">
-              <i v-if="loading" class="fas fa-spinner fa-spin"></i>
-              <i v-else class="fas fa-save"></i> 
-              {{ loading ? 'Saving...' : 'Save Changes' }}
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
       <div v-else-if="activeTab === 'role'">
         <form class="profile-form">
@@ -195,12 +227,10 @@ export default {
         { key: 'notification', label: 'Notification', icon: 'fas fa-bell' }
       ],
       form: {
-        username: '',
-        role: '',
-        organization: '',
-        country: '',
-        phone: '',
+        firstName: '',
+        lastName: '',
         email: '',
+        phone: '',
         newPassword: '',
         confirmPassword: '',
         otp: '',
@@ -208,6 +238,13 @@ export default {
         whatsappNotif: false,
         notifEmail: '',
         notifMobile: ''
+      },
+      businessInfo: {
+        departmentName: '',
+        businessUnitName: '',
+        entityName: '',
+        location: '',
+        departmentHead: ''
       },
       notifDropdownOpen: null,
       loading: false,
@@ -219,80 +256,77 @@ export default {
     this.loadUserData()
   },
   methods: {
+    async loadUserData() {
+      this.loading = true
+      this.error = null
 
-async loadUserData() {
+      try {
+        // Get user ID from localStorage
+        const userData = localStorage.getItem('user')
+        if (userData) {
+          const user = JSON.parse(userData)
+          const userId = user.UserId
 
-  this.loading = true
-
-  this.error = null
-
-  try {
-
-    // First try to get user data from localStorage
-
-    const userData = localStorage.getItem('user')
-
-    const storedUsername = localStorage.getItem('user_name')
-
-    const storedEmail = localStorage.getItem('user_email')
-
-    if (userData) {
-
-      const user = JSON.parse(userData)
-
-      this.form.username = storedUsername || user.username || ''
-
-      this.form.email = storedEmail || user.email || ''
-
-      this.form.role = user.role || 'User'
-
-      this.form.organization = user.organization || ''
-
-      this.form.country = user.country || ''
-
-      this.form.phone = user.phone || ''
-
-    } else {
-
-      // Try to fetch from API
-
-      const response = await fetch('http://localhost:8000/api/current-user/')
-
-      if (response.ok) {
-
-        const data = await response.json()
-
-        this.form.username = data.full_name || data.username || ''
-
-        this.form.email = data.email || ''
-
-        this.form.role = data.role || 'User'
-
-        this.form.organization = data.organization || ''
-
-        this.form.country = data.country || ''
-
-        this.form.phone = data.phone || ''
-
+          // Fetch personal info
+          const profileResponse = await fetch(`http://localhost:8000/api/user-profile/${userId}/`)
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json()
+            if (profileData.status === 'success') {
+              const data = profileData.data
+              this.form.firstName = data.firstName
+              this.form.lastName = data.lastName
+              this.form.email = data.email
+              
+              // Fetch business info
+              const businessResponse = await fetch(`http://localhost:8000/api/user-business-info/${userId}/`)
+              if (businessResponse.ok) {
+                const businessData = await businessResponse.json()
+                if (businessData.status === 'success') {
+                  this.businessInfo = businessData.data
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error)
+        this.error = 'Failed to load user data. Please try again.'
+      } finally {
+        this.loading = false
       }
+    },
 
-    }
+    async savePersonalInfo() {
+      this.loading = true
+      this.error = null
+      this.success = null
 
-  } catch (error) {
+      try {
+        const userData = JSON.parse(localStorage.getItem('user') || '{}')
+        
+        // Here you would typically send the updated data to your backend
+        // For now, we'll just update localStorage
+        userData.firstName = this.form.firstName
+        userData.lastName = this.form.lastName
+        userData.email = this.form.email
+        userData.phone = this.form.phone
 
-    console.error('Error loading user data:', error)
+        localStorage.setItem('user', JSON.stringify(userData))
+        localStorage.setItem('user_name', `${this.form.firstName} ${this.form.lastName}`)
+        localStorage.setItem('user_email', this.form.email)
 
-    this.error = 'Failed to load user data. Please try again.'
+        this.success = 'Personal information updated successfully!'
+        window.dispatchEvent(new Event('userDataUpdated'))
 
-  } finally {
+      } catch (error) {
+        console.error('Error saving personal info:', error)
+        this.error = 'Failed to save personal info. Please try again.'
+      } finally {
+        this.loading = false
+      }
+    },
 
-    this.loading = false
-
-  }
-
-},
-
-async saveAccountChanges() {
+    async saveBusinessInfo() {
 
   this.loading = true
 
@@ -308,15 +342,15 @@ async saveAccountChanges() {
 
     const userData = JSON.parse(localStorage.getItem('user') || '{}')
 
-    userData.username = this.form.username
+    userData.departmentName = this.businessInfo.departmentName
 
-    userData.email = this.form.email
+    userData.businessUnitName = this.businessInfo.businessUnitName
 
-    userData.organization = this.form.organization
+    userData.entityName = this.businessInfo.entityName
 
-    userData.country = this.form.country
+    userData.location = this.businessInfo.location
 
-    userData.phone = this.form.phone
+    userData.departmentHead = this.businessInfo.departmentHead
 
     localStorage.setItem('user', JSON.stringify(userData))
 
@@ -324,7 +358,7 @@ async saveAccountChanges() {
 
     localStorage.setItem('user_email', this.form.email)
 
-    this.success = 'Account information updated successfully!'
+    this.success = 'Business information updated successfully!'
 
     // Emit event to update sidebar username
 
@@ -332,9 +366,9 @@ async saveAccountChanges() {
 
   } catch (error) {
 
-    console.error('Error saving account changes:', error)
+    console.error('Error saving business info:', error)
 
-    this.error = 'Failed to save changes. Please try again.'
+    this.error = 'Failed to save business info. Please try again.'
 
   } finally {
 
@@ -874,6 +908,53 @@ async updatePassword() {
   box-shadow: none;
 }
 
+.account-container {
+  display: flex;
+  gap: 32px;
+  width: 100%;
+}
+
+.account-section-left,
+.account-section-right {
+  flex: 1;
+  min-width: 0;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+}
+
+.form-group input:disabled {
+  background-color: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.form-group input:focus {
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
 @media (max-width: 900px) {
   .form-row {
     flex-direction: column;
@@ -890,6 +971,9 @@ async updatePassword() {
   .form-row input[type="password"] {
     width: 100%;
     min-width: 0;
+  }
+  .account-container {
+    flex-direction: column;
   }
 }
 </style> 

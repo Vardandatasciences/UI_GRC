@@ -127,31 +127,11 @@
   
         <!-- Step 2: Processing Progress Section -->
         <div v-if="currentStep === 2" class="processing-section">
-          <div class="processing-header">
-            <div class="processing-icon-container">
-              <i class="fas fa-cog fa-spin processing-icon"></i>
-            </div>
-            <h3>Processing Framework Document</h3>
-            <p>{{ processingStatus.message || 'Extracting document sections...' }}</p>
-          </div>
-          
-          <div class="progress-container">
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: processingStatus.progress + '%' }"></div>
-            </div>
-            <div class="progress-text">{{ processingStatus.progress || 0 }}%</div>
-          </div>
-          
-          <div class="processing-details">
-            <div class="detail-item">
-              <i class="fas fa-file-pdf"></i>
-              <span>File: {{ uploadedFileName }}</span>
-            </div>
-            <div class="detail-item">
-              <i class="fas fa-clock"></i>
-              <span>Started: {{ processingStartTime }}</span>
-            </div>
-          </div>
+          <ProcessingStatus 
+            :currentStatus="processingStatus.status"
+            :processingSteps="processingSteps"
+            :currentOperation="currentOperation"
+          />
         </div>
   
         <!-- Step 3: Content Selection Complete -->
@@ -797,9 +777,13 @@
   <script>
   import { ref, computed, onUnmounted, watch } from 'vue'
   import axios from 'axios'
+  import ProcessingStatus from './ProcessingStatus.vue'
   
   export default {
     name: 'UploadFramework',
+    components: {
+      ProcessingStatus
+    },
     setup() {
       const selectedFile = ref(null)
       const isDragOver = ref(false)
@@ -2055,90 +2039,265 @@
   </script>
   
   <style scoped>
+  /* Base Styles */
   .upload-framework-container {
-    padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
-    font-family: 'Inter', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    min-height: 100vh;
-    margin-left: 280px !important;
+    padding: 2rem;
+    background: #ffffff;
   }
   
-  /* Step Indicator */
+  /* Step Indicator Styles */
   .step-indicator {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    margin-bottom: 3rem;
-    padding: 2rem;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
   }
   
   .step-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
+    position: relative;
+    flex: 1;
   }
   
   .step-number {
-    width: 48px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
+    background: #e0e0e0;
+    color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
-    font-size: 1.1rem;
-    background: #e2e8f0;
-    color: #64748b;
-    transition: all 0.3s ease;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
   }
   
   .step-item.active .step-number {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #1976d2;
     color: white;
-    transform: scale(1.1);
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
   }
   
   .step-item.completed .step-number {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: #2e7d32;
     color: white;
   }
   
   .step-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #64748b;
+    font-size: 0.9rem;
+    color: #666;
     text-align: center;
-    transition: all 0.3s ease;
-  }
-  
-  .step-item.active .step-label {
-    color: #1e293b;
-    font-weight: 600;
-  }
-  
-  .step-item.completed .step-label {
-    color: #0f766e;
   }
   
   .step-divider {
-    width: 80px;
+    flex: 1;
     height: 2px;
-    background: #e2e8f0;
+    background: #e0e0e0;
     margin: 0 1rem;
-    transition: all 0.3s ease;
+    max-width: 50px;
   }
   
-  .step-item.completed + .step-divider {
-    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+  /* Table Styles for Steps 5 and 6 */
+  .policy-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 1rem 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .policy-table th {
+    background: #f8f9fa;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 500;
+    color: #2c3e50;
+    border-bottom: 2px solid #e0e0e0;
+    white-space: nowrap;
+  }
+  
+  .policy-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    color: #2c3e50;
+  }
+  
+  .policy-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .policy-table tr:hover {
+    background: #f5f5f5;
+  }
+  
+  /* Form Layout Improvements */
+  .dynamic-forms-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+  
+  .form-section {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .form-container {
+    display: grid;
+    gap: 1rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+    font-weight: 500;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #2c3e50;
+    background: #ffffff;
+  }
+  
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    border-color: #1976d2;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .dynamic-forms-layout {
+      grid-template-columns: 1fr;
+    }
+    
+    .step-indicator {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .step-divider {
+      display: none;
+    }
+    
+    .policy-table {
+      display: block;
+      overflow-x: auto;
+    }
+  }
+  
+  /* Scrollable Tables */
+  .table-container {
+    overflow-x: auto;
+    margin: 1rem 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .table-container table {
+    min-width: 800px;
+  }
+  
+  /* Compliance Section Improvements */
+  .compliance-form {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+  }
+  
+  .compliance-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  
+  .compliance-item {
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Button Styles */
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .btn-primary {
+    background: #1976d2;
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background: #1565c0;
+  }
+  
+  .btn-secondary {
+    background: #f5f5f5;
+    color: #2c3e50;
+  }
+  
+  .btn-secondary:hover {
+    background: #e0e0e0;
+  }
+  
+  /* Processing Status Integration */
+  .processing-section {
+    max-width: 800px;
+    margin: 2rem auto;
+  }
+  
+  /* Fix for long content */
+  .form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .table-cell-content {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .table-cell-content:hover {
+    white-space: normal;
+    word-break: break-word;
   }
   
   /* Back Button */

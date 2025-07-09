@@ -14,6 +14,12 @@ class Users(models.Model):
     CreatedAt = models.DateTimeField(auto_now_add=True)
     UpdatedAt = models.DateTimeField(auto_now=True)
     Email = models.EmailField(max_length=100)
+    FirstName=models.CharField(max_length=255)
+    LastName=models.CharField(max_length=255)
+    IsActive=models.BooleanField(default=True)
+    Department=models.CharField(max_length=50)
+
+
     class Meta:
         db_table = 'users'
     def __str__(self):
@@ -1044,3 +1050,110 @@ class RBACManager(models.Manager):
         """Get all GRC Administrators"""
         return self.filter(role='GRC Administrator', is_active='Y')
 
+
+
+
+class BusinessUnit(models.Model):
+    BusinessUnitId = models.AutoField(primary_key=True)
+    Name = models.CharField(max_length=255)
+    Code = models.CharField(max_length=50)
+    Description = models.TextField()
+    EntityId = models.IntegerField()
+    IsActive = models.BooleanField(default=True)
+    CreatedDate = models.DateTimeField()
+
+    class Meta:
+        db_table = 'businessunits'
+
+    def __str__(self):
+        return self.Name
+
+
+class Category(models.Model):
+    CategoryId = models.AutoField(primary_key=True)
+    CategoryName = models.CharField(max_length=255)
+    Description = models.TextField()
+    IsActive = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'category'
+
+    def __str__(self):
+        return self.CategoryName
+
+
+class Department(models.Model):
+    DepartmentId = models.AutoField(primary_key=True)
+    EntityId = models.IntegerField()
+    DepartmentName = models.CharField(max_length=255)
+    DepartmentHead = models.IntegerField()
+    IsActive = models.BooleanField(default=True)
+    CreatedDate = models.DateTimeField()
+    BusinessUnitId = models.IntegerField()
+
+    class Meta:
+        db_table = 'department'
+
+    def __str__(self):
+        return self.DepartmentName
+
+
+class Entity(models.Model):
+    Id = models.AutoField(primary_key=True)
+    EntityName = models.CharField(max_length=255)
+    EntityType = models.CharField(max_length=255)
+    ParentEntityId = models.IntegerField(null=True, blank=True)
+    LocationId = models.IntegerField()
+    IsActive = models.BooleanField(default=True)
+    CreatedDate = models.DateTimeField()
+
+    class Meta:
+        db_table = 'mainentities'
+
+    def __str__(self):
+        return self.EntityName
+
+
+class Holiday(models.Model):
+    HolidayId = models.AutoField(primary_key=True)
+    EntityId = models.IntegerField()
+    HolidayDate = models.DateField()
+    HolidayName = models.CharField(max_length=255)
+    IsNational = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'holidays'
+
+    def __str__(self):
+        return self.HolidayName
+
+
+class Location(models.Model):
+    LocationID = models.AutoField(primary_key=True)
+    AddressLine = models.CharField(max_length=255)
+    City = models.CharField(max_length=255)
+    State = models.CharField(max_length=255, null=True, blank=True)
+    Country = models.CharField(max_length=255)
+    PostalCode = models.CharField(max_length=45, null=True, blank=True)
+
+    class Meta:
+        db_table = 'locations'
+
+    def __str__(self):
+        return self.AddressLine
+
+
+class Applicability(models.Model):
+    ApplicabilityId = models.AutoField(primary_key=True)
+    EntityId = models.IntegerField()
+    DepartmentId = models.IntegerField()
+    CategoryId = models.IntegerField()
+    StartDate = models.DateField()
+    EndDate = models.DateField(null=True, blank=True)
+    IsMandatory = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'applicability'
+
+    def __str__(self):
+        return f'{self.EntityId} - {self.DepartmentId} - {self.CategoryId}'

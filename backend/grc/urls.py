@@ -144,6 +144,7 @@ from . import risk_views
 from .risk_views import RiskViewSet, IncidentViewSet, ComplianceViewSet, RiskInstanceViewSet
 from .routes import previous_version
 from .routes import compliance
+from .routes import user_profile
 
 # ============================================================================
 # AUTHENTICATION URLs
