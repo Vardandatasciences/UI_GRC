@@ -384,6 +384,7 @@
               <textarea
                 v-model="step.description"
                 @input="onMitigationStepChange"
+                @blur="onMitigationStepChange"
                 class="compliance-input"
                 :class="{
                   'error': validationErrors.mitigation,
@@ -897,7 +898,7 @@ export default {
         if (response.data && response.data.success) {
           this.compliance = {
             ...response.data.data,
-            versionType: 'minor' // Set default version type
+            versionType: 'Minor' // Set default version type
           };
           
           // Set default reviewer if not present
@@ -911,8 +912,12 @@ export default {
           this.riskCategorySearch = this.compliance.RiskCategory || '';
           this.riskBusinessImpactSearch = this.compliance.RiskBusinessImpact || '';
           
+          // Log the mitigation data received from the backend
+          console.log("Received mitigation data:", this.compliance.mitigation);
+          
           // Initialize mitigation steps from loaded compliance data
           this.mitigationSteps = this.parseMitigationSteps(this.compliance.mitigation);
+          console.log("Parsed mitigation steps:", this.mitigationSteps);
         } else {
           this.error = 'Failed to load compliance data';
         }
@@ -967,8 +972,18 @@ export default {
       return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
     },
     validateField(fieldName) {
+      // Skip validation if compliance data is not yet loaded
+      if (!this.compliance) {
+        return true;
+      }
+
       const value = this.compliance[fieldName];
       const rules = this.validationRules[fieldName];
+      
+      // If no validation rules exist for this field, consider it valid
+      if (!rules || !Array.isArray(rules)) {
+        return true;
+      }
       
       // Reset error for this field
       this.validationErrors[fieldName] = '';
@@ -984,6 +999,14 @@ export default {
       }
       
       for (const rule of rules) {
+        // Custom validation function
+        if (rule.validate && typeof rule.validate === 'function') {
+          if (!rule.validate(value)) {
+            this.validationErrors[fieldName] = rule.message;
+            return false;
+          }
+        }
+        
         // Required validation
         if (rule.required && (!value || value.toString().trim() === '')) {
           this.validationErrors[fieldName] = rule.message;
@@ -1072,14 +1095,32 @@ export default {
           newVersion = `${major}.${(parseInt(minor) || 0) + 1}`;
         }
         
+        // Process mitigation steps properly
+        let mitigationData = {};
+        if (this.compliance.IsRisk && this.mitigationSteps && this.mitigationSteps.length > 0) {
+          this.mitigationSteps.forEach((step, index) => {
+            if (step.description && step.description.trim()) {
+              mitigationData[`${index + 1}`] = step.description.trim();
+            }
+          });
+        }
+        
+        console.log("DEBUG: Mitigation steps array:", this.mitigationSteps);
+        console.log("DEBUG: Processed mitigation data for submission:", mitigationData);
+        
         // Prepare submission data
         const editData = {
           ...this.compliance,
           ComplianceVersion: newVersion,
           Status: 'Under Review',
           ActiveInactive: 'Active',
-          PreviousComplianceVersionId: this.originalComplianceId
+          PreviousComplianceVersionId: this.originalComplianceId,
+          mitigation: mitigationData, // Use the processed mitigation data
+          user_id: '1' // Add user ID
         };
+
+        console.log("DEBUG: Complete edit data being sent:", editData);
+        console.log("DEBUG: Mitigation in edit data:", editData.mitigation);
 
         // Use the complianceService to save the edit
         const response = await complianceService.updateCompliance(this.originalComplianceId, editData);
@@ -1265,6 +1306,11 @@ export default {
     },
 
     validateFieldRealTime(fieldName) {
+      // Skip validation if compliance data is not yet loaded
+      if (!this.compliance) {
+        return true;
+      }
+
       // Skip validation for risk-related fields if IsRisk is false
       if (!this.compliance.IsRisk && ['PossibleDamage', 'mitigation', 'RiskType', 'RiskCategory', 'RiskBusinessImpact'].includes(fieldName)) {
         this.validationErrors[fieldName] = '';
@@ -1275,7 +1321,7 @@ export default {
       const value = this.compliance[fieldName];
       const rules = this.validationRules[fieldName];
       
-      if (!rules) return true;
+      if (!rules || !Array.isArray(rules)) return true;
 
       // Initialize field state if not exists
       if (!this.fieldStates[fieldName]) {
@@ -1300,6 +1346,15 @@ export default {
       let showWarning = false;
       
       for (const rule of rules) {
+        // Custom validation function
+        if (rule.validate && typeof rule.validate === 'function') {
+          if (!rule.validate(value)) {
+            isValid = false;
+            this.validationErrors[fieldName] = rule.message;
+            break;
+          }
+        }
+        
         if (rule.required && (!value || value.toString().trim() === '')) {
           isValid = false;
           this.validationErrors[fieldName] = rule.message;
@@ -1348,10 +1403,15 @@ export default {
     },
 
     getValidationProgress(fieldName) {
+      // Skip if compliance data is not yet loaded
+      if (!this.compliance) {
+        return 0;
+      }
+
       const value = this.compliance[fieldName];
       const rules = this.validationRules[fieldName];
       
-      if (!value || !rules) return 0;
+      if (!value || !rules || !Array.isArray(rules)) return 0;
       
       // For numeric fields (Impact, Probability)
       if (['Impact', 'Probability'].includes(fieldName)) {
@@ -1385,8 +1445,15 @@ export default {
     },
 
     getValidationMessage(fieldName) {
+      // Skip if compliance data is not yet loaded
+      if (!this.compliance) {
+        return '';
+      }
+
       const value = this.compliance[fieldName];
       const rules = this.validationRules[fieldName];
+      
+      if (!rules || !Array.isArray(rules)) return '';
       
       if (!value) {
         const requiredRule = rules.find(r => r.required);
@@ -1470,50 +1537,139 @@ export default {
     },
 
     submitForm() {
+      // Ensure mitigation data is properly formatted before submission
+      if (this.compliance.IsRisk && this.mitigationSteps.length > 0) {
+        // Update the mitigation data first
+        this.onMitigationStepChange();
+        
+        // Double-check that mitigation data is properly set
+        const mitigationJson = {};
+        this.mitigationSteps.forEach((step, index) => {
+          if (step.description && step.description.trim()) {
+            mitigationJson[`${index + 1}`] = step.description.trim();
+          }
+        });
+        
+        // Store the formatted JSON in the compliance object
+        this.compliance.mitigation = mitigationJson;
+        
+        // Debug output
+        console.log("submitForm - Mitigation steps:", this.mitigationSteps);
+        console.log("submitForm - Submitting mitigation data:", JSON.stringify(mitigationJson, null, 2));
+        console.log("submitForm - Compliance.mitigation:", this.compliance.mitigation);
+      } else if (!this.compliance.IsRisk) {
+        // Ensure mitigation is at least an empty object for non-risk items
+        this.compliance.mitigation = {};
+        console.log("submitForm - Not a risk, setting empty mitigation");
+      }
+      
       this.submitEdit();
     },
 
     addStep() {
       this.mitigationSteps.push({ description: '' });
+      console.log("addStep - Added new step, total steps:", this.mitigationSteps.length);
       this.onMitigationStepChange();
     },
     removeStep(index) {
       if (this.mitigationSteps.length > 1) {
         this.mitigationSteps.splice(index, 1);
+        console.log("removeStep - Removed step at index", index, ", remaining steps:", this.mitigationSteps.length);
         this.onMitigationStepChange();
       }
     },
     onMitigationStepChange() {
-      // Convert mitigation steps to the format expected by the backend
-      this.compliance.mitigation = this.mitigationSteps.reduce((obj, step, index) => {
-        if (step.description.trim()) {
-          obj[`step${index + 1}`] = step.description;
+      // Convert mitigation steps to the format expected by the backend: {"1": "First step", "2": "Second step"}
+      const mitigationJson = {};
+      
+      this.mitigationSteps.forEach((step, index) => {
+        if (step.description && step.description.trim()) {
+          mitigationJson[`${index + 1}`] = step.description.trim();
         }
-        return obj;
-      }, {});
+      });
+      
+      // Store the formatted JSON in the compliance object
+      this.compliance.mitigation = mitigationJson;
+      
+      // Debug output to console
+      console.log("onMitigationStepChange - Current mitigation steps:", this.mitigationSteps);
+      console.log("onMitigationStepChange - Formatted mitigation JSON:", JSON.stringify(mitigationJson, null, 2));
+      console.log("onMitigationStepChange - Compliance.mitigation:", this.compliance.mitigation);
       
       // Validate mitigation field
       this.validateField('mitigation');
     },
     parseMitigationSteps(mitigation) {
-      if (!mitigation) return [{ description: '' }];
+      console.log("Parsing mitigation steps from:", mitigation, "Type:", typeof mitigation);
+      
+      // Handle null or undefined
+      if (!mitigation) {
+        console.log("Mitigation is null/undefined, returning default empty step");
+        return [{ description: '' }];
+      }
       
       try {
+        // Handle string format (could be JSON string or plain text)
         if (typeof mitigation === 'string') {
-          return [{ description: mitigation }];
-        } else if (Array.isArray(mitigation)) {
+          if (!mitigation.trim()) {
+            console.log("Mitigation is empty string, returning default empty step");
+            return [{ description: '' }];
+          }
+          
+          try {
+            // Try to parse as JSON
+            const parsed = JSON.parse(mitigation);
+            console.log("Successfully parsed mitigation JSON string:", parsed);
+            
+            if (typeof parsed === 'object' && parsed !== null) {
+              if (Array.isArray(parsed)) {
+                // Handle array format
+                console.log("Mitigation is array, mapping to steps");
+                return parsed.map(step => ({
+                  description: typeof step === 'string' ? step : (step?.description || '')
+                }));
+              } else {
+                // Handle object format (expected format: {"1": "Step 1", "2": "Step 2"})
+                console.log("Mitigation is object, converting to steps");
+                return Object.values(parsed).map(value => ({
+                  description: typeof value === 'string' ? value : (value?.description || '')
+                }));
+              }
+            }
+          } catch (e) {
+            // Not valid JSON, treat as single step
+            console.log("Not valid JSON, treating as single step:", e);
+            return [{ description: mitigation }];
+          }
+        } 
+        // Handle array format directly
+        else if (Array.isArray(mitigation)) {
+          console.log("Mitigation is array, mapping to steps");
+          if (mitigation.length === 0) return [{ description: '' }];
+          
           return mitigation.map(step => ({
-            description: typeof step === 'string' ? step : step.description || ''
+            description: typeof step === 'string' ? step : (step?.description || '')
           }));
-        } else if (typeof mitigation === 'object') {
-          return Object.values(mitigation).map(step => ({
-            description: typeof step === 'string' ? step : step.description || ''
+        } 
+        // Handle object format directly (expected format: {"1": "Step 1", "2": "Step 2"})
+        else if (typeof mitigation === 'object' && mitigation !== null) {
+          console.log("Mitigation is object, converting to steps");
+          
+          // Check if it's an empty object
+          if (Object.keys(mitigation).length === 0) {
+            return [{ description: '' }];
+          }
+          
+          return Object.values(mitigation).map(value => ({
+            description: typeof value === 'string' ? value : (value?.description || '')
           }));
         }
       } catch (error) {
         console.error('Error parsing mitigation steps:', error);
       }
       
+      // Default fallback
+      console.log("Using default fallback for mitigation");
       return [{ description: '' }];
     },
   }

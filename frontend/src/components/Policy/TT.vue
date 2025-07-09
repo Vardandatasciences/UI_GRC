@@ -634,7 +634,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
       policySubCategories: [],
       policyData: [], // Store all policy category data
       users: [], // Add users array
-      loggedInUsername: localStorage.getItem('username') || '', // Add logged in username
+      loggedInUsername: localStorage.getItem('user_name') || '', // Add logged in username
       frameworkForm: {
         name: '',
         description: '',
@@ -1596,6 +1596,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
           PopupService.warning('Reviewer is required', 'Validation Error');
           return false;
         }
+        // Check entities validation - must be "all" or non-empty array
         if (!policy.entities || (Array.isArray(policy.entities) && policy.entities.length === 0)) {
           PopupService.warning('At least one entity must be selected', 'Validation Error');
           return false;
@@ -1604,12 +1605,19 @@ const API_BASE_URL = 'http://localhost:8000/api'
       }
       return false;
     },
+    updateLoggedInUsername() {
+      // Update the logged-in username from localStorage
+      this.loggedInUsername = localStorage.getItem('user_name') || '';
+    },
   },
   mounted() {
     document.addEventListener('click', this.handleClickOutside);
+    // Listen for user data updates
+    window.addEventListener('userDataUpdated', this.updateLoggedInUsername);
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside);
+    window.removeEventListener('userDataUpdated', this.updateLoggedInUsername);
   },
   }
   </script>

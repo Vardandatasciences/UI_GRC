@@ -3547,8 +3547,12 @@ def get_policy_version_history(request, policy_id):
 @api_view(['GET'])
 @permission_classes([PolicyApprovalWorkflowPermission])  # RBAC: Require PolicyApprovalWorkflowPermission for viewing reviewer's policy approvals
 def list_policy_approvals_for_reviewer(request):
-    # For now, reviewer_id is hardcoded as 2
-    reviewer_id = 2
+    # Get reviewer ID from request
+    reviewer_id = request.user.id if hasattr(request.user, 'id') else None
+    if not reviewer_id:
+        reviewer_id = request.session.get('user_id')
+    if not reviewer_id:
+        return Response({'error': 'No reviewer ID found'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Log policy approvals listing for reviewer
     send_log(
@@ -3583,20 +3587,22 @@ def list_policy_approvals_for_reviewer(request):
     unique_approvals = list(unique_policies.values())
     print(f"Returning {len(unique_approvals)} unique policy approvals")
     
-    # Log successful policy approvals listing for reviewer
-    send_log(
-        module="Policy",
-        actionType="LIST_POLICY_APPROVALS_FOR_REVIEWER_SUCCESS",
-        description=f"Successfully listed {len(unique_approvals)} policy approvals for reviewer {reviewer_id}",
-        userId=getattr(request.user, 'id', None),
-        userName=getattr(request.user, 'username', 'Anonymous'),
-        entityType="PolicyApproval",
-        ipAddress=get_client_ip(request),
-        additionalInfo={"reviewer_id": reviewer_id, "approval_count": len(unique_approvals)}
-    )
+    # Serialize the approvals
+    data = [
+        {
+            "ApprovalId": a.ApprovalId,
+            "PolicyId": a.PolicyId.PolicyId if a.PolicyId else None,
+            "Identifier": a.Identifier,
+            "ExtractedData": a.ExtractedData,
+            "UserId": a.UserId,
+            "ReviewerId": a.ReviewerId,
+            "ApprovedNot": a.ApprovedNot,
+            "Version": a.Version
+        }
+        for a in unique_approvals
+    ]
     
-    serializer = PolicyApprovalSerializer(unique_approvals, many=True)
-    return Response(serializer.data)
+    return Response(data)
 
 @api_view(['GET'])
 @permission_classes([PolicyApprovalWorkflowPermission]) # RBAC: Require PolicyApprovalWorkflowPermission for viewing rejected policy approvals
@@ -6390,10 +6396,14 @@ def create_tailored_framework(request):
             reviewer_user = Users.objects.filter(UserName=reviewer_name).first()
             if reviewer_user:
                 reviewer_id = reviewer_user.UserId
-            else:
-                reviewer_id = 2  # Default reviewer ID
-        else:
-            reviewer_id = 2  # Default reviewer ID
+        
+        # If no reviewer found, try to get from request
+        if not reviewer_id:
+            reviewer_id = request.user.id if hasattr(request.user, 'id') else None
+        if not reviewer_id:
+            reviewer_id = request.session.get('user_id')
+        if not reviewer_id:
+            return Response({'error': 'No reviewer ID found'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Security: Sanitize framework data before database storage (Django ORM provides SQL injection protection)
         framework_data = {
@@ -6863,11 +6873,19 @@ def create_tailored_policy(request):
         
         # Get user information for reviewer assignment
         reviewer_name = data.get('Reviewer', '')
-        reviewer_id = 2  # Default reviewer ID
+        reviewer_id = None
         if reviewer_name:
             reviewer_user = Users.objects.filter(UserName=reviewer_name).first()
             if reviewer_user:
                 reviewer_id = reviewer_user.UserId
+        
+        # If no reviewer found, try to get from request
+        if not reviewer_id:
+            reviewer_id = request.user.id if hasattr(request.user, 'id') else None
+        if not reviewer_id:
+            reviewer_id = request.session.get('user_id')
+        if not reviewer_id:
+            return Response({'error': 'No reviewer ID found'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Get user ID for policy approval
         user_id = 1  # Default user ID

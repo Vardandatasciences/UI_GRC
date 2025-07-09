@@ -451,8 +451,8 @@
                       </div>
                       <div class="compliance-scope-desc" v-if="!member.assignedSubPolicy">
                         Will include permanent compliances from all subpolicies under this policy
-                      </div>
                     </div>
+                  </div>
                   </div>
                   
                   <!-- Reports Section -->
@@ -510,7 +510,7 @@
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Business Unit</label>
                       <div class="dynamic-desc">Mention the business unit or process area being audited.</div>
-                      <input type="text" v-model="member.businessUnit" class="dynamic-input" placeholder="Enter business unit..." />
+                        <input type="text" v-model="member.businessUnit" class="dynamic-input" placeholder="Enter business unit..." />
                     </div>
                   </div>
                   <div class="dynamic-fields-row">

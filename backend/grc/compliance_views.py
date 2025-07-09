@@ -269,10 +269,10 @@ class ComplianceInputValidator:
     def clean_mitigation_data(mitigation_data: str) -> str:
         """
         Clean and format mitigation data for consistent storage and display.
-        Now handles JSON format with step-by-step structure.
+        Handles simple JSON format: {"1": "First step", "2": "Second step"}
         """
         if not mitigation_data:
-            return ""
+            return "{}"
         
         # If it's already a JSON string, try to parse and validate
         if isinstance(mitigation_data, str) and (mitigation_data.strip().startswith('{') or mitigation_data.strip().startswith('[')):
@@ -280,75 +280,38 @@ class ComplianceInputValidator:
                 import json
                 parsed = json.loads(mitigation_data)
                 
-                # Handle the new step-by-step format
-                if isinstance(parsed, dict) and 'steps' in parsed:
-                    # Validate the structure
-                    if isinstance(parsed['steps'], list):
-                        # Clean and validate each step
-                        cleaned_steps = []
-                        for step in parsed['steps']:
-                            if isinstance(step, dict) and 'description' in step:
-                                cleaned_step = {
-                                    'stepNumber': step.get('stepNumber', len(cleaned_steps) + 1),
-                                    'description': str(step['description']).strip()
-                                }
-                                # Only include steps with valid descriptions
-                                if cleaned_step['description']:
-                                    cleaned_steps.append(cleaned_step)
-                        
-                        # Reconstruct the JSON structure
-                        cleaned_mitigation = {
-                            'steps': cleaned_steps,
-                            'totalSteps': len(cleaned_steps),
-                            'lastUpdated': parsed.get('lastUpdated', ''),
-                            'version': '2.0'  # Version to identify new format
-                        }
-                        
+                # Handle the simple step format: {"1": "First step", "2": "Second step"}
+                if isinstance(parsed, dict):
+                    cleaned_mitigation = {}
+                    
+                    # Check if all keys are numeric strings and values are strings
+                    for key, value in parsed.items():
+                        if isinstance(key, str) and key.isdigit() and isinstance(value, str):
+                            if value.strip():  # Only include non-empty steps
+                                cleaned_mitigation[key] = value.strip()
+                        elif isinstance(key, int) and isinstance(value, str):
+                            if value.strip():  # Only include non-empty steps
+                                cleaned_mitigation[str(key)] = value.strip()
+                    
+                    # If we have valid steps, return the cleaned version
+                    if cleaned_mitigation:
                         return json.dumps(cleaned_mitigation, separators=(',', ':'))
                 
-                # Handle legacy array format
+                # Handle legacy array format - convert to simple format
                 if isinstance(parsed, list):
-                    # Convert to new format
-                    cleaned_steps = []
+                    cleaned_mitigation = {}
                     for i, step in enumerate(parsed):
                         if isinstance(step, str) and step.strip():
-                            cleaned_steps.append({
-                                'stepNumber': i + 1,
-                                'description': step.strip()
-                            })
+                            cleaned_mitigation[str(i + 1)] = step.strip()
                     
-                    if cleaned_steps:
-                        cleaned_mitigation = {
-                            'steps': cleaned_steps,
-                            'totalSteps': len(cleaned_steps),
-                            'lastUpdated': '',
-                            'version': '2.0'
-                        }
+                    if cleaned_mitigation:
                         return json.dumps(cleaned_mitigation, separators=(',', ':'))
-                
-                # Handle legacy object format
-                if isinstance(parsed, dict):
-                    if 'description' in parsed:
-                        # Convert single description to step format
-                        cleaned_mitigation = {
-                            'steps': [{
-                                'stepNumber': 1,
-                                'description': str(parsed['description']).strip()
-                            }],
-                            'totalSteps': 1,
-                            'lastUpdated': '',
-                            'version': '2.0'
-                        }
-                        return json.dumps(cleaned_mitigation, separators=(',', ':'))
-                
-                # Return as formatted JSON if it's a valid structure
-                return json.dumps(parsed, separators=(',', ':'))
                 
             except json.JSONDecodeError:
                 # If JSON parsing fails, treat as plain text
                 pass
         
-        # Handle plain text - convert to new JSON format
+        # Handle plain text - convert to simple JSON format
         if isinstance(mitigation_data, str) and mitigation_data.strip():
             import json
             
@@ -370,30 +333,22 @@ class ComplianceInputValidator:
             if not steps_text or (len(steps_text) == 1 and not steps_text[0].strip()):
                 steps_text = [text]
             
-            # Create step objects
-            cleaned_steps = []
+            # Create step objects in simple format
+            cleaned_mitigation = {}
             for i, step_text in enumerate(steps_text):
                 if step_text.strip():
-                    cleaned_steps.append({
-                        'stepNumber': i + 1,
-                        'description': step_text.strip()
-                    })
+                    cleaned_mitigation[str(i + 1)] = step_text.strip()
             
-            if cleaned_steps:
-                cleaned_mitigation = {
-                    'steps': cleaned_steps,
-                    'totalSteps': len(cleaned_steps),
-                    'lastUpdated': '',
-                    'version': '2.0'
-                }
+            if cleaned_mitigation:
                 return json.dumps(cleaned_mitigation, separators=(',', ':'))
         
-        return ""
+        return "{}"
     
     @staticmethod
     def validate_mitigation_json(mitigation_data: str) -> bool:
         """
         Validate that mitigation data is properly formatted JSON with valid structure
+        Expected format: {"1": "First step", "2": "Second step"}
         """
         if not mitigation_data:
             return True  # Empty is valid
@@ -402,21 +357,18 @@ class ComplianceInputValidator:
             import json
             parsed = json.loads(mitigation_data)
             
-            # Must be a dictionary with 'steps' key
-            if not isinstance(parsed, dict) or 'steps' not in parsed:
+            # Must be a dictionary
+            if not isinstance(parsed, dict):
                 return False
             
-            # Steps must be a list
-            if not isinstance(parsed['steps'], list):
-                return False
-            
-            # Each step must have required structure
-            for step in parsed['steps']:
-                if not isinstance(step, dict):
+            # Check if all keys are numeric strings and values are non-empty strings
+            for key, value in parsed.items():
+                # Key must be a string representation of a number
+                if not isinstance(key, str) or not key.isdigit():
                     return False
-                if 'description' not in step or not isinstance(step['description'], str):
-                    return False
-                if not step['description'].strip():
+                
+                # Value must be a non-empty string
+                if not isinstance(value, str) or not value.strip():
                     return False
             
             return True
@@ -567,23 +519,20 @@ class ComplianceInputValidator:
         try:
             # Validate and clean mitigation (JSON step-by-step format)
             raw_mitigation = request_data.get('mitigation')
-            if raw_mitigation:
-                # Clean the mitigation data first
-                cleaned_mitigation = cls.clean_mitigation_data(raw_mitigation)
-                
-                # Validate JSON structure
-                if not cls.validate_mitigation_json(cleaned_mitigation):
-                    raise ValidationError("Invalid mitigation data format")
-                
-                # Final validation for length (JSON format can be longer)
-                if len(cleaned_mitigation) > 10000:  # Increased limit for JSON
-                    raise ValidationError("Mitigation data exceeds maximum length")
-                
-                validated_data['mitigation'] = cleaned_mitigation
+            
+            # Use our helper function to format mitigation data
+            formatted_mitigation = format_mitigation_data(raw_mitigation)
+            
+            # If risk requires mitigation but none provided, add error
+            if validated_data.get('IsRisk', False) and not formatted_mitigation:
+                errors['mitigation'] = ["At least one mitigation step is required for risks"]
             else:
-                validated_data['mitigation'] = ''
-        except ValidationError as e:
-            errors['mitigation'] = [str(e)]
+                validated_data['mitigation'] = formatted_mitigation
+                
+                # Debug log
+                print(f"DEBUG: Validated mitigation data: {formatted_mitigation}")
+        except Exception as e:
+            errors['mitigation'] = [f"Error processing mitigation data: {str(e)}"]
         
         try:
             # Validate Criticality (required choice field)
@@ -811,21 +760,21 @@ def test_connection(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_frameworks(request):
-    print(f"\n=== GET_FRAMEWORKS DEBUG ===")
+    # print(f"\n=== GET_FRAMEWORKS DEBUG ===")
     
     try:
         # Get all frameworks (remove ActiveInactive filter for now to see all data)
         frameworks = Framework.objects.all()  # type: ignore
-        print(f"Found {frameworks.count()} frameworks in total")
+        # print(f"Found {frameworks.count()} frameworks in total")
         
-        # Debug: Print each framework
-        for fw in frameworks:
-            print(f"Framework: ID={fw.FrameworkId}, Name={fw.FrameworkName}, Status={fw.ActiveInactive}")
+        # # Debug: Print each framework
+        # for fw in frameworks:
+        #     print(f"Framework: ID={fw.FrameworkId}, Name={fw.FrameworkName}, Status={fw.ActiveInactive}")
         
         serializer = FrameworkSerializer(frameworks, many=True)
         serialized_data = serializer.data
         
-        print(f"Serialized data: {serialized_data}")
+        # print(f"Serialized data: {serialized_data}")
         
         # Format the response to match frontend expectations
         formatted_frameworks = []
@@ -838,7 +787,7 @@ def get_frameworks(request):
                 'description': fw_data.get('FrameworkDescription', ''),
             }
             formatted_frameworks.append(formatted_fw)
-            print(f"Formatted framework: {formatted_fw}")
+            # print(f"Formatted framework: {formatted_fw}")
         
         response_data = {
             'success': True, 
@@ -846,7 +795,7 @@ def get_frameworks(request):
             'count': len(formatted_frameworks)
         }
         
-        print(f"Final response: {response_data}")
+        # print(f"Final response: {response_data}")
         print("=== END GET_FRAMEWORKS DEBUG ===\n")
         
         return Response(response_data)
@@ -1054,7 +1003,7 @@ def create_compliance(request):
             BusinessUnitsCovered=validated_data['BusinessUnitsCovered'],
             IsRisk=validated_data['IsRisk'],
             PossibleDamage=validated_data['PossibleDamage'],
-            mitigation=validated_data['mitigation'],
+            mitigation=format_mitigation_data(validated_data['mitigation']),
             PotentialRiskScenarios=validated_data.get('PotentialRiskScenarios', ''),
             RiskType=validated_data.get('RiskType', ''),
             RiskCategory=validated_data.get('RiskCategory', ''),
@@ -1082,7 +1031,7 @@ def create_compliance(request):
             'Criticality': validated_data['Criticality'],
             'Impact': validated_data['Impact'],
             'Probability': validated_data['Probability'],
-            'mitigation': validated_data['mitigation'],
+            'mitigation': format_mitigation_data(validated_data['mitigation']),
             'PossibleDamage': validated_data['PossibleDamage'],
             'IsRisk': validated_data['IsRisk'],
             'MandatoryOptional': validated_data['MandatoryOptional'],
@@ -4987,6 +4936,15 @@ def edit_compliance(request, compliance_id):
         # Get the policy through the subpolicy relationship
         policy = compliance.SubPolicy.PolicyId
 
+        # Process mitigation data to ensure it's in the correct format
+        mitigation_data = request.data.get('mitigation', {})
+        
+        # Use the helper function to format mitigation data
+        processed_mitigation = format_mitigation_data(mitigation_data)
+        
+        print(f"DEBUG: Original mitigation data: {mitigation_data}")
+        print(f"DEBUG: Processed mitigation data: {processed_mitigation}")
+
         # Create a new compliance instance with updated data
         new_compliance = Compliance.objects.create(
             SubPolicy=compliance.SubPolicy,  # Use the ForeignKey field directly
@@ -4998,7 +4956,7 @@ def edit_compliance(request, compliance_id):
             BusinessUnitsCovered=request.data.get('BusinessUnitsCovered', ''),
             IsRisk=request.data.get('IsRisk', False),
             PossibleDamage=request.data.get('PossibleDamage', ''),
-            mitigation=request.data.get('mitigation', {}),
+            mitigation=processed_mitigation,  # Use the processed mitigation object
             PotentialRiskScenarios=request.data.get('PotentialRiskScenarios', ''),
             RiskType=request.data.get('RiskType', ''),
             RiskCategory=request.data.get('RiskCategory', ''),
@@ -5031,7 +4989,7 @@ def edit_compliance(request, compliance_id):
             'BusinessUnitsCovered': new_compliance.BusinessUnitsCovered,
             'IsRisk': new_compliance.IsRisk,
             'PossibleDamage': new_compliance.PossibleDamage,
-            'mitigation': new_compliance.mitigation,
+            'mitigation': processed_mitigation,  # Include mitigation in response for debugging
             'Criticality': new_compliance.Criticality,
             'Status': new_compliance.Status,
             'version_type': version_type,
@@ -5039,17 +4997,25 @@ def edit_compliance(request, compliance_id):
         }
 
         # Create PolicyApproval for the new version
+        # Map frontend field names to backend field names
+        reviewer_id = request.data.get('reviewer_id') or request.data.get('ReviewerId', 2)
+        user_id = request.data.get('UserId', 1)
+        
         policy_approval = PolicyApproval.objects.create(
             Identifier=new_compliance.Identifier,
             ExtractedData=extracted_data,
-            UserId=request.data.get('UserId', 1),  # Default to 1 if not provided
-            ReviewerId=request.data.get('ReviewerId', 2),  # Default to 2 if not provided
+            UserId=user_id,  # Default to 1 if not provided
+            ReviewerId=reviewer_id,  # Handle both reviewer_id and ReviewerId
             Version=f"u{new_version}",  # Use u prefix for user version
             ApprovedNot=None,  # Set to None for pending approval
             ApprovalDueDate=datetime.date.today() + datetime.timedelta(days=7),  # Due in 7 days
             PolicyId=policy  # Set the policy relationship correctly
         )
 
+        print(f"DEBUG: Successfully created compliance with mitigation: {new_compliance.mitigation}")
+        print(f"DEBUG: Mitigation type in database: {type(new_compliance.mitigation)}")
+        print(f"DEBUG: Mitigation JSON representation: {json.dumps(new_compliance.mitigation) if new_compliance.mitigation else 'None'}")
+        
         return Response({
             'success': True,
             'message': 'Compliance updated successfully',
@@ -5057,7 +5023,8 @@ def edit_compliance(request, compliance_id):
                 'ComplianceId': new_compliance.ComplianceId,
                 'Version': new_version,
                 'Status': new_compliance.Status,
-                'ApprovalId': policy_approval.ApprovalId
+                'ApprovalId': policy_approval.ApprovalId,
+                'mitigation': processed_mitigation  # Include mitigation in response for debugging
             }
         })
 
@@ -5379,3 +5346,79 @@ def get_compliances_by_type(request, type, id):
             'success': False,
             'message': f'Error fetching compliances: {str(e)}'
         }, status=500)
+
+def format_mitigation_data(mitigation_data):
+    """
+    Helper function to format and sanitize mitigation data
+    Returns a properly formatted JSON-serializable object
+    """
+    processed_mitigation = {}
+    
+    try:
+        print(f"DEBUG: format_mitigation_data - Input data: {mitigation_data}")
+        print(f"DEBUG: format_mitigation_data - Input type: {type(mitigation_data)}")
+        
+        # Handle different input types
+        if mitigation_data is None:
+            print(f"DEBUG: Mitigation data is None, using empty object")
+            return {}
+            
+        if isinstance(mitigation_data, dict):
+            # If it's already a dict, ensure values are strings
+            for key, value in mitigation_data.items():
+                if value and (isinstance(value, str) or isinstance(value, int) or isinstance(value, float)):
+                    processed_mitigation[str(key)] = str(value).strip()
+            print(f"DEBUG: Processed dictionary mitigation data")
+        elif isinstance(mitigation_data, str):
+            try:
+                # Try to parse as JSON
+                import json
+                if mitigation_data.strip().startswith('{') or mitigation_data.strip().startswith('['):
+                    parsed = json.loads(mitigation_data)
+                    
+                    if isinstance(parsed, dict):
+                        # Process dictionary format
+                        for key, value in parsed.items():
+                            if value and (isinstance(value, str) or isinstance(value, int) or isinstance(value, float)):
+                                processed_mitigation[str(key)] = str(value).strip()
+                    elif isinstance(parsed, list):
+                        # Process array format
+                        for i, item in enumerate(parsed):
+                            if item and (isinstance(item, str) or isinstance(item, int) or isinstance(item, float)):
+                                processed_mitigation[str(i+1)] = str(item).strip()
+                            elif isinstance(item, dict) and 'description' in item:
+                                processed_mitigation[str(i+1)] = str(item['description']).strip()
+                    
+                    print(f"DEBUG: Successfully parsed mitigation JSON string")
+                else:
+                    # Not JSON, use as single entry if not empty
+                    if mitigation_data.strip():
+                        processed_mitigation["1"] = mitigation_data.strip()
+                    print(f"DEBUG: Using mitigation data as single string entry")
+            except json.JSONDecodeError as e:
+                # Not valid JSON, use as single entry if not empty
+                if mitigation_data.strip():
+                    processed_mitigation["1"] = mitigation_data.strip()
+                print(f"DEBUG: JSON decode error: {str(e)}")
+        elif isinstance(mitigation_data, list):
+            # Process array format
+            for i, item in enumerate(mitigation_data):
+                if item and (isinstance(item, str) or isinstance(item, int) or isinstance(item, float)):
+                    processed_mitigation[str(i+1)] = str(item).strip()
+                elif isinstance(item, dict) and 'description' in item:
+                    processed_mitigation[str(i+1)] = str(item['description']).strip()
+            print(f"DEBUG: Processed list mitigation data")
+        else:
+            # Unknown type
+            print(f"DEBUG: Unknown mitigation data type: {type(mitigation_data)}, using empty object")
+            
+        # Validate that the processed data is JSON serializable
+        import json
+        json.dumps(processed_mitigation)
+        
+        print(f"DEBUG: Final processed mitigation: {processed_mitigation}")
+        return processed_mitigation
+        
+    except Exception as e:
+        print(f"DEBUG: Error formatting mitigation data: {str(e)}")
+        return {}  # Return empty object on error

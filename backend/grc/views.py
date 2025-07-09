@@ -975,102 +975,84 @@ def submit_policy_review(request, approval_id):
     try:
         # Get the original approval
         approval = PolicyApproval.objects.get(ApprovalId=approval_id)
-       
+        
+        # Get the latest user version approval to ensure we use the same IDs
+        latest_user_approval = PolicyApproval.objects.filter(
+            PolicyId=approval.PolicyId,
+            Version__startswith='u'
+        ).order_by('-ApprovalId').first()
+        
+        if not latest_user_approval:
+            return Response({'error': 'No user version found for this policy'}, status=status.HTTP_400_BAD_REQUEST)
+        
         # Validate and prepare data
         extracted_data = request.data.get('ExtractedData')
         if not extracted_data:
             return Response({'error': 'ExtractedData is required'}, status=status.HTTP_400_BAD_REQUEST)
-       
+        
         approved_not = request.data.get('ApprovedNot')
-       
-        # Simply create a new PolicyApproval object
-        # Avoid using filters that might generate BINARY expressions
-        new_version = "r1"  # Default version for reviewer
-       
-        # Try to determine the next version number without SQL LIKE
+        
+        # Get the latest version with "r" prefix for this identifier
         try:
             r_versions = []
             for pa in PolicyApproval.objects.filter(Identifier=approval.Identifier):
                 if pa.Version and pa.Version.startswith('r') and pa.Version[1:].isdigit():
                     r_versions.append(int(pa.Version[1:]))
-           
+            
             if r_versions:
                 new_version = f"r{max(r_versions) + 1}"
+            else:
+                new_version = "r1"  # Default version for reviewer
         except Exception as version_err:
             print(f"Error determining version (using default): {str(version_err)}")
-       
+            new_version = "r1"  # Default fallback
+        
         # Set approved date if policy is approved
         approved_date = None
         if approved_not == True or approved_not == 1:
             approved_date = datetime.date.today()
-           
-        # Create a new record using Django ORM
+        
+        # Create a new record using Django ORM with same user/reviewer IDs
         new_approval = PolicyApproval(
+            PolicyId=approval.PolicyId,
             Identifier=approval.Identifier,
             ExtractedData=extracted_data,
-            UserId=approval.UserId,
-            ReviewerId=approval.ReviewerId,
+            UserId=latest_user_approval.UserId,  # Use same user ID as user version
+            ReviewerId=latest_user_approval.ReviewerId,  # Use same reviewer ID as user version
             ApprovedNot=approved_not,
-            ApprovedDate=approved_date,  # Set approved date
+            ApprovedDate=approved_date,
             Version=new_version
         )
         new_approval.save()
-       
-        # If policy is approved (ApprovedNot=1), update the status in policy and subpolicies tables
+        
+        # If policy is approved, update the policy status
         if approved_not == True or approved_not == 1:
             try:
-                # Find the policy by Identifier
-                policy = Policy.objects.get(Identifier=approval.Identifier)
-
-                # Get the policy version record
-                policy_version = PolicyVersion.objects.filter(
-                    PolicyId=policy,
-                    Version=policy.CurrentVersion
-                ).first()
-
-                # If this policy has a previous version, set it to inactive
-                if policy_version and policy_version.PreviousVersionId:
-                    try:
-                        previous_version = PolicyVersion.objects.get(VersionId=policy_version.PreviousVersionId)
-                        previous_policy = previous_version.PolicyId
-                        previous_policy.ActiveInactive = 'Inactive'
-                        previous_policy.save()
-                        print(f"Set previous policy version {previous_policy.PolicyId} to Inactive")
-                    except Exception as prev_error:
-                        print(f"Error updating previous policy version: {str(prev_error)}")
-               
-                # Update policy status to Approved and Active
-                if policy.Status == 'Under Review':
-                    policy.Status = 'Approved'
-                    policy.ActiveInactive = 'Active'  # Set to Active when approved
-                    policy.save()
-                    print(f"Updated policy {policy.Identifier} status to Approved and Active")
-               
+                policy = Policy.objects.get(PolicyId=approval.PolicyId.PolicyId)
+                policy.Status = 'Approved'
+                policy.ActiveInactive = 'Active'
+                policy.save()
+                
                 # Update all subpolicies for this policy
                 subpolicies = SubPolicy.objects.filter(PolicyId=policy.PolicyId)
                 for subpolicy in subpolicies:
                     if subpolicy.Status == 'Under Review':
                         subpolicy.Status = 'Approved'
                         subpolicy.save()
-                        print(f"Updated subpolicy {subpolicy.Identifier} status to Approved")
-            except Exception as update_error:
-                print(f"Error updating policy/subpolicy status: {str(update_error)}")
-                # Continue with the response even if status update fails
-       
+            except Exception as e:
+                print(f"Error updating policy status: {str(e)}")
+        
         return Response({
             'message': 'Policy review submitted successfully',
             'ApprovalId': new_approval.ApprovalId,
-            'Version': new_approval.Version,
-            'ApprovedDate': approved_date.isoformat() if approved_date else None
+            'Version': new_approval.Version
         })
-       
-    except PolicyApproval.DoesNotExist:
-        return Response({'error': 'Policy approval not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        print("Error in submit_policy_review:", str(e))
-        import traceback
-        traceback.print_exc()
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        print(f"Error in submit_policy_review: {str(e)}")
+        return Response({
+            'error': 'Error submitting policy review',
+            'details': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['POST'])
 @permission_classes([AllowAny])

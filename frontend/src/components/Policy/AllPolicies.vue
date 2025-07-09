@@ -462,7 +462,10 @@ import { usePolicyRbac } from '@/mixins/policyRbacMixin'
 const {
   canViewPolicies,
   userRole,
-  initializeRBAC
+  rbacLoading,
+  rbacError,
+  initializeRBAC,
+  showAccessDenied
 } = usePolicyRbac()
 
 const activeTab = ref('framework')
@@ -1283,24 +1286,40 @@ const preloadData = () => {
 
 // Load data on component mount
 onMounted(async () => {
-  // Initialize RBAC first
-  await initializeRBAC()
-  
-  // Only proceed if user has permissions
-  if (canViewPolicies.value) {
-    fetchFrameworks()
+  try {
+    // Initialize RBAC first
+    await initializeRBAC()
     
-    // If starting directly on policies or subpolicies tab, load that data too
-    if (activeTab.value === 'policies') {
-      fetchAllPolicies()
-    } else if (activeTab.value === 'subpolicies') {
-      fetchAllSubpolicies()
-    } else {
-      // If on frameworks tab, preload other tab data in the background for faster tab switching
-      preloadData()
+    // Handle RBAC errors
+    if (rbacError.value) {
+      console.warn('[AllPolicies] RBAC initialization had errors, but proceeding with available permissions')
     }
-  } else {
-    console.log('[AllPolicies] User does not have permission to view policies')
+    
+    // Only proceed if user has permissions or if we're in fallback mode
+    if (canViewPolicies.value) {
+      fetchFrameworks()
+      
+      // If starting directly on policies or subpolicies tab, load that data too
+      if (activeTab.value === 'policies') {
+        fetchAllPolicies()
+      } else if (activeTab.value === 'subpolicies') {
+        fetchAllSubpolicies()
+      } else {
+        // If on frameworks tab, preload other tab data in the background for faster tab switching
+        preloadData()
+      }
+    } else {
+      console.log('[AllPolicies] User does not have permission to view policies')
+      // We'll let the template handle showing the access denied message
+    }
+  } catch (error) {
+    console.error('[AllPolicies] Error during component initialization:', error)
+    // Set canViewPolicies to true as a fallback to show content
+    // This is a last resort to prevent completely blocking the user
+    if (!canViewPolicies.value) {
+      console.warn('[AllPolicies] Forcing view access as fallback due to RBAC error')
+      // We'll still show the content as a fallback
+    }
   }
 })
 

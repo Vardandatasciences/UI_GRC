@@ -624,7 +624,7 @@ export default {
           MaturityLevel: 'Initial',
           ActiveInactive: 'Active',
           PermanentTemporary: 'Permanent',
-          mitigationSteps: [], // Array to hold mitigation steps
+          mitigationSteps: [{ stepNumber: 1, description: '' }], // Array to hold mitigation steps
           validationErrors: {}
         }
       ],
@@ -732,6 +732,9 @@ export default {
       
       // Add click event listener to close dropdowns when clicking outside
       document.addEventListener('click', this.handleClickOutside);
+      
+      // Initialize mitigation data for the initial compliance item
+      this.onMitigationStepChange(0);
     } catch (error) {
       // If there's an overall access error during component initialization
       if (error.response && [401, 403].includes(error.response.status)) {
@@ -974,14 +977,13 @@ export default {
           break;
           
         case 'mitigation':
-          if (compliance.IsRisk) {
-            if (!value || !compliance.mitigationSteps.length) {
-              result.errors.push('At least one mitigation step is required for risks');
-            }
-            
+          // Always validate mitigation steps regardless of IsRisk status
+          if (!compliance.mitigationSteps || compliance.mitigationSteps.length === 0) {
+            result.errors.push('At least one mitigation step is required');
+          } else {
             // Check if all steps have descriptions and meet minimum length
             const invalidSteps = compliance.mitigationSteps.filter(step => {
-              const description = step.description.trim();
+              const description = step.description ? step.description.trim() : '';
               return !description || description.length < 10;
             });
             
@@ -1491,7 +1493,7 @@ export default {
         MaturityLevel: 'Initial',
         ActiveInactive: 'Active',
         PermanentTemporary: 'Permanent',
-        mitigationSteps: [], // Initialize empty steps array
+        mitigationSteps: [{ stepNumber: 1, description: '' }], // Initialize with one empty step
         validationErrors: {}
       });
       
@@ -1503,6 +1505,9 @@ export default {
       
       // Switch to the newly added tab
       this.activeTab = this.complianceList.length - 1;
+      
+      // Initialize mitigation data for the new compliance item
+      this.onMitigationStepChange(this.activeTab);
     },
     removeCompliance(idx) {
       if (this.complianceList.length > 1) {
@@ -1546,7 +1551,12 @@ export default {
         console.log('Submitting compliance list:', this.complianceList);
 
         // Process each compliance item
-        for (const compliance of this.complianceList) {
+        for (let idx = 0; idx < this.complianceList.length; idx++) {
+          const compliance = this.complianceList[idx];
+          
+          // Ensure mitigation data is properly generated from steps
+          this.onMitigationStepChange(idx);
+          
           // Ensure all required fields are present
           if (!this.selectedSubPolicy?.id) {
             throw new Error('SubPolicy is required');
@@ -1631,7 +1641,8 @@ export default {
         stepNumber: this.complianceList[complianceIndex].mitigationSteps.length + 1,
         description: ''
       });
-      this.onMitigationStepChange(complianceIndex);
+      // Force Vue to update the component
+      this.$forceUpdate();
     },
     
     removeStep(complianceIndex, stepIndex) {
@@ -1693,7 +1704,7 @@ export default {
         MaturityLevel: 'Initial',
         ActiveInactive: 'Active',
         PermanentTemporary: 'Permanent',
-        mitigationSteps: [],
+        mitigationSteps: [{ stepNumber: 1, description: '' }],
         validationErrors: {}
       }];
       
@@ -1716,6 +1727,9 @@ export default {
       // Reset any other form-related data
       this.error = null;
       this.loading = false;
+      
+      // Initialize mitigation data for the reset form
+      this.onMitigationStepChange(0);
     },
          onFrameworkChange(option) {
        this.selectedFramework = option.value;

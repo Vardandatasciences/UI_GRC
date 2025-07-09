@@ -489,9 +489,28 @@ class PolicyTailoringPermission(BasePolicyPermission):
     """Permission to create tailored policies/frameworks"""
     
     def has_permission(self, request, view):
-        result = self.check_policy_permission(request, 'create')
-        logger.info(f"[RBAC POLICY] PolicyTailoringPermission check result: {result}")
-        return result
+        try:
+            user_id = RBACUtils.get_user_id_from_request(request)
+            if not user_id:
+                logger.warning("[RBAC POLICY] No user_id found for tailoring permission check")
+                return False
+            
+            # Get RBAC record
+            from ..models import RBAC
+            rbac_record = RBAC.objects.filter(user_id=user_id, is_active='Y').first()
+            if not rbac_record:
+                logger.warning(f"[RBAC POLICY] No RBAC record found for user {user_id}")
+                return False
+            
+            # Allow if user has create_framework permission OR is a Compliance Manager
+            has_permission = rbac_record.create_framework or rbac_record.role == 'Compliance Manager'
+            
+            logger.info(f"[RBAC POLICY] PolicyTailoringPermission check result: {has_permission}")
+            return has_permission
+            
+        except Exception as e:
+            logger.error(f"[RBAC POLICY] Error checking tailoring permission: {e}")
+            return False
 
 class PolicyVersioningPermission(BasePolicyPermission):
     """Permission to manage policy versions"""

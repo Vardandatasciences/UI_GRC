@@ -593,25 +593,20 @@ def create_policy_approval_for_version(policy_id):
     """
     Helper function to create a policy approval entry for a new policy version
     """
-    # Import security modules
-    from django.utils.html import escape as escape_html
-    import shlex
-    
-    # Log policy approval creation attempt
-    send_log(
-        module="Policy",
-        actionType="VERSION_APPROVAL_CREATE",
-        description=f"Creating policy approval for version policy {policy_id}",
-        userId=None,
-        userName="System",
-        entityType="Policy",
-        entityId=policy_id,
-        ipAddress=None
-    )
-    
     try:
         # Get the policy
         policy = Policy.objects.get(PolicyId=policy_id)
+        
+        # Get user ID from CreatedByName
+        user_obj = Users.objects.filter(UserName=policy.CreatedByName).first()
+        user_id = user_obj.UserId if user_obj else None
+        
+        # Get reviewer ID from Reviewer name
+        reviewer_obj = Users.objects.filter(UserName=policy.Reviewer).first()
+        reviewer_id = reviewer_obj.UserId if reviewer_obj else None
+        
+        print(f"DEBUG: Using user ID: {user_id} from CreatedByName: {policy.CreatedByName}")
+        print(f"DEBUG: Using reviewer ID: {reviewer_id} from Reviewer: {policy.Reviewer}")
         
         # Security: Escape policy name for safe logging (prevents log injection)
         safe_policy_name = escape_html(policy.PolicyName)
@@ -681,30 +676,13 @@ def create_policy_approval_for_version(policy_id):
         
         print(f"DEBUG: Prepared extracted data for policy approval")
         
-        # Determine reviewer ID
-        reviewer_id = 2  # Default reviewer ID
-        if policy.Reviewer:
-            # Check if Reviewer is already a numeric ID
-            if isinstance(policy.Reviewer, int) or (isinstance(policy.Reviewer, str) and policy.Reviewer.isdigit()):
-                reviewer_id = int(policy.Reviewer)
-            else:
-                # Try to find the reviewer by name in the Users table
-                try:
-                    user = Users.objects.filter(UserName=policy.Reviewer).first()
-                    if user:
-                        reviewer_id = user.UserId
-                except Exception as e:
-                    print(f"DEBUG: Error finding reviewer by name: {str(e)}")
-            
-        print(f"DEBUG: Using reviewer ID: {reviewer_id}")
-        
         # Create the policy approval with direct SQL debug to verify it's working
         try:
             approval = PolicyApproval.objects.create(
                 PolicyId=policy,
                 ExtractedData=extracted_data,
-                UserId=1,  # Default user id
-                ReviewerId=reviewer_id,
+                UserId=user_id,  # Use actual user ID from CreatedByName
+                ReviewerId=reviewer_id,  # Use actual reviewer ID from Reviewer name
                 Version="u1",  # Default initial version
                 ApprovedNot=None  # Not yet approved
             )
@@ -715,8 +693,8 @@ def create_policy_approval_for_version(policy_id):
                 module="Policy",
                 actionType="VERSION_APPROVAL_CREATE_SUCCESS",
                 description=f"Policy approval created successfully with ID {approval.ApprovalId}",
-                userId=None,
-                userName="System",
+                userId=user_id,
+                userName=policy.CreatedByName,
                 entityType="Policy",
                 entityId=policy_id,
                 ipAddress=None,
@@ -1256,179 +1234,74 @@ def approve_policy_version(request, policy_id):
     """
     Approve a policy version and automatically deactivate all previous versions.
     This endpoint is specifically designed for the Versioning.vue component.
-    
-    When a policy version (e.g., 6.4) is approved, all previous versions (6.3, 6.2, etc.) 
-    with the same Identifier will be set to ActiveInactive='Inactive'.
     """
-    # Import security modules for safe logging
-    from django.utils.html import escape as escape_html
-    import shlex
-    
-    # Log policy version approval attempt
-    send_log(
-        module="Policy",
-        actionType="APPROVE_POLICY_VERSION",
-        description=f"Attempting to approve policy version {policy_id}",
-        userId=getattr(request.user, 'id', None),
-        userName=getattr(request.user, 'username', 'Anonymous'),
-        entityType="Policy",
-        entityId=policy_id,
-        ipAddress=get_client_ip(request)
-    )
-    
     try:
-        print(f"Approving policy version: {policy_id}")
-        
         # Get the policy
         policy = get_object_or_404(Policy, PolicyId=policy_id)
         
-        # Check if policy can be approved
-        if policy.Status == 'Approved':
-            # Log already approved status
-            send_log(
-                module="Policy",
-                actionType="APPROVE_POLICY_VERSION_SUCCESS",
-                description=f"Policy {policy_id} is already approved",
-                userId=getattr(request.user, 'id', None),
-                userName=getattr(request.user, 'username', 'Anonymous'),
-                entityType="Policy",
-                entityId=policy_id,
-                ipAddress=get_client_ip(request),
-                additionalInfo={"current_status": policy.Status}
-            )
+        # Get the latest policy approval
+        latest_approval = PolicyApproval.objects.filter(
+            PolicyId=policy,
+            ApprovedNot__isnull=True  # Get the pending approval
+        ).order_by('-ApprovalId').first()
+        
+        if not latest_approval:
             return Response({
-                "message": "Policy is already approved",
-                "PolicyId": policy.PolicyId,
-                "Status": policy.Status
-            }, status=status.HTTP_200_OK)
+                'error': 'No pending approval found for this policy'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         # Start database transaction
         with transaction.atomic():
-            # Update policy status to Approved and Active/Scheduled based on StartDate
+            # Update policy status
             policy.Status = 'Approved'
-            # Set policy to Active or Scheduled based on StartDate
             today = date.today()
-            print(f"DEBUG: Policy Version Approval {policy_id} - Today: {today}, StartDate: {policy.StartDate} (type: {type(policy.StartDate)})")
             
             if policy.StartDate and policy.StartDate > today:
                 policy.ActiveInactive = 'Scheduled'
-                print(f"Set policy version {policy_id} to Approved status and Scheduled status (StartDate: {policy.StartDate} > today: {today})")
             else:
                 policy.ActiveInactive = 'Active'
-                print(f"Set policy version {policy_id} to Approved status and Active status (StartDate: {policy.StartDate} <= today: {today} or None)")
             
             policy.save()
             
-            # Security: Escape policy name for safe logging (prevents log injection)
-            safe_policy_name = escape_html(policy.PolicyName)
-            print(f"Policy {policy_id} ({safe_policy_name}) approved and set to {policy.ActiveInactive}")
+            # Create new reviewer version with same user/reviewer IDs
+            new_approval = PolicyApproval.objects.create(
+                PolicyId=policy,
+                ExtractedData=latest_approval.ExtractedData,
+                UserId=latest_approval.UserId,  # Keep the same user ID
+                ReviewerId=latest_approval.ReviewerId,  # Keep the same reviewer ID
+                Version=f"r{int(latest_approval.Version[1:]) if latest_approval.Version[1:].isdigit() else 1}",
+                ApprovedNot=True,
+                ApprovedDate=today
+            )
             
-            # Deactivate all previous versions with the same Identifier
-            deactivated_count = 0
-            if policy.Identifier:
-                previous_policies = Policy.objects.filter(
-                    Identifier=policy.Identifier,
-                    ActiveInactive='Active'  # Only get currently active policies
-                ).exclude(
-                    PolicyId=policy_id
-                )
-                
-                print(f"Found {previous_policies.count()} active previous versions to deactivate for policy {safe_policy_name} (ID: {policy_id})")
-                
-                for prev_policy in previous_policies:
-                    # Security: Escape previous policy name for safe logging
-                    safe_prev_policy_name = escape_html(prev_policy.PolicyName)
-                    print(f"Deactivating previous policy version: PolicyId={prev_policy.PolicyId}, Version={prev_policy.CurrentVersion}, Name={safe_prev_policy_name}")
-                    
-                    prev_policy.ActiveInactive = 'Inactive'
-                    prev_policy.save()
-                    deactivated_count += 1
-                    
-                    print(f"Successfully deactivated policy {prev_policy.PolicyId}")
-                    
-                    # Also deactivate subpolicies of the previous version
-                    prev_subpolicies = SubPolicy.objects.filter(PolicyId=prev_policy)
-                    subpolicy_count = 0
-                    for prev_subpolicy in prev_subpolicies:
-                        if hasattr(prev_subpolicy, 'ActiveInactive'):
-                            prev_subpolicy.ActiveInactive = 'Inactive'
-                            prev_subpolicy.save()
-                            subpolicy_count += 1
-                    
-                    if subpolicy_count > 0:
-                        print(f"Deactivated {subpolicy_count} subpolicies for previous policy {prev_policy.PolicyId}")
-            else:
-                print(f"Warning: Policy {policy_id} has no Identifier, cannot deactivate previous versions")
+            # Deactivate previous versions
+            deactivated_count = deactivate_previous_policy_versions(policy)
             
-            # Update all subpolicies for the current policy to Approved with same ActiveInactive as parent policy
+            # Update subpolicies
             subpolicies = SubPolicy.objects.filter(PolicyId=policy)
             for subpolicy in subpolicies:
                 subpolicy.Status = 'Approved'
                 if hasattr(subpolicy, 'ActiveInactive'):
-                    subpolicy.ActiveInactive = policy.ActiveInactive  # Match parent policy's ActiveInactive status
+                    subpolicy.ActiveInactive = policy.ActiveInactive
                 subpolicy.save()
-                print(f"Updated subpolicy {subpolicy.SubPolicyId} status to Approved and ActiveInactive to {policy.ActiveInactive}")
-            
-            # Update the policy approval record if it exists
-            try:
-                policy_approval = PolicyApproval.objects.filter(
-                    PolicyId=policy,
-                    ApprovedNot__isnull=True  # Get the pending approval
-                ).order_by('-ApprovalId').first()
-                
-                if policy_approval:
-                    policy_approval.ApprovedNot = True
-                    policy_approval.save()
-                    print(f"Updated policy approval record {policy_approval.ApprovalId}")
-            except Exception as approval_error:
-                print(f"Error updating policy approval record: {str(approval_error)}")
-                # Don't fail the whole operation if approval record update fails
-            
-            # Log successful policy approval
-            send_log(
-                module="Policy",
-                actionType="APPROVE_POLICY_VERSION_SUCCESS",
-                description=f"Policy {policy_id} approved successfully and set to {policy.ActiveInactive}",
-                userId=getattr(request.user, 'id', None),
-                userName=getattr(request.user, 'username', 'Anonymous'),
-                entityType="Policy",
-                entityId=policy_id,
-                ipAddress=get_client_ip(request),
-                additionalInfo={
-                    "new_status": policy.ActiveInactive,
-                    "deactivated_previous_versions": deactivated_count,
-                    "policy_name": policy.PolicyName
-                }
-            )
             
             return Response({
-                "message": f"Policy approved successfully and set to {policy.ActiveInactive}. {deactivated_count} previous versions deactivated.",
-                "PolicyId": policy_id,
-                "Status": "Approved",
-                "ActiveInactive": policy.ActiveInactive,
-                "deactivated_previous_versions": deactivated_count
-            }, status=status.HTTP_200_OK)
-        
+                'message': 'Policy version approved successfully',
+                'policy_id': policy_id,
+                'status': policy.Status,
+                'active_inactive': policy.ActiveInactive,
+                'deactivated_count': deactivated_count,
+                'approval_id': new_approval.ApprovalId,
+                'version': new_approval.Version
+            })
+            
     except Exception as e:
         print(f"Error approving policy version: {str(e)}")
-        
-        # Log error
-        send_log(
-            module="Policy",
-            actionType="APPROVE_POLICY_VERSION_FAILED",
-            description=f"Error approving policy version {policy_id}: {str(e)}",
-            userId=getattr(request.user, 'id', None),
-            userName=getattr(request.user, 'username', 'Anonymous'),
-            entityType="Policy",
-            entityId=policy_id,
-            logLevel="ERROR",
-            ipAddress=get_client_ip(request),
-            additionalInfo={"error": str(e)}
-        )
-        
         import traceback
         traceback.print_exc()
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 def update_policy_status_based_on_subpolicies(policy_id):

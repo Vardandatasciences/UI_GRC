@@ -223,11 +223,24 @@ def get_pending_compliance_approvals(request):
                     # Find the parent policy through the subpolicy
                     subpolicy = SubPolicy.objects.get(SubPolicyId=compliance.SubPolicyId.SubPolicyId)
                     
+                    # Get user and reviewer IDs from request
+                    user_id = request.user.id if hasattr(request.user, 'id') else None
+                    if not user_id:
+                        user_id = request.session.get('user_id')
+                    if not user_id:
+                        return Response({'error': 'No user ID found'}, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    reviewer_id = request.session.get('reviewer_id')
+                    if not reviewer_id:
+                        reviewer_id = request.session.get('user_id')  # Use user ID as reviewer ID if no reviewer ID found
+                    if not reviewer_id:
+                        return Response({'error': 'No reviewer ID found'}, status=status.HTTP_400_BAD_REQUEST)
+                    
                     new_approval = PolicyApproval.objects.create(
                         PolicyId=subpolicy.PolicyId,
                         ExtractedData=extracted_data,
-                        UserId=1,  # Default user
-                        ReviewerId=2,  # Default reviewer
+                        UserId=user_id,
+                        ReviewerId=reviewer_id,
                         Version='u1',
                         ApprovedNot=None
                     )
