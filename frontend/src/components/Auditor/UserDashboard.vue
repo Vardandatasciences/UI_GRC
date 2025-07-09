@@ -155,6 +155,7 @@ import { Chart, ArcElement, BarElement, CategoryScale, LinearScale, PointElement
 import { Doughnut, Bar, Line } from 'vue-chartjs'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import axios from 'axios'
+import { AccessUtils } from '@/utils/accessUtils'
 
 Chart.register(ArcElement, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend)
 
@@ -236,6 +237,10 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching audit completion rate:', error)
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit completion rate access')) {
+          return
+        }
       }
     }
 
@@ -251,6 +256,10 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching total audits:', error)
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit total audits access')) {
+          return
+        }
       }
     }
 
@@ -267,6 +276,10 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching open audits:', error)
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit open audits access')) {
+          return
+        }
       }
     }
 
@@ -283,6 +296,10 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching completed audits:', error)
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit completed audits access')) {
+          return
+        }
       }
     }
 

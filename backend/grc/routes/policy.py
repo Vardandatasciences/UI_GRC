@@ -49,6 +49,13 @@ from ..rbac.permissions import (
     PolicyVersioningPermission, PolicyListPermission,
     PolicyApprovalWorkflowPermission
 )
+from ..rbac.decorators import (
+    audit_assign_required,
+    audit_conduct_required,
+    audit_view_reports_required,
+    audit_view_all_required
+)
+
 import logging
 
 # Set up logger for policy RBAC
@@ -4668,6 +4675,7 @@ def all_policies_get_frameworks(request):
 
 @api_view(['GET'])
 @permission_classes([PolicyViewPermission])  # RBAC: Require PolicyViewPermission for viewing framework version policies
+@audit_view_reports_required
 def all_policies_get_framework_version_policies(request, version_id):
     """
     API endpoint to get all policies for a specific framework version for AllPolicies.vue component.

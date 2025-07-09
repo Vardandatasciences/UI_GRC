@@ -69,6 +69,8 @@
 </template>
 
 <script>
+import { AccessUtils } from '@/utils/accessUtils';
+
 export default {
   name: 'ReviewConfirmation',
   props: {
@@ -132,6 +134,11 @@ export default {
       
       // Navigate back to the reviews page
       this.$router.push('/auditor/reviewer');
+    },
+    
+    // Method to check review confirmation permission
+    checkReviewConfirmationPermission() {
+      AccessUtils.showReviewAuditDenied();
     }
   }
 };

@@ -45,7 +45,7 @@
               <template #cell-actions="{ row }">
                 <div class="version-actions">
                   <i class="fas fa-eye action-icon" @click="viewReport(selectedAuditId, row.Version)" title="View"></i>
-                  <i class="fas fa-trash action-icon" @click="confirmDelete(selectedAuditId, row.Version)" title="Delete"></i>
+                  <i v-if="!isApproved(row)" class="fas fa-trash action-icon" @click="confirmDelete(selectedAuditId, row.Version)" title="Delete"></i>
                   <template v-if="!isRejected(row)">
                     <i v-if="downloadingVersion === row.Version" class="fas fa-spinner fa-spin" title="Downloading..."></i>
                     <i v-else class="fas fa-download action-icon" @click="downloadReport(selectedAuditId, row.Version)" title="Download"></i>
@@ -68,6 +68,7 @@ import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import DynamicTable from '../DynamicTable.vue';
+import { AccessUtils } from '@/utils/accessUtils';
 
 export default {
   name: 'AuditReport',
@@ -89,6 +90,26 @@ export default {
     
     // Base URL for API calls
     const API_BASE_URL = process.env.VUE_APP_API_URL || 'http://localhost:8000/api';
+
+    // Push notification sender
+    const sendPushNotification = async (notificationData) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/push-notification/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    };
 
     // Table columns configuration for main audit table
     const tableColumns = computed(() => [
@@ -174,7 +195,12 @@ export default {
         audits.value = response.data.audits;
       } catch (err) {
         console.error('Error fetching audit reports:', err);
-        error.value = 'Failed to load audit reports. Please try again later.';
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(err, 'audit reports access')) {
+          error.value = 'Access denied';
+        } else {
+          error.value = 'Failed to load audit reports. Please try again later.';
+        }
       } finally {
         loading.value = false;
       }
@@ -211,7 +237,7 @@ export default {
         
         // Filter versions with ApprovedRejected status (although backend should already filter these)
         auditVersions.value = auditVersions.value.filter(version => {
-          return version.ApprovedRejected !== null && version.ApprovedRejected !== '';
+          return version.ApprovedRejected !== null && version.ApprovedRejected !== '' && version.ReportStatus !== 'Pending';
         });
         
         // Apply status fixes to ensure proper display
@@ -232,7 +258,12 @@ export default {
         });
       } catch (err) {
         console.error(`Error fetching versions for audit ${auditId}:`, err);
-        versionError.value = 'Failed to load audit versions. Please try again later.';
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(err, 'audit versions access')) {
+          versionError.value = 'Access denied';
+        } else {
+          versionError.value = 'Failed to load audit versions. Please try again later.';
+        }
       } finally {
         loadingVersions.value = false;
       }
@@ -247,6 +278,13 @@ export default {
 
     // Confirm deletion with the user
     const confirmDelete = async (auditId, version) => {
+      // Check if the version is approved - this is a backup check in case the UI control fails
+      const versionData = auditVersions.value.find(v => v.Version === version);
+      if (versionData && isApproved(versionData)) {
+        router.app.config.globalProperties.$popup.error("Cannot delete approved reports.");
+        return;
+      }
+      
       const result = await router.app.config.globalProperties.$popup.confirm(`Are you sure you want to delete version ${version}? This action cannot be undone.`, 'Confirm Deletion');
       if (result) {
         deleteReport(auditId, version);
@@ -269,12 +307,48 @@ export default {
           
           // Show success message
           router.app.config.globalProperties.$popup.success(`Successfully deleted version ${version}`);
+          // Send push notification
+          sendPushNotification({
+            title: 'Audit Report Version Deleted',
+            message: `Audit report version ${version} for Audit ID ${auditId} was deleted successfully.`,
+            category: 'audit',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         } else {
           router.app.config.globalProperties.$popup.error(`Error: ${response.data.error || 'Failed to delete version'}`);
+          // Send push notification
+          sendPushNotification({
+            title: 'Audit Report Version Deletion Failed',
+            message: `Failed to delete audit report version ${version} for Audit ID ${auditId}.`,
+            category: 'audit',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         }
       } catch (err) {
         console.error(`Error deleting version ${version} for audit ${auditId}:`, err);
-        router.app.config.globalProperties.$popup.error(`Error: ${err.response?.data?.error || 'Failed to delete version'}`);
+        
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(err, 'audit report deletion')) {
+          return;
+        }
+        
+        // Handle specific error for approved reports
+        if (err.response && err.response.status === 403 && err.response.data.is_approved) {
+          router.app.config.globalProperties.$popup.error("Cannot delete approved reports.");
+        } else {
+          router.app.config.globalProperties.$popup.error(`Error: ${err.response?.data?.error || 'Failed to delete version'}`);
+        }
+        
+        // Send push notification
+        sendPushNotification({
+          title: 'Audit Report Version Deletion Error',
+          message: `Error occurred while deleting audit report version ${version} for Audit ID ${auditId}.`,
+          category: 'audit',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       } finally {
         deletingVersion.value = null;
       }
@@ -299,6 +373,12 @@ export default {
       // Remove the hardcoding of R1 always being rejected
       const statusStr = String(version.ApprovedRejected || '');
       return statusStr === '2';
+    };
+
+    // Check if a version is approved
+    const isApproved = (version) => {
+      const statusStr = String(version.ApprovedRejected || '');
+      return statusStr === '1';
     };
 
     // Download report from S3
@@ -327,10 +407,30 @@ export default {
       } catch (err) {
         console.error(`Error downloading report for audit ${auditId}, version ${version}:`, err);
         
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(err, 'audit report download')) {
+          downloadingVersion.value = null;
+          return;
+        }
+        
         if (err.response && err.response.status === 403) {
           router.app.config.globalProperties.$popup.error("Cannot download rejected reports.");
+          sendPushNotification({
+            title: 'Audit Report Download Forbidden',
+            message: `Attempted to download rejected report version ${version} for Audit ID ${auditId}.`,
+            category: 'audit',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         } else {
           router.app.config.globalProperties.$popup.error(`Error downloading report: ${err.response?.data?.error || 'Unknown error'}`);
+          sendPushNotification({
+            title: 'Audit Report Download Error',
+            message: `Error occurred while downloading report version ${version} for Audit ID ${auditId}.`,
+            category: 'audit',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         }
         
         // Reset the downloading state in case of error
@@ -391,8 +491,10 @@ export default {
       getStatusClass,
       getStatusText,
       isRejected,
+      isApproved,
       handleRowClick,
-      handleVersionRowClick
+      handleVersionRowClick,
+      sendPushNotification
     };
   }
 }

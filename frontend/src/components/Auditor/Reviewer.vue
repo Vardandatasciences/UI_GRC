@@ -100,6 +100,7 @@
 import { api } from '../../data/api';
 import axios from 'axios';
 import DynamicTable from '../DynamicTable.vue';
+import { AccessUtils } from '@/utils/accessUtils';
 
 // Get the API base URL from the imported api object, or default to '/api'
 const API_BASE_URL = api.baseURL || '/api';
@@ -179,9 +180,22 @@ export default {
         const response = await api.getMyReviews();
         this.audits = response.data.audits;
         console.log(`Fetched ${this.audits.length} review tasks`);
+        // Push notification for successful fetch (optional, can be omitted if not needed)
       } catch (error) {
         console.error('Error fetching review tasks:', error);
-        this.error = error.response?.data?.error || 'Failed to load review tasks. Please try again.';
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'review tasks access')) {
+          this.error = 'Access denied';
+        } else {
+          this.error = error.response?.data?.error || 'Failed to load review tasks. Please try again.';
+        }
+        await this.sendPushNotification({
+          title: 'Review Tasks Load Failed',
+          message: this.error,
+          category: 'review',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       } finally {
         this.loading = false;
       }
@@ -208,6 +222,13 @@ export default {
       try {
         console.log(`Downloading audit report for audit ${auditId}`);
         this.$popup.success('Generating audit report...');
+        await this.sendPushNotification({
+          title: 'Audit Report Generation',
+          message: `Audit report for audit ID ${auditId} is being generated.`,
+          category: 'audit',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         
         // Create a direct URL for the download
         const reportUrl = `${API_BASE_URL}/generate-audit-report/${auditId}/`;
@@ -218,10 +239,28 @@ export default {
         
         // Show success message
         this.$popup.success('Report download initiated');
+        await this.sendPushNotification({
+          title: 'Audit Report Download',
+          message: `Audit report for audit ID ${auditId} download initiated.`,
+          category: 'audit',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
       } catch (error) {
         console.error('Error initiating report download:', error);
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit report download')) {
+          return;
+        }
         const errorMessage = error.message || 'Failed to download report. Please try again.';
         this.$popup.error(errorMessage);
+        await this.sendPushNotification({
+          title: 'Audit Report Download Failed',
+          message: errorMessage,
+          category: 'audit',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       }
     },
     
@@ -308,6 +347,13 @@ export default {
           if (review_comments === null) {
             // User cancelled the prompt, revert the status change
             this.fetchReviewTasks();
+            await this.sendPushNotification({
+              title: 'Review Rejection Cancelled',
+              message: `Rejection for audit ID ${audit.audit_id} was cancelled by the user.`,
+              category: 'review',
+              priority: 'low',
+              user_id: 'default_user'
+            });
             return;
           }
         } else if (audit.review_status === 'Accept') {
@@ -316,6 +362,13 @@ export default {
           if (review_comments === null) {
             // User cancelled the prompt, revert the status change
             this.fetchReviewTasks();
+            await this.sendPushNotification({
+              title: 'Review Approval Cancelled',
+              message: `Approval for audit ID ${audit.audit_id} was cancelled by the user.`,
+              category: 'review',
+              priority: 'low',
+              user_id: 'default_user'
+            });
             return;
           }
         }
@@ -337,6 +390,13 @@ export default {
         
         // Show success message
         this.$popup.success('Review status updated successfully!');
+        await this.sendPushNotification({
+          title: 'Review Status Updated',
+          message: `Review status for audit ID ${audit.audit_id} updated to ${audit.review_status}.`,
+          category: 'review',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         
         // If we just updated to "Under review" and the review status is "In Review",
         // automatically open the review dialog
@@ -350,6 +410,32 @@ export default {
         // Revert the status change on error
         this.fetchReviewTasks(); // Reload data from server
         this.$popup.error(error.response?.data?.error || 'Failed to update review status. Please try again.');
+        await this.sendPushNotification({
+          title: 'Review Status Update Failed',
+          message: `Failed to update review status for audit ID ${audit.audit_id}. Error: ${error.response?.data?.error || error.message}`,
+          category: 'review',
+          priority: 'high',
+          user_id: 'default_user'
+        });
+      }
+    },
+    // --- Push Notification Method ---
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
       }
     },
   }

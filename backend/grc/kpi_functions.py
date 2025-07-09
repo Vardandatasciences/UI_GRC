@@ -11,6 +11,12 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models.expressions import RawSQL
 from .logging_service import send_log
+from django.http import JsonResponse
+from django.db import connection
+from dateutil.relativedelta import relativedelta
+from django.db.models import F, Func, IntegerField, Value, CharField
+from django.db.models.functions import Coalesce
+from .rbac.decorators import audit_analytics_required
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +30,7 @@ class DateDiffInDays(Func):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@audit_analytics_required
 def get_audit_completion_metrics(request):
     try:
         # Get time period from query params (default to current month)
@@ -75,7 +82,6 @@ def get_audit_completion_metrics(request):
                 month
         """
         
-        from django.db import connection
         with connection.cursor() as cursor:
             cursor.execute(monthly_data_query, [year_start, year_end])
             monthly_data = []
@@ -162,6 +168,7 @@ def get_audit_completion_metrics(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])  # Temporarily allow any access for testing
+@audit_analytics_required
 def get_non_compliance_count(request):
     try:
         # Group and count by Complied values ('0' and '1')
@@ -217,6 +224,7 @@ def get_non_compliance_count(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@audit_analytics_required
 def get_audit_cycle_time(request):
     try:
         # Get framework_id from query params for filtering
@@ -271,12 +279,9 @@ def get_audit_cycle_time(request):
                 month
         """
         
-        from django.db import connection
-        
-        # Get frameworks for dropdown
-        frameworks = []
         with connection.cursor() as cursor:
             cursor.execute(frameworks_query)
+            frameworks = []
             for row in cursor.fetchall():
                 framework_id, framework_name = row
                 frameworks.append({
@@ -352,6 +357,7 @@ def get_audit_cycle_time(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@audit_analytics_required
 def get_finding_rate(request):
     try:
         # Get time period from query params (default to current year)
@@ -427,7 +433,6 @@ def get_finding_rate(request):
             LIMIT 10;
         """
         
-        from django.db import connection
         with connection.cursor() as cursor:
             cursor.execute(raw_query, [start_date, end_date])
             result = cursor.fetchone()
@@ -490,6 +495,7 @@ def get_finding_rate(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@audit_analytics_required
 def get_time_to_close_findings(request):
     try:
         # Get time period from query params (default to current year)
@@ -568,7 +574,6 @@ def get_time_to_close_findings(request):
             LIMIT 5;
         """
         
-        from django.db import connection
         with connection.cursor() as cursor:
             # Get average close time
             cursor.execute(avg_close_time_query, [start_date, end_date])
@@ -656,19 +661,9 @@ def get_time_to_close_findings(request):
             'message': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# @api_view(['GET'])
-# @permission_classes([AllowAny])
-# def get_audit_pass_rate(request):
-#     """
-#     This function has been removed as the Audit Pass Rate KPI is no longer used.
-#     """
-#     return Response({
-#         'success': False,
-#         'message': 'This endpoint has been deprecated'
-#     }, status=status.HTTP_404_NOT_FOUND)
-
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@audit_analytics_required
 def get_non_compliance_issues(request):
     try:
         # Get time period from query params (default to current year)
@@ -779,7 +774,6 @@ def get_non_compliance_issues(request):
             LIMIT 5
         """
         
-        from django.db import connection
         with connection.cursor() as cursor:
             # Get total count
             cursor.execute(count_query, [start_date, end_date])
@@ -906,6 +900,7 @@ def get_non_compliance_issues(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@audit_analytics_required
 def get_severity_distribution(request):
     try:
         # Get time period from query params (default to current year)
@@ -1004,7 +999,6 @@ def get_severity_distribution(request):
             LIMIT 15
         """
         
-        from django.db import connection
         with connection.cursor() as cursor:
             # Get severity distribution
             cursor.execute(severity_query, [start_date, end_date])
@@ -1137,6 +1131,7 @@ def get_severity_distribution(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@audit_analytics_required
 def get_findings_closure_rate(request):
     try:
         # Get time period from query params (default to current year)
@@ -1243,7 +1238,6 @@ def get_findings_closure_rate(request):
             LIMIT 5
         """
         
-        from django.db import connection
         with connection.cursor() as cursor:
             # Get overall closure rate
             cursor.execute(closure_rate_query, [
@@ -1350,6 +1344,7 @@ def get_findings_closure_rate(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@audit_analytics_required
 def get_evidence_completion(request):
     try:
         # Get audit ID filter if provided
@@ -1377,7 +1372,6 @@ def get_evidence_completion(request):
             params.append(audit_id)
         
         # Execute the query
-        from django.db import connection
         with connection.cursor() as cursor:
             cursor.execute(base_query + audit_filter, params)
             result = cursor.fetchone()
@@ -1502,6 +1496,7 @@ def get_evidence_completion(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@audit_analytics_required
 def get_report_timeliness(request):
     try:
         # Get time period from query params (default to current year)
@@ -1608,7 +1603,6 @@ def get_report_timeliness(request):
                 month
         """
         
-        from django.db import connection
         with connection.cursor() as cursor:
             # Get overall timeliness metrics
             cursor.execute(timeliness_query, [start_date, end_date])
@@ -1736,6 +1730,7 @@ def get_report_timeliness(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@audit_analytics_required
 def get_compliance_readiness(request):
     try:
         # Get framework or policy filter if provided
@@ -1879,7 +1874,6 @@ def get_compliance_readiness(request):
                 FIELD(criticality_level, 'Critical', 'High', 'Medium', 'Low', 'Undefined')
         """
         
-        from django.db import connection
         with connection.cursor() as cursor:
             # Get overall metrics
             cursor.execute(base_query, params)

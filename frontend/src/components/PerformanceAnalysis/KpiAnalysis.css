@@ -1,72 +1,86 @@
 .kpi-container {
+  padding: 20px;
+  width: calc(100% - 250px); /* Account for sidebar width */
+  margin-left: 250px; /* Match the sidebar width */
   display: flex;
   flex-direction: column;
-  width: 90%;
-  padding: 1rem;
-  gap: 1.5rem ;
-  margin-left: 150px;
+  gap: 20px;
+  min-height: 100vh;
+  background: #f5f5f5;
 }
 
 .kpi-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 20px;
   width: 100%;
-  justify-content: space-between;
 }
 
 .kpi-card-wrapper {
   flex: 1;
-  min-width: 300px;
-  margin-bottom: 0;
+  min-width: 0; /* Allow cards to shrink below min-width */
+  width: calc(25% - 15px); /* Exact 25% width minus gap */
 }
 
 .kpi-card {
   height: 100%;
-  width: 100%;
   transition: all 0.3s ease;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  border-radius: 8px;
+  background: white;
+  padding: 16px;
 }
 
-/* Row-specific styling to ensure cards align properly */
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Remove old row-specific styles */
 .kpi-row:nth-child(1) .kpi-card-wrapper,
 .kpi-row:nth-child(2) .kpi-card-wrapper,
-.kpi-row:nth-child(3) .kpi-card-wrapper {
-  flex-basis: calc(33.333% - 1rem);
-  max-width: calc(33.333% - 1rem);
-}
-
+.kpi-row:nth-child(3) .kpi-card-wrapper,
 .kpi-row:nth-child(4) .kpi-card-wrapper {
-  flex-basis: calc(50% - 0.75rem);
-  max-width: calc(50% - 0.75rem);
+  flex: 1 1 calc(25% - 20px);
+  min-width: 300px;
+  max-width: calc(25% - 20px);
 }
 
-/* Media queries for responsiveness */
-@media (max-width: 1200px) {
-  .kpi-row:nth-child(1) .kpi-card-wrapper,
-  .kpi-row:nth-child(2) .kpi-card-wrapper,
-  .kpi-row:nth-child(3) .kpi-card-wrapper,
-  .kpi-row:nth-child(4) .kpi-card-wrapper {
-    flex-basis: calc(50% - 0.75rem);
-    max-width: calc(50% - 0.75rem);
+/* Responsive adjustments */
+@media (max-width: 1600px) {
+  .kpi-row {
+    flex-wrap: wrap;
+  }
+  
+  .kpi-card-wrapper {
+    width: calc(33.33% - 14px);
+    flex: 0 0 calc(33.33% - 14px);
+  }
+}
+
+@media (max-width: 1300px) {
+  .kpi-card-wrapper {
+    width: calc(50% - 10px);
+    flex: 0 0 calc(50% - 10px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .kpi-container {
+    width: calc(100% - 200px); /* Smaller sidebar on medium screens */
+    margin-left: 200px;
   }
 }
 
 @media (max-width: 768px) {
-  .kpi-row:nth-child(1) .kpi-card-wrapper,
-  .kpi-row:nth-child(2) .kpi-card-wrapper,
-  .kpi-row:nth-child(3) .kpi-card-wrapper,
-  .kpi-row:nth-child(4) .kpi-card-wrapper {
-    flex-basis: 100%;
-    max-width: 100%;
+  .kpi-container {
+    width: 100%; /* Full width on mobile */
+    margin-left: 0;
+    padding: 10px;
   }
-}
-
-.kpi-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  
+  .kpi-card-wrapper {
+    width: 100%;
+    flex: 0 0 100%;
+  }
 }
 
 .count-badge, .time-badge, .finding-badge {
@@ -422,88 +436,6 @@
   color: #666;
   margin-top: 0.25rem;
   font-weight: 500;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-  .kpi-container {
-    padding: 0.6rem;
-  }
-  
-  .kpi-row {
-    gap: 0.6rem;
-  }
-  
-  .kpi-card-wrapper {
-    min-width: 230px;
-  }
-  
-  .count-badge, .time-badge, .finding-badge {
-    width: 75px;
-    height: 75px;
-    font-size: 1.5rem;
-  }
-  
-  .gauge-container {
-    width: 85px;
-    height: 85px;
-  }
-  
-  .metric-value {
-    font-size: 1rem;
-  }
-  
-  .time-unit, .finding-unit {
-    font-size: 0.6rem;
-  }
-  
-  .time-to-close-container {
-    gap: 0.75rem;
-  }
-  
-  .oldest-findings-section {
-    max-width: 230px;
-  }
-}
-
-@media (max-width: 990px) {
-  .kpi-container {
-    padding: 0.5rem;
-  }
-  
-  .kpi-row {
-    gap: 0.5rem;
-  }
-  
-  .time-to-close-container {
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-  
-  .left-section, .right-section {
-    width: 100%;
-  }
-  
-  .oldest-findings-section {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 768px) {
-  .kpi-container {
-    padding: 0.4rem;
-  }
-  
-  .kpi-row {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .kpi-card-wrapper {
-    max-width: none;
-    width: 100%;
-  }
 }
 
 /* Non-Compliance Issues specific styles */

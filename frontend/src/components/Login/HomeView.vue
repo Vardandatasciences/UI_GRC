@@ -6,12 +6,12 @@
         <span>GRC Platform</span>
       </div>
       <nav class="main-nav">
-        <router-link to="/home" class="active">Dashboard</router-link>
-        <router-link to="/policy/dashboard">Policies</router-link>
-        <router-link to="/compliance/user-dashboard">Compliance</router-link>
-        <router-link to="/risk/riskdashboard">Risk</router-link>
-        <router-link to="/auditor/performance/userdashboard">Audits</router-link>
-        <router-link to="/incident/dashboard">Incidents</router-link>
+        <router-link :to="{ name: 'home' }" class="active">Dashboard</router-link>
+        <router-link :to="{ name: 'PolicyDashboard' }">Policies</router-link>
+        <router-link :to="{ name: 'ComplianceDashboard' }">Compliance</router-link>
+        <router-link :to="{ name: 'RiskDashboard' }">Risk</router-link>
+        <router-link :to="{ name: 'AuditorDashboard' }">Audits</router-link>
+        <router-link :to="{ name: 'IncidentDashboard' }">Incidents</router-link>
       </nav>
       <button @click="logout" class="logout-btn">Logout</button>
     </header>
@@ -21,7 +21,7 @@
         <div class="hero-text">
             <h1>Unified GRC at Your Fingertips</h1>
             <p>
-            Experience the future of Governance, Risk, and Compliance with a unified platform designed for agility, accuracy, and efficiency. Our GRC solution empowers MAU Bank to seamlessly manage audits, assess risks, enforce compliance, and monitor policies — all from a single intuitive interface.
+            Experience the future of Governance, Risk, and Compliance with a unified platform designed for agility, accuracy, and efficiency. Our GRC solution empowers XYZ Bank to seamlessly manage audits, assess risks, enforce compliance, and monitor policies — all from a single intuitive interface.
             </p>
             <p>
             Secure. Scalable. Smart. Your unified GRC system is now just a login away.
@@ -96,6 +96,16 @@ const dashboardData = ref({
   totalCompliances: 0
 });
 
+// Simplified dashboard data initialization - no API calls
+const initializeDashboardData = () => {
+  dashboardData.value = {
+    totalPolicies: 0,
+    totalIncidents: 0,
+    totalRisks: 0,
+    totalCompliances: 0
+  };
+};
+
 // Chart data - will be populated with real data
 const lineChartData = ref({
   labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
@@ -136,26 +146,7 @@ const chartOptions = {
   }
 };
 
-// Fetch dashboard data
-const fetchDashboardData = async () => {
-  try {
-    // Fetch various GRC metrics
-    const [incidentsResponse, policiesResponse] = await Promise.all([
-      axios.get('/api/incidents/counts/'),
-      axios.get('/api/policy-dashboard/')
-    ]);
-    
-    if (incidentsResponse.data) {
-      dashboardData.value.totalIncidents = incidentsResponse.data.total || 0;
-    }
-    
-    if (policiesResponse.data) {
-      dashboardData.value.totalPolicies = policiesResponse.data.totalPolicies || 0;
-    }
-  } catch (error) {
-    console.error('Error fetching dashboard data:', error);
-  }
-};
+// Remove the fetchDashboardData function since we're not using it anymore
 
 const logout = async () => {
   try {
@@ -189,8 +180,8 @@ onMounted(() => {
     user.value = JSON.parse(userData);
   }
   
-  // Fetch dashboard data
-  fetchDashboardData();
+  // Initialize dashboard data without API calls
+  initializeDashboardData();
 });
 </script>
 

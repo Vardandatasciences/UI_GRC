@@ -20,7 +20,7 @@ from .audit_views import (
 )
 from . import notification_service
 from .assign_audit import get_frameworks, get_policies, get_subpolicies, get_users_audit, create_audit, add_compliance_to_audit, get_compliance_count
-from .auditing import get_audit_task_details, save_audit_version, send_audit_for_review
+from .auditing import get_audit_task_details, save_audit_version, send_audit_for_review, upload_evidence_to_s3
 from . import reviewing
 from .routes.notifications import push_notification, get_notifications, mark_as_read, mark_all_as_read
 from grc.rbac import views as rbac_views
@@ -511,6 +511,9 @@ audit_urlpatterns = [
     path('audits/<int:audit_id>/task-details/', get_audit_task_details, name='get_audit_task_details'),
     path('audit-compliances/<int:audit_id>/', get_audit_compliances, name='get_audit_compliances'),
     path('audits/<int:audit_id>/compliances/', get_audit_compliances, name='get_audit_compliances_alt'),
+    
+    # S3 Upload
+    path('upload-evidence-s3/', upload_evidence_to_s3, name='upload_evidence_to_s3'),
     
     # Audit Approval and Incident Creation
     path('approve-audit-and-create-incidents/<int:audit_id>/', report_views.approve_audit_and_create_incidents, name='approve_audit_and_create_incidents'),

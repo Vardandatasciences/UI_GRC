@@ -12,6 +12,14 @@ from .validation import (
 )
 from django.utils.decorators import method_decorator
 from .logging_service import send_log
+from .s3_fucntions import create_render_mysql_client
+import os
+import tempfile
+from .rbac.decorators import (
+    audit_conduct_required,
+    audit_review_required,
+    audit_assign_required
+)
 
 # Custom JSON encoder to handle date objects
 class DateTimeEncoder(json.JSONEncoder):
@@ -21,6 +29,7 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(obj)
 
 @require_http_methods(["GET"])
+@audit_conduct_required
 def get_audit_task_details(request, audit_id):
     """
     Get detailed information about a specific audit for the task view.
@@ -495,6 +504,7 @@ def get_audit_task_details(request, audit_id):
 
 @csrf_exempt
 @require_http_methods(["POST", "OPTIONS"])
+@audit_conduct_required
 def save_audit_version(request, audit_id):
     """
     Save audit form data as a version in audit_version table.
@@ -752,6 +762,7 @@ def save_audit_version(request, audit_id):
 
 @csrf_exempt
 @require_http_methods(["POST", "OPTIONS"])
+@audit_conduct_required
 def send_audit_for_review(request, audit_id):
     """
     Update audit status to "Under Review" when auditor sends it for review.
@@ -840,6 +851,7 @@ def send_audit_for_review(request, audit_id):
         return response
 
 @require_http_methods(["POST"])
+@audit_conduct_required
 def update_audit_findings(request):
     """
     This endpoint is now deprecated - all updates should go through versioning system.
@@ -848,3 +860,145 @@ def update_audit_findings(request):
         'error': 'Direct audit findings updates are not allowed. Please use the versioning system.',
         'success': False
     }, status=400)
+
+@csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
+@audit_conduct_required
+def upload_evidence_to_s3(request):
+    """
+    Upload evidence files to S3 using the RenderS3Client.
+    Handles both compliance evidence and audit evidence uploads.
+    """
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        response = JsonResponse({})
+        response["Access-Control-Allow-Origin"] = "http://localhost:8080"
+        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response["Access-Control-Allow-Credentials"] = "true"
+        return response
+    
+    try:
+        # Check if file is present
+        if 'file' not in request.FILES:
+            return JsonResponse({
+                'success': False,
+                'error': 'No file provided'
+            }, status=400)
+        
+        uploaded_file = request.FILES['file']
+        
+        # Get additional parameters
+        user_id = request.POST.get('userId', 'default-user')
+        document_type = request.POST.get('documentType', 'evidence')
+        audit_id = request.POST.get('audit_id', '')
+        compliance_id = request.POST.get('compliance_id', '')
+        file_name = request.POST.get('fileName', uploaded_file.name)
+        
+        print(f"Uploading file: {file_name} for user: {user_id}, type: {document_type}")
+        
+        # Validate file size (max 50MB)
+        max_file_size = 50 * 1024 * 1024  # 50MB in bytes
+        if uploaded_file.size > max_file_size:
+            return JsonResponse({
+                'success': False,
+                'error': f'File size exceeds maximum limit of 50MB. Current size: {uploaded_file.size / (1024*1024):.2f}MB'
+            }, status=400)
+        
+        # Validate file type (basic validation)
+        allowed_extensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.zip', '.rar']
+        file_extension = os.path.splitext(file_name)[1].lower()
+        if file_extension not in allowed_extensions:
+            return JsonResponse({
+                'success': False,
+                'error': f'File type {file_extension} is not allowed. Allowed types: {", ".join(allowed_extensions)}'
+            }, status=400)
+        
+        # Create temporary file for upload
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+            # Write uploaded file to temporary file
+            for chunk in uploaded_file.chunks():
+                temp_file.write(chunk)
+            temp_file_path = temp_file.name
+        
+        try:
+            # Create S3 client
+            s3_client = create_render_mysql_client()
+            
+            # Test connection first
+            connection_test = s3_client.test_connection()
+            if not connection_test.get('overall_success', False):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'S3 service is currently unavailable. Please try again later.',
+                    'details': connection_test
+                }, status=503)
+            
+            # Generate unique file name to avoid conflicts
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            unique_file_name = f"{document_type}_{audit_id}_{compliance_id}_{timestamp}_{file_name}"
+            
+            # Upload to S3
+            print(f"Uploading to S3 with filename: {unique_file_name}")
+            upload_result = s3_client.upload(
+                file_path=temp_file_path,
+                user_id=user_id,
+                custom_file_name=unique_file_name
+            )
+            
+            if upload_result.get('success'):
+                file_info = upload_result.get('file_info', {})
+                
+                # Prepare response data
+                response_data = {
+                    'success': True,
+                    'file': {
+                        'name': file_name,  # Original file name for display
+                        'storedName': file_info.get('storedName', unique_file_name),
+                        'url': file_info.get('url', ''),
+                        's3Key': file_info.get('s3Key', ''),
+                        'size': uploaded_file.size,
+                        'contentType': uploaded_file.content_type,
+                        'uploadedAt': datetime.now().isoformat(),
+                        'documentType': document_type,
+                        'auditId': audit_id,
+                        'complianceId': compliance_id
+                    },
+                    'operation_id': upload_result.get('operation_id'),
+                    'message': f'File uploaded successfully to S3'
+                }
+                
+                print(f"S3 upload successful: {file_info.get('storedName', unique_file_name)}")
+                
+                response = JsonResponse(response_data)
+                response["Access-Control-Allow-Origin"] = "http://localhost:8080"
+                response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+                response["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+                response["Access-Control-Allow-Credentials"] = "true"
+                
+                return response
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': upload_result.get('error', 'S3 upload failed'),
+                    'details': upload_result
+                }, status=500)
+                
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+                
+    except Exception as e:
+        print(f"Error in upload_evidence_to_s3: {str(e)}")
+        response = JsonResponse({
+            'success': False,
+            'error': f'Upload failed: {str(e)}'
+        }, status=500)
+        
+        response["Access-Control-Allow-Origin"] = "http://localhost:8080"
+        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response["Access-Control-Allow-Credentials"] = "true"
+        
+        return response

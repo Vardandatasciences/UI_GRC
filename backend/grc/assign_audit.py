@@ -13,8 +13,15 @@ from datetime import datetime
 import json
 from .validation import validate_audit_data, ValidationError
 from .logging_service import send_log
+from .rbac.decorators import (
+    audit_assign_required,
+    audit_conduct_required,
+    audit_view_reports_required,
+    audit_view_all_required
+)
 
 @api_view(['GET'])
+@audit_assign_required
 def get_frameworks(request):
     """Return all frameworks (FrameworkId, FrameworkName)"""
     try:
@@ -41,6 +48,7 @@ def get_frameworks(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@audit_assign_required
 def get_policies(request):
     """Return all policies for a given framework (PolicyId, PolicyName, FrameworkId)"""
     try:
@@ -72,6 +80,7 @@ def get_policies(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@audit_assign_required
 def get_subpolicies(request):
     """Return all subpolicies for a given policy (SubPolicyId, SubPolicyName, PolicyId)"""
     try:
@@ -103,6 +112,7 @@ def get_subpolicies(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@audit_assign_required
 def get_users_audit(request):
     """Return all users (UserId, UserName)"""
     try:
@@ -131,6 +141,7 @@ def get_users_audit(request):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@audit_assign_required
 def create_audit(request):
     """
     Create new Audit instances for each team member based on the form submission.
@@ -391,6 +402,7 @@ def create_audit(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@audit_conduct_required
 def get_audit_compliances(request, audit_id):
     """
     Get all compliance details for a specific audit through audit findings
@@ -478,6 +490,7 @@ def get_audit_compliances(request, audit_id):
 
 @csrf_exempt
 @api_view(['POST', 'OPTIONS'])
+@audit_assign_required
 def add_compliance_to_audit(request, audit_id):
     """
     Add a new compliance item to an audit and create the corresponding audit finding.
@@ -817,6 +830,7 @@ def add_compliance_to_audit(request, audit_id):
         return response
 
 @api_view(['POST'])
+@audit_conduct_required
 def bulk_update_findings(request):
     """
     Bulk update audit findings
@@ -984,6 +998,7 @@ def bulk_update_findings(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@audit_assign_required
 def get_compliance_count(request):
     """
     Get the count of permanent compliances for a policy or subpolicy
@@ -1126,6 +1141,7 @@ def get_compliance_count(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
+@audit_view_reports_required
 def get_report_details(request):
     """Get detailed information about specific reports"""
     try:

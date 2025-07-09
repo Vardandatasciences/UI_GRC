@@ -14,8 +14,19 @@ from docx import Document
 from docx.shared import Inches, Pt
 import os
 from .notification_service import NotificationService
+from .rbac.decorators import (
+    audit_assign_required,
+    audit_conduct_required,
+    audit_review_required,
+    audit_view_reports_required,
+    audit_view_all_required,
+    audit_analytics_required,
+    audit_or_conduct_required,
+    audit_manage_required
+)
 
 @api_view(['GET'])
+@audit_assign_required
 def get_frameworks(request):
     """
     Get all frameworks
@@ -28,6 +39,7 @@ def get_frameworks(request):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@audit_assign_required
 def get_policies_by_framework(request, framework_id):
     """
     Get all policies for a specific framework
@@ -64,6 +76,7 @@ def get_compliances_by_scope(framework_id, policy_id=None, subpolicy_id=None):
 
 
 @api_view(['GET'])
+@audit_assign_required
 def get_assign_data(request):
     """
     Fetch frameworks, policies, subpolicies, and users for assignment data
@@ -102,6 +115,7 @@ def get_assign_data(request):
 
  
 @api_view(['GET'])
+@audit_view_all_required
 def get_all_audits(request):
     """
     Fetch all audits with related data for display in the audit table
@@ -200,6 +214,7 @@ def get_all_audits(request):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@audit_conduct_required
 def get_my_audits(request):
     """
     Fetch audits assigned to the current user (as auditor)
@@ -336,6 +351,7 @@ def get_my_audits(request):
  
 
 @api_view(['GET'])
+@audit_view_reports_required
 def get_audit_details(request, audit_id):
     """
     Fetch detailed information for a specific audit including compliance items
@@ -686,6 +702,7 @@ def get_users(request):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@audit_conduct_required
 def update_audit_status(request, audit_id):
     """Update the status of an audit"""
     try:
@@ -1963,6 +1980,7 @@ def fix_subpolicy_version_field(request):
   
 
 @api_view(['GET'])
+@audit_review_required
 def get_my_reviews(request):
     """
     Fetch audits assigned to the current user (as reviewer)
@@ -2237,6 +2255,7 @@ def get_my_reviews(request):
     
 
 @api_view(['POST'])
+@audit_conduct_required
 def upload_evidence(request, compliance_id):
     """
     Upload evidence for a specific audit finding
@@ -2412,6 +2431,7 @@ def upload_evidence(request, compliance_id):
 
  
 @api_view(['POST'])
+@audit_conduct_required
 def submit_audit_findings(request, audit_id):
     """
     Mark an audit as ready for review and submit all findings.
@@ -3771,6 +3791,7 @@ def get_latest_version_data(audit_id):
         return None
   
 @api_view(['POST'])
+@audit_review_required
 def save_review_progress(request, audit_id):
     """
     Save reviewer progress - always creates new version with reviewer_status and reviewer_comments in JSON format
@@ -4156,6 +4177,7 @@ def get_next_version_number(audit_id, prefix):
         return f"{prefix}1"
 
 @api_view(['GET'])
+@audit_review_required
 def load_review_data(request, audit_id):
     """
     Load the latest audit version data when a reviewer clicks 'Continue Review' button

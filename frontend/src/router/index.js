@@ -100,12 +100,12 @@ import UserProfile from '../components/Login/UserProfile.vue'
 const routes = [
   {
     path: '/login',
-    name: 'Login',
+    name: 'login',
     component: LoginView
   },
   {
     path: '/home',
-    name: 'Home',
+    name: 'home',
     component: HomeView,
     meta: { requiresAuth: true }
   },
@@ -113,7 +113,7 @@ const routes = [
     path: '/',
     redirect: () => {
       const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
-      return isAuthenticated ? '/home' : '/login'
+      return isAuthenticated ? { name: 'home' } : { name: 'login' }
     }
   },
   {

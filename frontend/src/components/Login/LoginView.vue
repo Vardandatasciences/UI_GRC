@@ -31,8 +31,8 @@
     </div>
     <div class="welcome-panel">
         <div class="welcome-content">
-            <h2>Welcome to the GRC Platform for MAU Bank</h2>
-            <p>Streamlining Governance, Risk, and Compliance for MAU Bank.</p>
+            <h2>Welcome to the GRC Platform for XYZ Bank</h2>
+            <p>Streamlining Governance, Risk, and Compliance for XYZ Bank.</p>
             <div class="features">
               <div class="feature-item">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feature-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
@@ -110,8 +110,10 @@ const login = async () => {
       // Emit auth change event for App.vue to listen
       window.dispatchEvent(new Event('authChanged'))
       
-      // Redirect to home
-      router.push('/home')
+      // Redirect to home with a slight delay to ensure all data is stored
+      setTimeout(() => {
+        router.push({ name: 'home' })
+      }, 100)
     } else {
       errorMessage.value = response.data.message || 'Login failed'
     }

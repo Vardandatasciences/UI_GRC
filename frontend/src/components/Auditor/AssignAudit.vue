@@ -329,130 +329,107 @@
       <div v-if="currentTab === 3" class="tab-content">
         <h2>Review & Assign</h2>
         
-        <!-- Summary of Assignments with Edit Capability -->
-        <div class="assignments-summary">
-          <h3>Assignment Summary</h3>
-          <div v-for="(member, index) in teamMembers" :key="index" class="summary-card">
-            <div class="summary-header">
-              <span class="member-name">{{ getUserName(member.auditor) || 'Team Member' }}</span>
-              <span class="member-role">{{ member.role || 'Role not assigned' }}</span>
+        <div class="review-actions">
+          <button class="expand-all-btn" @click="expandAllSections">
+            <i class="fas fa-expand-alt"></i> Expand All Sections
+          </button>
+        </div>
+        
+        <!-- Team Members Review -->
+        <div class="team-review-section">
+          <div v-for="(member, index) in teamMembers" :key="index" class="team-review-card">
+            <div class="member-header">
+              <h4>{{ getUserName(member.auditor) || 'Team Member' }} - {{ member.role }}</h4>
             </div>
             
-            <!-- Expandable Team Member Information Section -->
-            <div class="review-section">
-              <div class="review-section-header" @click="member.isReviewTeamExpanded = !member.isReviewTeamExpanded">
-                <h4>Team Member Information</h4>
-                <div class="review-controls">
-                  <button class="edit-btn" @click.stop="toggleTeamEditMode(member)">
-                    <i :class="['fas', member.isTeamEditMode ? 'fa-check' : 'fa-edit']"></i>
-                    {{ member.isTeamEditMode ? 'Save' : 'Edit' }}
-                  </button>
-                  <i :class="['fas', member.isReviewTeamExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-                </div>
+            <!-- Policy Assignment Review Section -->
+            <div class="collapsible-section">
+              <div class="section-header" @click="toggleSection(member, 'reviewPolicy')">
+                <h5>Policy Assignment</h5>
+                <i :class="['fas', member.isReviewPolicyExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
               </div>
               
-              <div class="review-section-content" :class="{ 'collapsed': !member.isReviewTeamExpanded }">
-                <div class="edit-view">
-                  <div class="dynamic-fields-row">
-                    <div class="dynamic-field-col">
-                      <label class="dynamic-label">Auditor</label>
-                      <div class="dynamic-desc">Select the auditor responsible for this audit.</div>
-                      <SelectInput
-                        v-model="member.auditor"
-                        :options="users.map(user => ({ value: user.UserId, label: user.UserName }))"
-                        label="Auditor"
-                        placeholder="Select Auditor"
-                      />
-                    </div>
-                    <div class="dynamic-field-col">
-                      <label class="dynamic-label">Role</label>
-                      <div class="dynamic-desc">Select the role of the auditor in this audit.</div>
-                      <SelectInput
-                        v-model="member.role"
-                        :options="roles.map(role => ({ value: role, label: role }))"
-                        label="Role"
-                        placeholder="Select Role"
-                      />
+              <div class="section-content" :class="{ 'collapsed': !member.isReviewPolicyExpanded }">
+                <div class="review-content" v-if="!member.isPolicyEditMode">
+                  <div class="review-item">
+                    <span class="review-label">Assigned Policy:</span>
+                    <span class="review-value">{{ getPolicyName(member.assignedPolicy) }}</span>
+                  </div>
+                  <div class="review-item" v-if="member.assignedSubPolicy">
+                    <span class="review-label">Sub Policy:</span>
+                    <span class="review-value">{{ getSubPolicyName(member.assignedSubPolicy) }}</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Reviewer:</span>
+                    <span class="review-value">{{ getUserName(member.reviewer) }}</span>
+                  </div>
+                  
+                  <!-- Selected Reports Display -->
+                  <div class="review-item" v-if="getSelectedReportsForMember(member).length > 0">
+                    <span class="review-label">Attached Reports:</span>
+                    <div class="review-reports-list">
+                      <div v-for="report in getSelectedReportsForMember(member)" 
+                           :key="report.ReportId" 
+                           class="review-report-item">
+                        <span class="report-title">Report #{{ report.ReportId }}</span>
+                        <span class="report-info">
+                          {{ report.AuditorName }} - {{ formatDate(report.CompletionDate) }}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div class="dynamic-fields-row">
-                    <div class="dynamic-field-col">
-                      <label class="dynamic-label">Primary Responsibilities</label>
-                      <div class="dynamic-desc">Describe the main responsibilities for this team member.</div>
-                      <TextareaInput
-                        v-model="member.responsibilities"
-                        label="Primary Responsibilities"
-                        placeholder="Enter responsibilities..."
-                        rows="3"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Expandable Policy Assignment Section -->
-            <div class="review-section">
-              <div class="review-section-header" @click="member.isReviewPolicyExpanded = !member.isReviewPolicyExpanded">
-                <h4>Policy Assignment</h4>
-                <div class="review-controls">
-                  <button class="edit-btn" @click.stop="togglePolicyEditMode(member)">
-                    <i :class="['fas', member.isPolicyEditMode ? 'fa-check' : 'fa-edit']"></i>
-                    {{ member.isPolicyEditMode ? 'Save' : 'Edit' }}
+                  
+                  <button class="edit-section-btn" @click="togglePolicyEditMode(member)">
+                    <i class="fas fa-edit"></i> Edit
                   </button>
-                  <i :class="['fas', member.isReviewPolicyExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
                 </div>
-              </div>
-              
-              <div class="review-section-content" :class="{ 'collapsed': !member.isReviewPolicyExpanded }">
-                <div class="edit-view">
+                
+                <!-- Edit Mode for Policy Assignment -->
+                <div class="edit-content" v-if="member.isPolicyEditMode">
                   <div class="dynamic-fields-row">
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Assigned Policy</label>
-                      <div class="dynamic-desc">Select the policy to be audited by this team member.</div>
-                      <SelectInput
+                      <CustomDropdown
                         v-model="member.assignedPolicy"
-                        :options="policies.map(p => ({ value: p.PolicyId, label: p.PolicyName }))"
-                        label="Assigned Policy"
-                        placeholder="Select Policy"
+                        :config="{
+                          name: 'Assigned Policy',
+                          label: 'Assigned Policy',
+                          values: policies.map(p => ({ value: p.PolicyId, label: p.PolicyName })),
+                          defaultValue: 'Select Policy'
+                        }"
+                        :showSearchBar="true"
+                        :error="getFieldError('assignedPolicy', index)"
                         @change="onMemberPolicyChange(index)"
                       />
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Sub Policy</label>
-                      <div class="dynamic-desc">Select specific sub policy if applicable.</div>
-                      <SelectInput
+                      <CustomDropdown
                         v-model="member.assignedSubPolicy"
-                        :options="getMemberSubpolicies(index).map(sp => ({ value: sp.SubPolicyId, label: sp.SubPolicyName }))"
-                        label="Sub Policy"
-                        placeholder="Select Sub Policy"
+                        :config="{
+                          name: 'Sub Policy',
+                          label: 'Sub Policy',
+                          values: getMemberSubpolicies(index).map(sp => ({ value: sp.SubPolicyId, label: sp.SubPolicyName })),
+                          defaultValue: 'Select Sub Policy'
+                        }"
+                        :showSearchBar="true"
                         @change="onSubPolicyChange(index)"
                       />
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Reviewer</label>
-                      <div class="dynamic-desc">Choose the reviewer who will review this audit.</div>
-                      <SelectInput
+                      <CustomDropdown
                         v-model="member.reviewer"
-                        :options="users.map(user => ({ value: user.UserId, label: user.UserName }))"
-                        label="Reviewer"
-                        placeholder="Select Reviewer"
+                        :config="{
+                          name: 'Reviewer',
+                          label: 'Reviewer',
+                          values: users.map(user => ({ value: user.UserId, label: user.UserName })),
+                          defaultValue: 'Select Reviewer'
+                        }"
+                        :showSearchBar="true"
+                        :error="getFieldError('reviewer', index)"
                       />
                     </div>
-                  </div>
-                  
-                  <!-- Compliance Preview -->
-                  <div class="compliance-preview" v-if="member.assignedPolicy">
-                    <div class="preview-header">Compliance Items to be Audited:</div>
-                    <div class="preview-content">
-                      <div class="compliance-count" :class="{ 'loading': complianceCountLoading[`${member.assignedPolicy}-loading`] }">
-                        <span v-if="complianceCountLoading[`${member.assignedPolicy}-loading`]">Loading...</span>
-                        <span v-else>{{ getComplianceCount(member.assignedPolicy, member.assignedSubPolicy) }} items</span>
-                      </div>
-                      <div class="compliance-scope-desc" v-if="!member.assignedSubPolicy">
-                        Will include permanent compliances from all subpolicies under this policy
-                    </div>
-                  </div>
                   </div>
                   
                   <!-- Reports Section -->
@@ -460,10 +437,11 @@
                     <div class="reports-row">
                       <div class="reports-col">
                         <button class="reports-btn" @click="showReportsModal(member)">
-                          <i class="fas fa-file-alt"></i> Manage Reports
+                          <i class="fas fa-file-alt"></i> Attach Reports
                         </button>
                       </div>
                     </div>
+                    
                     <!-- Display Selected Reports -->
                     <div v-if="getSelectedReportsForMember(member).length > 0" class="selected-reports">
                       <h6>Selected Reports:</h6>
@@ -482,55 +460,88 @@
                       </div>
                     </div>
                   </div>
+                  
+                  <button class="save-section-btn" @click="togglePolicyEditMode(member)">
+                    <i class="fas fa-save"></i> Save
+                  </button>
                 </div>
               </div>
             </div>
-            
-            <!-- Expandable Audit Details Section -->
-            <div class="review-section">
-              <div class="review-section-header" @click="member.isReviewDetailsExpanded = !member.isReviewDetailsExpanded">
-                <h4>Audit Details</h4>
-                <div class="review-controls">
-                  <button class="edit-btn" @click.stop="toggleDetailsEditMode(member)">
-                    <i :class="['fas', member.isDetailsEditMode ? 'fa-check' : 'fa-edit']"></i>
-                    {{ member.isDetailsEditMode ? 'Save' : 'Edit' }}
-                  </button>
-                  <i :class="['fas', member.isReviewDetailsExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-                </div>
+
+            <!-- Audit Details Review Section -->
+            <div class="collapsible-section">
+              <div class="section-header" @click="toggleSection(member, 'reviewDetails')">
+                <h5>Audit Details</h5>
+                <i :class="['fas', member.isReviewDetailsExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
               </div>
               
-              <div class="review-section-content" :class="{ 'collapsed': !member.isReviewDetailsExpanded }">
-                <div class="edit-view">
+              <div class="section-content" :class="{ 'collapsed': !member.isReviewDetailsExpanded }">
+                <div class="review-content" v-if="!member.isDetailsEditMode">
+                  <div class="review-item">
+                    <span class="review-label">Audit Title:</span>
+                    <span class="review-value">{{ member.auditTitle || 'Not specified' }}</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Business Unit:</span>
+                    <span class="review-value">{{ member.businessUnit || 'Not specified' }}</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Scope:</span>
+                    <span class="review-value">{{ member.scope }}</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Objective:</span>
+                    <span class="review-value">{{ member.objective }}</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Type:</span>
+                    <span class="review-value">{{ getAuditTypeLabel(member.type) }}</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Frequency:</span>
+                    <span class="review-value">{{ getFrequencyLabel(member.frequency) }}</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Due Date:</span>
+                    <span class="review-value">{{ formatDate(member.dueDate) }}</span>
+                  </div>
+                  
+                  <button class="edit-section-btn" @click="toggleDetailsEditMode(member)">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                </div>
+                
+                <!-- Edit Mode for Audit Details -->
+                <div class="edit-content" v-if="member.isDetailsEditMode">
                   <div class="dynamic-fields-row">
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Audit Title</label>
-                      <div class="dynamic-desc">Enter a concise title for this audit assignment.</div>
                       <input type="text" v-model="member.auditTitle" class="dynamic-input" placeholder="Enter audit title..." />
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Business Unit</label>
-                      <div class="dynamic-desc">Mention the business unit or process area being audited.</div>
-                        <input type="text" v-model="member.businessUnit" class="dynamic-input" placeholder="Enter business unit..." />
+                      <input type="text" v-model="member.businessUnit" class="dynamic-input" placeholder="Enter business unit..." />
                     </div>
                   </div>
+
                   <div class="dynamic-fields-row">
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Scope</label>
-                      <div class="dynamic-desc">Specify the boundaries and extent of the audit.</div>
                       <TextareaInput
                         v-model="member.scope"
                         label="Scope"
                         placeholder="Enter scope..."
+                        :error="getFieldError('scope', index)"
                         rows="3"
                       />
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Objective</label>
-                      <div class="dynamic-desc">State the main goals or objectives of the audit.</div>
                       <TextareaInput
                         v-model="member.objective"
                         label="Objective"
                         placeholder="Enter objective..."
+                        :error="getFieldError('objective', index)"
                         rows="3"
                       />
                     </div>
@@ -538,7 +549,6 @@
                   <div class="dynamic-fields-row">
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Type</label>
-                      <div class="dynamic-desc">Select whether the audit is Internal or External.</div>
                       <SelectInput
                         v-model="member.type"
                         :options="[
@@ -548,11 +558,11 @@
                         ]"
                         label="Type"
                         placeholder="Select Type"
+                        :error="getFieldError('type', index)"
                       />
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Frequency</label>
-                      <div class="dynamic-desc">How often should this audit occur?</div>
                       <SelectInput
                         v-model="member.frequency"
                         :options="[
@@ -566,18 +576,108 @@
                         ]"
                         label="Frequency"
                         placeholder="Select Frequency"
+                        :error="getFieldError('frequency', index)"
                       />
                     </div>
                     <div class="dynamic-field-col">
                       <label class="dynamic-label">Due Date</label>
-                      <div class="dynamic-desc">Select the due date for this audit.</div>
                       <DateInput
                         v-model="member.dueDate"
                         label="Due Date"
                         placeholder="Select due date"
+                        :error="getFieldError('dueDate', index)"
                       />
                     </div>
                   </div>
+                  
+                  <button class="save-section-btn" @click="toggleDetailsEditMode(member)">
+                    <i class="fas fa-save"></i> Save
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Team Member Details Review Section -->
+            <div class="collapsible-section">
+              <div class="section-header" @click="toggleSection(member, 'reviewTeam')">
+                <h5>Team Member Details</h5>
+                <i :class="['fas', member.isReviewTeamExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+              </div>
+              
+              <div class="section-content" :class="{ 'collapsed': !member.isReviewTeamExpanded }">
+                <div class="review-content" v-if="!member.isTeamEditMode">
+                  <div class="review-item">
+                    <span class="review-label">Auditor:</span>
+                    <span class="review-value">{{ getUserName(member.auditor) }}</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Role:</span>
+                    <span class="review-value">{{ member.role }}</span>
+                  </div>
+                  <div class="review-item">
+                    <span class="review-label">Responsibilities:</span>
+                    <span class="review-value">{{ member.responsibilities }}</span>
+                  </div>
+                  
+                  <button class="edit-section-btn" @click="toggleTeamEditMode(member)">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                </div>
+                
+                <!-- Edit Mode for Team Member Details -->
+                <div class="edit-content" v-if="member.isTeamEditMode">
+                  <div class="dynamic-fields-row">
+                    <div class="dynamic-field-col">
+                      <label class="dynamic-label">Auditor</label>
+                      <CustomDropdown
+                        v-model="member.auditor"
+                        :config="{
+                          name: 'Auditor',
+                          label: 'Auditor',
+                          values: users.map(user => ({ value: user.UserId, label: user.UserName })),
+                          defaultValue: 'Select Auditor'
+                        }"
+                        :showSearchBar="true"
+                        :error="getFieldError('auditor', index)"
+                      />
+                    </div>
+                    <div class="dynamic-field-col">
+                      <label class="dynamic-label">Role</label>
+                      <SelectInput
+                        v-model="member.role"
+                        :options="roles.map(role => ({ value: role, label: role }))"
+                        label="Role"
+                        placeholder="Select Role"
+                      />
+                    </div>
+                    <div class="dynamic-field-col">
+                      <label class="dynamic-label">Responsibilities</label>
+                      <TextareaInput
+                        v-model="member.responsibilities"
+                        label="Responsibilities"
+                        placeholder="Enter responsibilities..."
+                        :error="getFieldError('responsibilities', index)"
+                        rows="3"
+                      />
+                    </div>
+                  </div>
+                  
+                  <button class="save-section-btn" @click="toggleTeamEditMode(member)">
+                    <i class="fas fa-save"></i> Save
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="compliance-preview" v-if="member.assignedPolicy">
+              <div class="preview-header">Compliance Items to be Audited:</div>
+              <div class="preview-content">
+                <div class="compliance-count" :class="{ 'loading': complianceCountLoading[`${member.assignedPolicy}-loading`] }">
+                  <span v-if="complianceCountLoading[`${member.assignedPolicy}-loading`]">Loading...</span>
+                  <span v-else>{{ getComplianceCount(member.assignedPolicy, member.assignedSubPolicy) }} items</span>
+                </div>
+                <div class="compliance-scope-desc" v-if="!member.assignedSubPolicy">
+                  Will include permanent compliances from all subpolicies under this policy
                 </div>
               </div>
             </div>
@@ -597,7 +697,7 @@
         <button 
           v-if="currentTab < tabs.length - 1" 
           class="nav-button next" 
-          @click="currentTab++"
+          @click="nextTab"
           :disabled="!canProceed"
         >
           Next
@@ -674,6 +774,8 @@ import CustomDropdown from '@/components/CustomDropdown.vue';
 // import TextInput from '@/components/inputs/TextInput.vue';
 import TextareaInput from '@/components/inputs/TextareaInput.vue';
 import DateInput from '@/components/inputs/DateInput.vue';
+import { AccessUtils } from '@/utils/accessUtils';
+
 
 export default {
   name: 'AssignAudit',
@@ -757,6 +859,7 @@ export default {
         frequency: '',
         dueDate: '',
         reports: '',
+        // Ensure all expansion states are properly initialized
         isPolicyAssignmentExpanded: true,
         isAuditDetailsExpanded: true,
         isReviewPolicyExpanded: true,
@@ -843,12 +946,30 @@ export default {
     }
   },
   methods: {
+    // Permission check methods
+    checkAssignAuditPermission() {
+      // Show assign audit access denied popup if user doesn't have permission
+      AccessUtils.showAssignAuditDenied();
+    },
+    
+    // Handle assign audit button click with permission check
+    handleAssignAuditClick() {
+      // For now, proceed with audit assignment
+      // In a full implementation, you would check user permissions here
+      // and call checkAssignAuditPermission() if the user doesn't have permission
+      this.submitAudit();
+    },
+    
     async fetchFrameworks() {
       try {
         const res = await axios.get('/api/frameworks/');
         this.frameworks = res.data;
       } catch (e) {
         console.error('Error fetching frameworks:', e);
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(e, 'audit framework access')) {
+          return;
+        }
         this.frameworks = [];
       }
     },
@@ -858,6 +979,10 @@ export default {
         this.users = res.data;
       } catch (e) {
         console.error('Error fetching users:', e);
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(e, 'audit user access')) {
+          return;
+        }
         this.users = [];
       }
     },
@@ -910,6 +1035,7 @@ export default {
         frequency: '',
         dueDate: '',
         reports: '',
+        // Ensure all expansion states are properly initialized
         isPolicyAssignmentExpanded: true,
         isAuditDetailsExpanded: true,
         isReviewPolicyExpanded: true,
@@ -955,6 +1081,13 @@ export default {
       // if (!this.validateForm()) {
       //   // Show error message
       //   this.$popup.error('Please fix the validation errors before submitting.');
+      //   await this.sendPushNotification({
+      //     title: 'Audit Assignment Failed',
+      //     message: 'Validation errors occurred while assigning the audit. Please fix them and try again.',
+      //     category: 'audit',
+      //     priority: 'high',
+      //     user_id: 'default_user'
+      //   });
       //   return;
       // }
       
@@ -987,18 +1120,39 @@ export default {
         
         if (response.data.audits_created > 0) {
           this.$popup.success(`Successfully created ${response.data.audits_created} audit(s)`);
+          await this.sendPushNotification({
+            title: 'Audit Assigned',
+            message: `Successfully created ${response.data.audits_created} audit(s).`,
+            category: 'audit',
+            priority: 'high',
+            user_id: 'default_user'
+          });
           this.resetForm();
         } else {
           throw new Error('No audits were created');
         }
         
       } catch (error) {
+        console.error('Error in submitAudit:', error);
+        
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit assignment')) {
+          return;
+        }
+        
         const errorMessage = error.response?.data?.error || 'Please try again.';
         if (error.response?.data?.details) {
           // Handle validation errors from backend
           this.handleBackendValidationErrors(error.response.data.details);
         }
         this.$popup.error('Error assigning audits: ' + errorMessage);
+        await this.sendPushNotification({
+          title: 'Audit Assignment Failed',
+          message: `Error assigning audits: ${errorMessage}`,
+          category: 'audit',
+          priority: 'high',
+          user_id: 'default_user'
+        });
         console.error('Error in submitAudit:', error);
       } finally {
         this.assigning = false;
@@ -1033,6 +1187,7 @@ export default {
         frequency: '',
         dueDate: '',
         reports: '',
+        // Ensure all expansion states are properly initialized
         isPolicyAssignmentExpanded: true,
         isAuditDetailsExpanded: true,
         isReviewPolicyExpanded: true,
@@ -1081,6 +1236,14 @@ export default {
           
         } catch (error) {
           console.error('Error in onMemberPolicyChange:', error);
+          
+          // Handle access denied errors
+
+          if (AccessUtils.handleApiError(error, 'audit subpolicy access')) {
+
+return;
+
+}
         } finally {
           this.complianceCountLoading = {
             ...this.complianceCountLoading,
@@ -1101,6 +1264,7 @@ export default {
           }
         });
         
+        // Handle access denied errors
         const key = `${member.assignedPolicy}-${member.assignedSubPolicy || ''}`;
         this.memberComplianceCounts = {
           ...this.memberComplianceCounts,
@@ -1109,6 +1273,12 @@ export default {
         
       } catch (error) {
         console.error('Error fetching compliance count:', error);
+        
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit compliance count access')) {
+          return;
+        }
+        
         const key = `${member.assignedPolicy}-${member.assignedSubPolicy || ''}`;
         this.memberComplianceCounts = {
           ...this.memberComplianceCounts,
@@ -1201,10 +1371,24 @@ export default {
         };
 
         this.currentMember.reports = JSON.stringify(reportsData);
+        await this.sendPushNotification({
+          title: 'Reports Attached',
+          message: `Reports have been attached to the audit assignment.`,
+          category: 'audit',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         this.closeReportsModal();
       } catch (error) {
         console.error('Error saving reports:', error);
         this.$popup.error('Error saving reports. Please try again.');
+        await this.sendPushNotification({
+          title: 'Report Attachment Failed',
+          message: 'Error saving reports. Please try again.',
+          category: 'audit',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       }
     },
     
@@ -1251,24 +1435,52 @@ export default {
     },
 
     toggleSection(member, section) {
+      console.log(`Toggling section: ${section}`, member);
       if (section === 'policyAssignment') {
         member.isPolicyAssignmentExpanded = !member.isPolicyAssignmentExpanded;
       } else if (section === 'auditDetails') {
         member.isAuditDetailsExpanded = !member.isAuditDetailsExpanded;
+      } else if (section === 'reviewPolicy') {
+        member.isReviewPolicyExpanded = !member.isReviewPolicyExpanded;
+        console.log('Review Policy expanded:', member.isReviewPolicyExpanded);
+      } else if (section === 'reviewDetails') {
+        member.isReviewDetailsExpanded = !member.isReviewDetailsExpanded;
+        console.log('Review Details expanded:', member.isReviewDetailsExpanded);
+      } else if (section === 'reviewTeam') {
+        member.isReviewTeamExpanded = !member.isReviewTeamExpanded;
+        console.log('Review Team expanded:', member.isReviewTeamExpanded);
       }
     },
     
     // New methods for toggling edit modes
-    toggleTeamEditMode(member) {
-      member.isTeamEditMode = !member.isTeamEditMode;
-    },
-    
     togglePolicyEditMode(member) {
       member.isPolicyEditMode = !member.isPolicyEditMode;
     },
     
     toggleDetailsEditMode(member) {
       member.isDetailsEditMode = !member.isDetailsEditMode;
+    },
+    
+    toggleTeamEditMode(member) {
+      member.isTeamEditMode = !member.isTeamEditMode;
+    },
+
+    nextTab() {
+      this.currentTab++;
+      this.resetCollapsibleSections();
+    },
+
+    resetCollapsibleSections() {
+      this.teamMembers.forEach(member => {
+        member.isPolicyAssignmentExpanded = true;
+        member.isAuditDetailsExpanded = true;
+        member.isReviewPolicyExpanded = true;
+        member.isReviewDetailsExpanded = true;
+        member.isReviewTeamExpanded = true;
+        member.isPolicyEditMode = false;
+        member.isDetailsEditMode = false;
+        member.isTeamEditMode = false;
+      });
     },
     
     // Helper methods for read-only display
@@ -1293,6 +1505,37 @@ export default {
         default: return frequency || 'Not specified';
       }
     },
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
+    expandAllSections() {
+      this.teamMembers.forEach(member => {
+        member.isPolicyAssignmentExpanded = true;
+        member.isAuditDetailsExpanded = true;
+        member.isReviewPolicyExpanded = true;
+        member.isReviewDetailsExpanded = true;
+        member.isReviewTeamExpanded = true;
+        member.isPolicyEditMode = false;
+        member.isDetailsEditMode = false;
+        member.isTeamEditMode = false;
+      });
+    },
   },
   watch: {
     'teamMembers': {
@@ -1302,6 +1545,14 @@ export default {
           if (member.assignedSubPolicy) {
             this.onSubPolicyChange(index);
           }
+        });
+      }
+    },
+    'currentTab': function(newVal) {
+      if (newVal === 3) { // Review & Assign tab
+        this.$nextTick(() => {
+          this.resetCollapsibleSections();
+          console.log('Reset collapsible sections for Review & Assign tab');
         });
       }
     }
@@ -1675,16 +1926,19 @@ export default {
   border: 1px solid #e2e8f0;
   border-top: none;
   border-radius: 0 0 8px 8px;
-  transition: all 0.3s ease;
+  transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
   overflow: hidden;
   max-height: 2000px; /* Adjust based on your content */
+  opacity: 1;
 }
 
 .section-content.collapsed {
   max-height: 0;
-  padding: 0;
+  padding-top: 0;
+  padding-bottom: 0;
   border: none;
   opacity: 0;
+  pointer-events: none;
 }
 
 .team-assignment-card {
@@ -1748,5 +2002,143 @@ export default {
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
+}
+.empty-review-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
+  margin: 2rem 0;
+}
+
+.empty-review-page p {
+  font-size: 1.2rem;
+  color: #6b7280;
+  text-align: center;
+}
+.team-review-section {
+  margin-top: 1.5rem;
+}
+
+.team-review-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.review-content {
+  padding: 1rem 0;
+}
+
+.review-item {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.review-label {
+  font-weight: 500;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.review-value {
+  color: #1e293b;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.edit-section-btn, .save-section-btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.edit-section-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+.edit-section-btn:hover {
+  background: #f1f5f9;
+}
+
+.save-section-btn {
+  background: #2563eb;
+  border: none;
+  color: white;
+}
+
+.save-section-btn:hover {
+  background: #1d4ed8;
+}
+
+.review-reports-list {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.review-report-item {
+  padding: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dynamic-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.dynamic-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+.review-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.expand-all-btn {
+  padding: 0.5rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.expand-all-btn:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
 }
 </style>

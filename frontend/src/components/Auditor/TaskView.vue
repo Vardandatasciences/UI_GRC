@@ -497,6 +497,7 @@
 <script>
 import { api } from '../../data/api';
 import ValidationMixin from '@/mixins/ValidationMixin';
+import { AccessUtils } from '@/utils/accessUtils';
 
 export default {
   name: 'TaskView',
@@ -613,20 +614,32 @@ export default {
           formData.append('audit_id', this.$route.params.auditId);
           formData.append('fileName', file.name);
 
-          const response = await api.uploadFile(formData, (progressEvent) => {
-            const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            this.complianceUploadProgress = Math.round(((i * 100) + fileProgress) / files.length);
+          // Use S3 upload endpoint
+          const response = await fetch('http://localhost:8000/api/upload-evidence-s3/', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
           });
 
-          if (response.data.success) {
-            uploadedUrls.push(response.data.file.url);
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Upload failed');
+          }
+
+          const responseData = await response.json();
+          
+          if (responseData.success) {
+            uploadedUrls.push(responseData.file.url);
             this.selectedCompliance.evidence_files.push({
               name: file.name,
-              url: response.data.file.url,
+              url: responseData.file.url,
               uploadedAt: new Date().toISOString(),
               fromVersion: false
             });
           }
+          
+          // Update progress
+          this.complianceUploadProgress = Math.round(((i + 1) * 100) / files.length);
         }
 
         // Get existing evidence URLs
@@ -657,10 +670,29 @@ export default {
         }, 2000);
 
         this.$toast?.success(`${files.length} compliance evidence file(s) uploaded successfully`);
+        await this.sendPushNotification({
+          title: 'Compliance Evidence Uploaded',
+          message: `${files.length} compliance evidence file(s) uploaded for compliance: ${this.selectedCompliance.description}`,
+          category: 'compliance',
+          priority: 'medium',
+          user_id: 'current-user'
+        });
       } catch (error) {
         console.error('Error uploading compliance files:', error);
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'compliance file upload')) {
+          this.complianceUploadProgress = 0;
+          return;
+        }
         this.$toast?.error('Failed to upload compliance evidence files');
         this.complianceUploadProgress = 0;
+        await this.sendPushNotification({
+          title: 'Compliance Evidence Upload Failed',
+          message: `Failed to upload compliance evidence file(s) for compliance: ${this.selectedCompliance?.description || ''}`,
+          category: 'compliance',
+          priority: 'high',
+          user_id: 'current-user'
+        });
       }
 
       // Clear the input
@@ -686,20 +718,32 @@ export default {
           formData.append('audit_id', this.$route.params.auditId);
           formData.append('fileName', file.name);
 
-          const response = await api.uploadFile(formData, (progressEvent) => {
-            const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            this.auditUploadProgress = Math.round(((i * 100) + fileProgress) / files.length);
+          // Use S3 upload endpoint
+          const response = await fetch('http://localhost:8000/api/upload-evidence-s3/', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
           });
 
-          if (response.data.success) {
-            uploadedUrls.push(response.data.file.url);
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Upload failed');
+          }
+
+          const responseData = await response.json();
+          
+          if (responseData.success) {
+            uploadedUrls.push(responseData.file.url);
             this.auditEvidenceFiles.push({
               name: file.name,
-              url: response.data.file.url,
+              url: responseData.file.url,
               uploadedAt: new Date().toISOString(),
               fromVersion: false
             });
           }
+          
+          // Update progress
+          this.auditUploadProgress = Math.round(((i + 1) * 100) / files.length);
         }
 
         // Get existing evidence URLs
@@ -729,10 +773,24 @@ export default {
         }, 2000);
 
         this.$toast?.success(`${files.length} audit evidence file(s) uploaded successfully`);
+        await this.sendPushNotification({
+          title: 'Audit Evidence Uploaded',
+          message: `${files.length} audit evidence file(s) uploaded for audit: ${this.auditDetails?.title || ''}`,
+          category: 'audit',
+          priority: 'medium',
+          user_id: 'current-user'
+        });
       } catch (error) {
         console.error('Error uploading audit files:', error);
         this.$toast?.error('Failed to upload audit evidence files');
         this.auditUploadProgress = 0;
+        await this.sendPushNotification({
+          title: 'Audit Evidence Upload Failed',
+          message: `Failed to upload audit evidence file(s) for audit: ${this.auditDetails?.title || ''}`,
+          category: 'audit',
+          priority: 'high',
+          user_id: 'current-user'
+        });
       }
 
       // Clear the input
@@ -861,7 +919,12 @@ export default {
         console.log(`Loaded ${this.auditDetails.compliances ? this.auditDetails.compliances.length : 0} compliances`);
       } catch (error) {
         console.error('Error fetching audit details:', error);
-        this.error = error.response?.data?.error || 'Failed to load audit details';
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit task details access')) {
+          this.error = 'Access denied';
+        } else {
+          this.error = error.response?.data?.error || 'Failed to load audit details';
+        }
       } finally {
         this.loading = false;
       }
@@ -942,6 +1005,13 @@ export default {
           }
         }
         this.$toast?.error(errorMsg);
+        await this.sendPushNotification({
+          title: 'Audit Save Validation Error',
+          message: errorMsg,
+          category: 'audit',
+          priority: 'high',
+          user_id: 'current-user'
+        });
         return;
       }
       
@@ -1048,6 +1118,14 @@ export default {
           
           // Show the review modal
           this.showReviewModal = true;
+          this.$toast?.success(`Audit version ${this.currentVersion} saved successfully`);
+          await this.sendPushNotification({
+            title: 'Audit Version Saved',
+            message: `Audit version ${this.currentVersion} saved successfully for audit: ${this.auditDetails?.title || ''}`,
+            category: 'audit',
+            priority: 'medium',
+            user_id: 'current-user'
+          });
         } else {
           throw new Error('Failed to save audit version');
         }
@@ -1058,11 +1136,32 @@ export default {
         if (error.response?.status === 400 && error.response?.data?.error) {
           if (error.response.data.error.includes('Validation error')) {
             this.$toast?.error('Validation error: ' + error.response.data.error);
+            await this.sendPushNotification({
+              title: 'Audit Save Validation Error',
+              message: 'Validation error: ' + error.response.data.error,
+              category: 'audit',
+              priority: 'high',
+              user_id: 'current-user'
+            });
           } else {
             this.$toast?.error(error.response.data.error);
+            await this.sendPushNotification({
+              title: 'Audit Save Error',
+              message: error.response.data.error,
+              category: 'audit',
+              priority: 'high',
+              user_id: 'current-user'
+            });
           }
         } else {
         this.$toast?.error('Failed to save audit version: ' + (error.response?.data?.error || error.message));
+        await this.sendPushNotification({
+          title: 'Audit Save Error',
+          message: 'Failed to save audit version: ' + (error.response?.data?.error || error.message),
+          category: 'audit',
+          priority: 'high',
+          user_id: 'current-user'
+        });
         }
       } finally {
         this.isSaving = false;
@@ -1101,6 +1200,13 @@ export default {
         if (reviewResponse.data.success) {
           this.closeReviewModal();
           this.$toast?.success('Audit sent for review successfully');
+          await this.sendPushNotification({
+            title: 'Audit Sent for Review',
+            message: `Audit "${this.auditDetails?.title || ''}" sent for review (version: ${this.currentVersion})`,
+            category: 'audit',
+            priority: 'high',
+            user_id: 'current-user'
+          });
           
           // Optionally redirect to audits list or show different UI
           // this.$router.push('/audits');
@@ -1109,7 +1215,18 @@ export default {
         }
       } catch (error) {
         console.error('Error sending audit for review:', error);
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit review submission')) {
+          return;
+        }
         this.$toast?.error('Failed to send audit for review: ' + (error.response?.data?.error || error.message));
+        await this.sendPushNotification({
+          title: 'Audit Review Send Failed',
+          message: 'Failed to send audit for review: ' + (error.response?.data?.error || error.message),
+          category: 'audit',
+          priority: 'high',
+          user_id: 'current-user'
+        });
       } finally {
         this.isSendingForReview = false;
       }
@@ -1140,6 +1257,13 @@ export default {
       // Validate before submission
       if (!this.validateNewComplianceForm()) {
         this.$toast?.error('Please fix validation errors before submitting');
+        await this.sendPushNotification({
+          title: 'Compliance Add Validation Error',
+          message: 'Please fix validation errors before submitting',
+          category: 'compliance',
+          priority: 'high',
+          user_id: 'current-user'
+        });
         return;
       }
       
@@ -1189,13 +1313,32 @@ export default {
             // Show notification about the new version if available
             if (this.currentVersion) {
               this.$toast?.info(`Updated to version ${this.currentVersion} with the added compliance`);
+              await this.sendPushNotification({
+                title: 'Audit Version Updated',
+                message: `Updated to version ${this.currentVersion} with the added compliance`,
+                category: 'audit',
+                priority: 'medium',
+                user_id: 'current-user'
+              });
             }
           }
+          await this.sendPushNotification({
+            title: 'Compliance Added',
+            message: `Compliance "${this.newCompliance.complianceTitle}" added to audit: ${this.auditDetails?.title || ''}`,
+            category: 'compliance',
+            priority: 'medium',
+            user_id: 'current-user'
+          });
         } else {
           throw new Error(response.data.error || 'Failed to add compliance');
         }
       } catch (error) {
         console.error('Error adding compliance:', error);
+        
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'compliance addition')) {
+          return;
+        }
         
         // Extract detailed error information
         let errorMessage = 'Failed to add compliance';
@@ -1214,6 +1357,13 @@ export default {
         }
         
         this.$toast?.error(errorMessage);
+        await this.sendPushNotification({
+          title: 'Compliance Add Error',
+          message: errorMessage,
+          category: 'compliance',
+          priority: 'high',
+          user_id: 'current-user'
+        });
       } finally {
         this.isAddingCompliance = false;
       }
@@ -1465,6 +1615,25 @@ export default {
         return this.fieldErrors[complianceIndex][fieldName];
       }
       return this.validationErrors[fieldName];
+    },
+
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
     },
   },
   mounted() {

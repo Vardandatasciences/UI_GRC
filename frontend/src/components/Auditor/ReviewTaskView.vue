@@ -360,6 +360,7 @@
 
 <script>
 import { api } from '../../data/api';
+import { AccessUtils } from '@/utils/accessUtils';
 
 export default {
   name: 'ReviewTaskView',
@@ -393,6 +394,25 @@ export default {
       if (version.startsWith('A')) return 'Auditor Version';
       if (version.startsWith('R')) return 'Reviewer Version';
       return 'Unknown Version';
+    },
+
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
     },
 
     async fetchAuditDetails() {
@@ -453,7 +473,12 @@ export default {
 
       } catch (error) {
         console.error('Error fetching audit details:', error);
-        this.error = error.response?.data?.error || 'Failed to load audit details';
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit review details access')) {
+          this.error = 'Access denied';
+        } else {
+          this.error = error.response?.data?.error || 'Failed to load audit details';
+        }
       } finally {
         this.loading = false;
       }
@@ -528,8 +553,22 @@ export default {
           
           if (unreviewed.length > 0) {
             this.$toast?.info(`Saved progress. ${unreviewed.length} compliance(s) still need review.`);
+            this.sendPushNotification({
+              title: 'Review Progress Saved',
+              message: `Saved progress. ${unreviewed.length} compliance(s) still need review for audit "${this.auditDetails?.title || ''}"`,
+              category: 'review',
+              priority: 'info',
+              user_id: 'default_user'
+            });
           } else {
             this.$toast?.success(`Review version ${this.currentVersion} saved successfully`);
+            this.sendPushNotification({
+              title: 'Review Version Saved',
+              message: `Review version ${this.currentVersion} saved successfully for audit "${this.auditDetails?.title || ''}"`,
+              category: 'review',
+              priority: 'success',
+              user_id: 'default_user'
+            });
           }
         } else {
           throw new Error('Failed to save review version');
@@ -538,6 +577,13 @@ export default {
       } catch (error) {
         console.error('Error in saveReview:', error);
         this.$toast?.error('Failed to save review: ' + (error.response?.data?.error || error.message));
+        this.sendPushNotification({
+          title: 'Review Save Failed',
+          message: 'Failed to save review: ' + (error.response?.data?.error || error.message),
+          category: 'review',
+          priority: 'error',
+          user_id: 'default_user'
+        });
       } finally {
         this.isSavingReview = false;
       }
@@ -568,6 +614,13 @@ export default {
             });
 
             this.$toast?.success('Audit has been rejected and returned for revision');
+            this.sendPushNotification({
+              title: 'Audit Rejected',
+              message: 'Audit has been rejected and returned for revision for audit "' + (this.auditDetails?.title || '') + '"',
+              category: 'review',
+              priority: 'warning',
+              user_id: 'default_user'
+            });
             this.showRejectModal = false;
             this.$router.push('/reviewer'); // Redirect to reviews list
           } else {
@@ -576,7 +629,18 @@ export default {
         }
       } catch (error) {
         console.error('Error confirming rejection:', error);
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit review rejection')) {
+          return;
+        }
         this.$toast?.error('Failed to process rejection: ' + (error.response?.data?.error || error.message));
+        this.sendPushNotification({
+          title: 'Review Rejection Failed',
+          message: 'Failed to process rejection: ' + (error.response?.data?.error || error.message),
+          category: 'review',
+          priority: 'error',
+          user_id: 'default_user'
+        });
       }
     },
 
@@ -635,7 +699,18 @@ export default {
         }
       } catch (error) {
         console.error('Error confirming acceptance:', error);
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit review acceptance')) {
+          return;
+        }
         this.$toast?.error('Failed to process acceptance: ' + (error.response?.data?.error || error.message));
+        this.sendPushNotification({
+          title: 'Review Acceptance Failed',
+          message: 'Failed to process acceptance: ' + (error.response?.data?.error || error.message),
+          category: 'review',
+          priority: 'error',
+          user_id: 'default_user'
+        });
       }
     },
 
@@ -658,10 +733,28 @@ export default {
             this.currentVersion = response.data.review_version;
             this.lastSavedTime = new Date().toISOString();
             this.$toast?.success(`Review version ${this.currentVersion} saved successfully`);
+            this.sendPushNotification({
+              title: 'Review Version Saved',
+              message: `Review version ${this.currentVersion} saved successfully for audit "${this.auditDetails?.title || ''}"`,
+              category: 'review',
+              priority: 'success',
+              user_id: 'default_user'
+            });
           }
         }).catch(error => {
           console.error('Error saving review:', error);
+          // Handle access denied errors
+          if (AccessUtils.handleApiError(error, 'audit review save')) {
+            return;
+          }
           this.$toast?.error('Failed to save review: ' + (error.response?.data?.error || error.message));
+          this.sendPushNotification({
+            title: 'Review Save Failed',
+            message: 'Failed to save review: ' + (error.response?.data?.error || error.message),
+            category: 'review',
+            priority: 'error',
+            user_id: 'default_user'
+          });
         });
       }
       

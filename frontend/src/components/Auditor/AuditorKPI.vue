@@ -24,12 +24,30 @@
 
 <script>
 import '@fortawesome/fontawesome-free/css/all.min.css'
+import { AccessUtils } from '@/utils/accessUtils';
 
 export default {
   name: 'AuditorKPI',
   setup() {
     // Component logic will go here
     return {}
+  },
+  methods: {
+    // Method to check KPI analytics permission
+    checkKPIPermission() {
+      AccessUtils.showAuditKPIDenied();
+    }
+  },
+  mounted() {
+    // Add any future API calls here with access denied checks
+    // For example:
+    // try {
+    //   const response = await api.getKPIData();
+    // } catch (error) {
+    //   if (AccessUtils.handleApiError(error, 'audit KPI access')) {
+    //     return;
+    //   }
+    // }
   }
 }
 </script>

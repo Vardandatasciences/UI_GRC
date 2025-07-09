@@ -263,7 +263,8 @@ class RBACUtils:
                 'list_users': 'view_all_policy',
                 
                 # ===== AUDIT MODULE ENDPOINTS =====
-                'get_all_audits': 'view_audit_reports',
+                # Basic audit operations
+                'get_all_audits': 'view_all_audits',
                 'get_my_audits': 'conduct_audit',
                 'get_my_reviews': 'review_audit',
                 'get_audit_details': 'view_audit_reports',
@@ -280,6 +281,77 @@ class RBACUtils:
                 'load_review_data': 'review_audit',
                 'generate_audit_report': 'view_audit_reports',
                 'get_audit_reports': 'view_audit_reports',
+                
+                # Audit assignment and creation
+                'get_frameworks': 'assign_audit',
+                'get_policies': 'assign_audit',
+                'get_subpolicies': 'assign_audit',
+                'get_users_audit': 'assign_audit',
+                'create_audit': 'assign_audit',
+                'get_assign_data': 'assign_audit',
+                'get_compliance_count': 'assign_audit',
+                
+                # Audit task management
+                'get_audit_task_details': 'conduct_audit',
+                'get_audit_compliances': 'conduct_audit',
+                'get_audit_status': 'conduct_audit',
+                'check_audit_version': 'conduct_audit',
+                'save_audit_json_version': 'conduct_audit',
+                'upload_evidence_to_s3': 'conduct_audit',
+                'load_continuing_data': 'conduct_audit',
+                'load_audit_continuing_data': 'conduct_audit',
+                'get_latest_reviewer_data': 'conduct_audit',
+                'load_audit_with_reviewer_feedback': 'conduct_audit',
+                
+                # Audit review process
+                'load_latest_review_version': 'review_audit',
+                'update_audit_review_status': 'review_audit',
+                'get_empty_review_structure': 'review_audit',
+                'save_review_json': 'review_audit',
+                'create_review_version': 'review_audit',
+                'complete_audit_review': 'review_audit',
+                'approve_audit_and_create_incidents': 'review_audit',
+                
+                # Audit report generation and management
+                'get_audit_report_versions': 'view_audit_reports',
+                'delete_audit_report_version': 'view_audit_reports',
+                'get_audit_report_s3_link': 'view_audit_reports',
+                'check_audit_reports': 'view_audit_reports',
+                'get_report_details': 'view_audit_reports',
+                
+                # Audit analytics and KPIs
+                'get_non_compliance_count': 'audit_performance_analytics',
+                'get_audit_completion_metrics': 'audit_performance_analytics',
+                'get_audit_cycle_time': 'audit_performance_analytics',
+                'get_finding_rate': 'audit_performance_analytics',
+                'get_time_to_close_findings': 'audit_performance_analytics',
+                'get_non_compliance_issues': 'audit_performance_analytics',
+                'get_severity_distribution': 'audit_performance_analytics',
+                'get_findings_closure_rate': 'audit_performance_analytics',
+                'get_evidence_completion': 'audit_performance_analytics',
+                'get_report_timeliness': 'audit_performance_analytics',
+                'get_compliance_readiness': 'audit_performance_analytics',
+                
+                # Audit dashboard endpoints
+                'get_audit_completion_rate': 'audit_performance_analytics',
+                'get_total_audits': 'view_all_audits',
+                'get_open_audits': 'view_all_audits',
+                'get_completed_audits': 'view_all_audits',
+                'audit_completion_trend': 'audit_performance_analytics',
+                'audit_compliance_trend': 'audit_performance_analytics',
+                'audit_finding_trend': 'audit_performance_analytics',
+                'framework_performance': 'audit_performance_analytics',
+                'category_performance': 'audit_performance_analytics',
+                'status_distribution': 'audit_performance_analytics',
+                'recent_audit_activities': 'view_all_audits',
+                
+                # Audit maintenance and debug endpoints
+                'add_majorminor_column': 'assign_audit',
+                'fix_subpolicy_version_field': 'assign_audit',
+                'fix_audit_table': 'assign_audit',
+                'debug_audit_status_transition': 'conduct_audit',
+                'debug_audit_version_schema': 'conduct_audit',
+                'debug_audit_versions': 'conduct_audit',
                 
                 # ===== RISK MODULE ENDPOINTS =====
                 'risk_workflow': 'view_all_risk',
@@ -459,7 +531,7 @@ class RBACUtils:
     def has_audit_permission(user_id, permission_type):
         """
         Check if user has specific audit permission with detailed debugging
-        permission_type: 'assign', 'conduct', 'review', 'view_reports', 'analytics'
+        permission_type: 'assign', 'conduct', 'review', 'view_reports', 'analytics', 'view_all'
         """
         try:
             logger.debug(f"[RBAC] Checking audit permission: {permission_type} for user {user_id}")
@@ -475,7 +547,8 @@ class RBACUtils:
                 'conduct': 'conduct_audit',
                 'review': 'review_audit',
                 'view_reports': 'view_audit_reports',
-                'analytics': 'audit_performance_analytics'
+                'analytics': 'audit_performance_analytics',
+                'view_all': 'view_all_audits'
             }
             
             field_name = permission_field_map.get(permission_type)
@@ -621,6 +694,7 @@ class RBACUtils:
             logger.info(f"[RBAC] Conduct Audit: {'YES' if rbac_record.conduct_audit else 'NO'}")
             logger.info(f"[RBAC] Review Audit: {'YES' if rbac_record.review_audit else 'NO'}")
             logger.info(f"[RBAC] View Audit Reports: {'YES' if rbac_record.view_audit_reports else 'NO'}")
+            logger.info(f"[RBAC] View All Audits: {'YES' if rbac_record.view_all_audits else 'NO'}")
             logger.info(f"[RBAC] Audit Analytics: {'YES' if rbac_record.audit_performance_analytics else 'NO'}")
             
             logger.info(f"[RBAC] === RISK MODULE PERMISSIONS ===")
@@ -684,6 +758,7 @@ class RBACUtils:
                         'conduct': rbac_record.conduct_audit,
                         'review': rbac_record.review_audit,
                         'view_reports': rbac_record.view_audit_reports,
+                        'view_all': rbac_record.view_all_audits,
                         'analytics': rbac_record.audit_performance_analytics,
                     },
                     'risk': {

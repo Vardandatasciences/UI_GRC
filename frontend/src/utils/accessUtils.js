@@ -344,6 +344,201 @@ export const AccessUtils = {
   },
 
   /**
+   * Show access denied popup for specific audit operations (6 main audit permissions)
+   * @param {string} operation - Operation type
+   * @param {Function} onContactAdmin - Callback for contact admin action
+   */
+  showAuditAccessDenied(operation = 'access', onContactAdmin = null) {
+    console.log('[ACCESS_UTILS] showAuditAccessDenied called:', { operation });
+    
+    // Map operations to main audit permissions and descriptions
+    const operationFeatureMap = {
+      // AssignAudit operations
+      assign: { feature: 'AssignAudit', text: 'assign audits' },
+      create: { feature: 'AssignAudit', text: 'create audit assignments' },
+      'assign-audit': { feature: 'AssignAudit', text: 'assign audit tasks' },
+      'create-audit': { feature: 'AssignAudit', text: 'create new audits' },
+      
+      // ConductAudit operations
+      conduct: { feature: 'ConductAudit', text: 'conduct audits' },
+      perform: { feature: 'ConductAudit', text: 'perform audit tasks' },
+      'conduct-audit': { feature: 'ConductAudit', text: 'conduct audit activities' },
+      'update-task': { feature: 'ConductAudit', text: 'update audit tasks' },
+      'checklist': { feature: 'ConductAudit', text: 'manage audit checklists' },
+      
+      // ReviewAudit operations
+      review: { feature: 'ReviewAudit', text: 'review audits' },
+      approve: { feature: 'ReviewAudit', text: 'approve audit results' },
+      'review-audit': { feature: 'ReviewAudit', text: 'review audit submissions' },
+      'approve-audit': { feature: 'ReviewAudit', text: 'approve audit reports' },
+      
+      // ViewAuditReports operations
+      'view-reports': { feature: 'ViewAuditReports', text: 'view audit reports' },
+      'generate-reports': { feature: 'ViewAuditReports', text: 'generate audit reports' },
+      'download-reports': { feature: 'ViewAuditReports', text: 'download audit reports' },
+      reports: { feature: 'ViewAuditReports', text: 'access audit reports' },
+      
+      // AuditPerformanceAnalytics operations
+      analytics: { feature: 'AuditPerformanceAnalytics', text: 'view audit analytics' },
+      kpi: { feature: 'AuditPerformanceAnalytics', text: 'view audit KPIs' },
+      metrics: { feature: 'AuditPerformanceAnalytics', text: 'view audit metrics' },
+      performance: { feature: 'AuditPerformanceAnalytics', text: 'view audit performance data' },
+      
+      // ViewAllAudits operations
+      view: { feature: 'ViewAllAudits', text: 'view audit information' },
+      'view-all': { feature: 'ViewAllAudits', text: 'view all audits' },
+      dashboard: { feature: 'ViewAllAudits', text: 'access the audit dashboard' },
+      list: { feature: 'ViewAllAudits', text: 'list audit items' },
+      search: { feature: 'ViewAllAudits', text: 'search audits' },
+      access: { feature: 'ViewAllAudits', text: 'access the audit module' }
+    };
+
+    const operationInfo = operationFeatureMap[operation] || { feature: 'ViewAllAudits', text: operation };
+    
+    const message = `You don't have permission to ${operationInfo.text}. Please contact your administrator to request the "${operationInfo.feature}" permission.`;
+    
+    PopupService.accessDenied(message, 'Audit Access Denied', onContactAdmin || this.defaultContactAdmin);
+  },
+
+  /**
+   * Show access denied popup for specific main audit features
+   * @param {string} feature - Main audit feature name (AssignAudit, ConductAudit, etc.)
+   * @param {Function} onContactAdmin - Callback for contact admin action
+   */
+  showAuditFeatureDenied(feature, onContactAdmin = null) {
+    console.log('[ACCESS_UTILS] showAuditFeatureDenied called:', { feature });
+    
+    const featureMessages = {
+      'AssignAudit': 'assign audits',
+      'ConductAudit': 'conduct audits',
+      'ReviewAudit': 'review audits',
+      'ViewAuditReports': 'view audit reports',
+      'AuditPerformanceAnalytics': 'view audit performance analytics',
+      'ViewAllAudits': 'view audit information'
+    };
+    
+    const operationText = featureMessages[feature] || 'access this audit feature';
+    const message = `You don't have permission to ${operationText}. Please contact your administrator to request the "${feature}" permission.`;
+    
+    PopupService.accessDenied(message, 'Audit Access Denied', onContactAdmin || this.defaultContactAdmin);
+  },
+
+  /**
+   * Comprehensive audit access control methods
+   */
+  
+  // Main audit feature access methods
+  showAuditViewDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('view', onContactAdmin);
+  },
+  
+  showAuditDashboardDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('dashboard', onContactAdmin);
+  },
+  
+  showAuditListDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('list', onContactAdmin);
+  },
+  
+  // Audit assignment methods
+  showAuditAssignDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('assign', onContactAdmin);
+  },
+  
+  showAuditCreateDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('create', onContactAdmin);
+  },
+  
+  showCreateAuditDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('create-audit', onContactAdmin);
+  },
+  
+  // Audit conduct methods
+  showAuditConductDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('conduct', onContactAdmin);
+  },
+  
+  showAuditPerformDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('perform', onContactAdmin);
+  },
+  
+  showAuditTaskUpdateDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('update-task', onContactAdmin);
+  },
+  
+  showAuditChecklistDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('checklist', onContactAdmin);
+  },
+  
+  // Audit review methods
+  showAuditReviewDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('review', onContactAdmin);
+  },
+  
+  showAuditApproveDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('approve', onContactAdmin);
+  },
+  
+  // Audit reports methods
+  showAuditReportsDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('reports', onContactAdmin);
+  },
+  
+  showAuditViewReportsDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('view-reports', onContactAdmin);
+  },
+  
+  showAuditGenerateReportsDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('generate-reports', onContactAdmin);
+  },
+  
+  showAuditDownloadReportsDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('download-reports', onContactAdmin);
+  },
+  
+  // Audit analytics methods
+  showAuditAnalyticsDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('analytics', onContactAdmin);
+  },
+  
+  showAuditKPIDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('kpi', onContactAdmin);
+  },
+  
+  showAuditMetricsDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('metrics', onContactAdmin);
+  },
+  
+  showAuditPerformanceAnalyticsDenied(onContactAdmin = null) {
+    this.showAuditAccessDenied('performance', onContactAdmin);
+  },
+  
+  // Main audit permission methods
+  showAssignAuditDenied(onContactAdmin = null) {
+    this.showAuditFeatureDenied('AssignAudit', onContactAdmin);
+  },
+  
+  showConductAuditDenied(onContactAdmin = null) {
+    this.showAuditFeatureDenied('ConductAudit', onContactAdmin);
+  },
+  
+  showReviewAuditDenied(onContactAdmin = null) {
+    this.showAuditFeatureDenied('ReviewAudit', onContactAdmin);
+  },
+  
+  showViewAuditReportsDenied(onContactAdmin = null) {
+    this.showAuditFeatureDenied('ViewAuditReports', onContactAdmin);
+  },
+  
+  showAuditPerformanceAnalyticsPermissionDenied(onContactAdmin = null) {
+    this.showAuditFeatureDenied('AuditPerformanceAnalytics', onContactAdmin);
+  },
+  
+  showViewAllAuditsDenied(onContactAdmin = null) {
+    this.showAuditFeatureDenied('ViewAllAudits', onContactAdmin);
+  },
+
+  /**
    * Default contact admin callback - can be customized per application
    */
   defaultContactAdmin() {
@@ -478,6 +673,51 @@ export const AccessUtils = {
         this.showIncidentAccessDenied('edit');
       } else {
         this.showIncidentAccessDenied('view');
+      }
+      return true;
+    }
+    
+    // Audit URLs
+    if (url.includes('/api/audit/') || url.includes('/api/audits/')) {
+      console.log('[ACCESS_UTILS] Audit API access denied detected');
+      
+      // Audit assignment URLs
+      if (url.includes('/assign') || url.includes('/create')) {
+        this.showAuditAccessDenied('assign');
+        return true;
+      }
+      
+      // Audit conduct URLs
+      if (url.includes('/conduct') || url.includes('/tasks/') || url.includes('/checklist')) {
+        this.showAuditAccessDenied('conduct');
+        return true;
+      }
+      
+      // Audit review URLs
+      if (url.includes('/review') || url.includes('/approve')) {
+        this.showAuditAccessDenied('review');
+        return true;
+      }
+      
+      // Audit reports URLs
+      if (url.includes('/reports') || url.includes('/generate') || url.includes('/download')) {
+        this.showAuditAccessDenied('view-reports');
+        return true;
+      }
+      
+      // Audit analytics URLs
+      if (url.includes('/analytics') || url.includes('/kpi') || url.includes('/metrics')) {
+        this.showAuditAccessDenied('analytics');
+        return true;
+      }
+      
+      // General audit operations based on HTTP method
+      if (method === 'POST') {
+        this.showAuditAccessDenied('create');
+      } else if (method === 'PUT' || method === 'PATCH') {
+        this.showAuditAccessDenied('conduct');
+      } else {
+        this.showAuditAccessDenied('view');
       }
       return true;
     }

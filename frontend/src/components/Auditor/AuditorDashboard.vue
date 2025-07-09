@@ -274,6 +274,7 @@ import './AuditorDashboard.css';
 import axios from 'axios';
 import DynamicTable from '../DynamicTable.vue';
 import CustomButton from '../CustomButton.vue';
+import { AccessUtils } from '@/utils/accessUtils';
 
 // Create an api object with the required methods
 const api = {
@@ -283,6 +284,10 @@ const api = {
       return response;
     } catch (error) {
       console.error('Error fetching audits:', error);
+      // Handle access denied errors
+      if (AccessUtils.handleApiError(error, 'audit dashboard access')) {
+        throw error;
+      }
       throw error;
     }
   },
@@ -316,6 +321,10 @@ const api = {
       console.error('Error updating audit status:', error);
       console.error('Status code:', error.response?.status);
       console.error('Error message:', error.response?.data || error.message);
+      // Handle access denied errors
+      if (AccessUtils.handleApiError(error, 'audit status update')) {
+        throw error;
+      }
       throw error;
     }
   },
@@ -327,6 +336,10 @@ const api = {
       return response;
     } catch (error) {
       console.error(`Error fetching versions for audit ${auditId}:`, error);
+      // Handle access denied errors
+      if (AccessUtils.handleApiError(error, 'audit versions access')) {
+        throw error;
+      }
       throw error;
     }
   },
@@ -338,6 +351,10 @@ const api = {
       return response;
     } catch (error) {
       console.error(`Error getting S3 link for audit ${auditId}, version ${version}:`, error);
+      // Handle access denied errors
+      if (AccessUtils.handleApiError(error, 'audit report download access')) {
+        throw error;
+      }
       throw error;
     }
   }
@@ -540,6 +557,11 @@ export default {
         })
         .catch(error => {
           console.error('Error fetching audits:', error);
+          // Handle access denied errors
+          if (AccessUtils.handleApiError(error, 'audit dashboard access')) {
+            this.loading = false;
+            return;
+          }
           this.error = 'Failed to load audit data. Please try again.';
           this.loading = false;
         });
@@ -588,7 +610,12 @@ export default {
         this.popupData.compliances = response.data.compliances;
       } catch (error) {
         console.error('Error fetching compliance data:', error);
-        this.popupData.complianceError = 'Failed to load compliance data. Please try again.';
+        // Handle access denied errors
+        if (AccessUtils.handleApiError(error, 'audit compliance access')) {
+          this.popupData.complianceError = 'Access denied';
+        } else {
+          this.popupData.complianceError = 'Failed to load compliance data. Please try again.';
+        }
       } finally {
         this.popupData.loadingCompliances = false;
       }
@@ -628,6 +655,12 @@ export default {
           
           // Revert to old status on error
           this.audits[idx].status = oldStatus;
+          
+          // Handle access denied errors
+          if (AccessUtils.handleApiError(error, 'audit status update')) {
+            this.statusUpdating = false;
+            return;
+          }
           
           // Show detailed error message
           let errorMessage = 'Failed to update status. ';
@@ -840,11 +873,39 @@ export default {
       }
     },
 
+    // Add sendPushNotification method
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
+
     // Add a helper method to show success messages
     showSuccessMessage(message) {
       // If you have a toast/notification system, use it here
       // Otherwise use a simple alert
       this.$popup.success(message);
+      // Send push notification
+      this.sendPushNotification({
+        title: 'Audit Notification',
+        message: message,
+        category: 'audit',
+        priority: 'high',
+        user_id: 'default_user'
+      });
     },
     
     // Method to view all versions of an audit
@@ -879,7 +940,12 @@ export default {
         })
         .catch(error => {
           console.error(`Error fetching versions for audit ${audit.audit_id}:`, error);
-          this.versionsError = 'Failed to load audit versions. Please try again later.';
+          // Handle access denied errors
+          if (AccessUtils.handleApiError(error, 'audit versions access')) {
+            this.versionsError = 'Access denied';
+          } else {
+            this.versionsError = 'Failed to load audit versions. Please try again later.';
+          }
         })
         .finally(() => {
           this.loadingVersions = false;
@@ -926,10 +992,30 @@ export default {
           .catch(error => {
             console.error(`Error downloading report for audit ${auditId}, version ${version}:`, error);
             
+            // Handle access denied errors
+            if (AccessUtils.handleApiError(error, 'audit report download')) {
+              return;
+            }
+            
             if (error.response && error.response.status === 403) {
               this.$popup.error("Cannot download rejected reports.");
+              this.sendPushNotification({
+                title: 'Audit Notification',
+                message: 'Cannot download rejected reports.',
+                category: 'audit',
+                priority: 'high',
+                user_id: 'default_user'
+              });
             } else {
-              this.$popup.error(`Error downloading report: ${error.response?.data?.error || 'Unknown error'}`);
+              const msg = `Error downloading report: ${error.response?.data?.error || 'Unknown error'}`;
+              this.$popup.error(msg);
+              this.sendPushNotification({
+                title: 'Audit Notification',
+                message: msg,
+                category: 'audit',
+                priority: 'high',
+                user_id: 'default_user'
+              });
             }
           })
           .finally(() => {
@@ -941,9 +1027,17 @@ export default {
             }, 3000);
           });
       } catch (error) {
+        const msg = `Error: ${error.message || 'Unknown error occurred'}`;
         console.error(`Error in downloadAuditVersion for audit ${auditId}, version ${version}:`, error);
         this.downloadingVersion = null;
-        this.$popup.error(`Error: ${error.message || 'Unknown error occurred'}`);
+        this.$popup.error(msg);
+        this.sendPushNotification({
+          title: 'Audit Notification',
+          message: msg,
+          category: 'audit',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       }
     },
     
@@ -1052,7 +1146,15 @@ export default {
         this.fetchAudits();
       } catch (error) {
         console.error('Error saving compliance updates:', error);
-        this.$popup.error('Failed to save compliance updates. Please try again.');
+        const msg = 'Failed to save compliance updates. Please try again.';
+        this.$popup.error(msg);
+        this.sendPushNotification({
+          title: 'Audit Notification',
+          message: msg,
+          category: 'audit',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       }
     },
 

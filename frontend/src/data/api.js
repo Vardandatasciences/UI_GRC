@@ -99,8 +99,8 @@ export const api = {
 
   // Task Views
   getAuditTaskDetails: (id) => axiosInstance.get(`/api/audits/${id}/task-details/`),
-  saveVersion: (id, data) => axiosInstance.post(`api/audits/${id}/save-version/`, data),
-  sendForReview: (id, data) => axiosInstance.post(`api/audits/${id}/send-for-review/`, data),
+  saveVersion: (id, data) => axiosInstance.post(`/api/audits/${id}/save-version/`, data),
+  sendForReview: (id, data) => axiosInstance.post(`/api/audits/${id}/send-for-review/`, data),
 
   // Audit Reports
   checkAuditReports: (params) => axiosInstance.get('/audit-reports/check/', { params }),

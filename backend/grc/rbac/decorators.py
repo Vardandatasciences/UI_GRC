@@ -97,6 +97,42 @@ def policy_assign_required(view_func):
     """Decorator for functions that require policy assign permission (uses edit permission)"""
     return rbac_required(required_permission='edit_policy')(view_func)
 
+# =====================================================
+# AUDIT MODULE DECORATORS
+# =====================================================
+
+def audit_view_reports_required(view_func):
+    """Decorator for functions that require audit view reports permission"""
+    return rbac_required(required_permission='view_audit_reports')(view_func)
+
+def audit_conduct_required(view_func):
+    """Decorator for functions that require audit conduct permission"""
+    return rbac_required(required_permission='conduct_audit')(view_func)
+
+def audit_review_required(view_func):
+    """Decorator for functions that require audit review permission"""
+    return rbac_required(required_permission='review_audit')(view_func)
+
+def audit_assign_required(view_func):
+    """Decorator for functions that require audit assign permission"""
+    return rbac_required(required_permission='assign_audit')(view_func)
+
+def audit_analytics_required(view_func):
+    """Decorator for functions that require audit analytics permission"""
+    return rbac_required(required_permission='audit_performance_analytics')(view_func)
+
+def audit_view_all_required(view_func):
+    """Decorator for functions that require view all audits permission"""
+    return rbac_required(required_permission='view_all_audits')(view_func)
+
+def audit_or_conduct_required(view_func):
+    """Decorator for functions that require either audit view or conduct permission"""
+    return require_any_permission('view_audit_reports', 'conduct_audit')(view_func)
+
+def audit_manage_required(view_func):
+    """Decorator for functions that require audit management permissions (assign, conduct, or review)"""
+    return require_any_permission('assign_audit', 'conduct_audit', 'review_audit')(view_func)
+
 def check_user_permissions(request):
     """
     Helper function to check user permissions and return detailed info

@@ -58,6 +58,7 @@ AUDIT_CONDUCT = 'conduct_audit'
 AUDIT_REVIEW = 'review_audit'
 AUDIT_ASSIGN = 'assign_audit'
 AUDIT_ANALYTICS = 'audit_performance_analytics'
+AUDIT_VIEW_ALL = 'view_all_audits'
 
 class BaseIncidentPermission(BasePermission):
     """Base permission class for incident module"""
@@ -262,10 +263,80 @@ class AuditAnalyticsPermission(BaseIncidentPermission):
             
         except Exception as e:
             logger.error(f"[RBAC PERM] Error checking audit analytics permission: {e}")
-            return False 
+            return False
 
+class AuditViewAllPermission(BaseIncidentPermission):
+    """Permission to view all audits"""
+    
+    def has_permission(self, request, view):
+        try:
+            user_id = RBACUtils.get_user_id_from_request(request)
+            if not user_id:
+                return False
+        
+            from ..models import RBAC
+            rbac_record = RBAC.objects.filter(user_id=user_id, is_active='Y').first()
+            if not rbac_record:
+                return False
+            
+            # Check if user has view all audits permission - use correct field name
+            has_permission = rbac_record.view_all_audits
+            logger.info(f"[RBAC] User {user_id} audit.view_all = {'ALLOWED' if has_permission else 'DENIED'}")
+            
+            return has_permission
+            
+        except Exception as e:
+            logger.error(f"[RBAC PERM] Error checking audit view all permission: {e}")
+            return False
 
-
+class BaseAuditPermission(BasePermission):
+    """Base permission class for audit module"""
+    
+    def has_permission(self, request, view):
+        """Check if user has basic authentication"""
+        # Always allow if user is authenticated - specific permissions checked in subclasses
+        return True
+    
+    def check_audit_permission(self, request, permission_type):
+        """Helper method to check specific audit permission"""
+        try:
+            user_id = RBACUtils.get_user_id_from_request(request)
+            if not user_id:
+                logger.warning(f"[RBAC AUDIT] No user_id found for {permission_type} permission check")
+                return False
+        
+            from ..models import RBAC
+            rbac_record = RBAC.objects.filter(user_id=user_id, is_active='Y').first()
+            if not rbac_record:
+                logger.warning(f"[RBAC AUDIT] No RBAC record found for user {user_id}")
+                return False
+            
+            # Map permission types to correct model fields
+            permission_field_map = {
+                'view_reports': 'view_audit_reports',
+                'conduct': 'conduct_audit',
+                'review': 'review_audit',
+                'assign': 'assign_audit',
+                'analytics': 'audit_performance_analytics',
+                'view_all': 'view_all_audits'
+            }
+            
+            permission_field = permission_field_map.get(permission_type)
+            if not permission_field:
+                logger.error(f"[RBAC AUDIT] Invalid permission type: {permission_type}")
+                return False
+            
+            has_permission = getattr(rbac_record, permission_field, False)
+            
+            # Debug log the permission check
+            logger.info(f"[RBAC AUDIT] User {user_id} audit.{permission_type} = {'ALLOWED' if has_permission else 'DENIED'}")
+            logger.info(f"[RBAC AUDIT] User Details - Role: {rbac_record.role}, Field Checked: {permission_field}")
+            
+            return has_permission
+            
+        except Exception as e:
+            logger.error(f"[RBAC AUDIT] Error checking {permission_type} permission: {e}")
+            return False
 
 # =====================================================
 # POLICY MODULE PERMISSIONS - ENHANCED

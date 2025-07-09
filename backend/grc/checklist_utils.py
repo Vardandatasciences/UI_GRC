@@ -4,17 +4,17 @@ import logging
 from .notification_service import NotificationService
 from .logging_service import send_log
 from datetime import timedelta
+from django.db import connection
+from datetime import datetime
+from django.utils import timezone
+from .rbac.decorators import audit_conduct_required
 
 logger = logging.getLogger(__name__)
 
+@audit_conduct_required
 def update_lastchecklistitem_verified(audit_id):
     """
-    Update lastchecklistitemverified table when an audit is approved and completed.
-    This function:
-    1. Gets all compliance items from audit_findings for the given audit
-    2. For each compliance, gets the associated policy hierarchy
-    3. Updates or inserts records in lastchecklistitemverified table
-    4. Prints records where check value is "0" or "1"
+    Update the last checklist item verified timestamp for an audit
     """
     try:
         # Log the start of the update process

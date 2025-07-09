@@ -4,6 +4,7 @@
 # type: ignore
 import logging
 from django.shortcuts import render, get_object_or_404
+from django.db.models import Count
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -1977,6 +1978,12 @@ def get_all_users(request):
 @permission_classes([ComplianceTogglePermission])
 @compliance_toggle_required
 def toggle_compliance_version(request, compliance_id):
+    """
+    Toggle compliance version active/inactive status with strict rules:
+    1. Only "Approved" compliances can be made Active
+    2. Only one version can be Active at a time
+    3. When active version is turned off, either deactivate or activate latest version
+    """
     try:
         print(f"\n=== TOGGLE_COMPLIANCE_VERSION DEBUG ===")
         print(f"Toggling compliance with ID: {compliance_id}")
@@ -1985,94 +1992,94 @@ def toggle_compliance_version(request, compliance_id):
         compliance = get_object_or_404(Compliance, ComplianceId=compliance_id)
         print(f"Found compliance: {compliance.Identifier}, Status: {compliance.Status}, ActiveInactive: {compliance.ActiveInactive}")
        
-        # Only allow toggling if compliance is approved
+        # RULE 1: Only allow toggling if compliance is approved
         if compliance.Status != 'Approved':
             print(f"Cannot toggle - compliance status is {compliance.Status}, not Approved")
             return Response({
                 'success': False,
-                'message': 'Only approved compliances can be toggled'
+                'message': 'Only approved compliances can be toggled between active and inactive'
             }, status=status.HTTP_400_BAD_REQUEST)
  
-        # Function to get all related versions by identifier
-        def get_all_versions_by_identifier(identifier):
+        # Helper function to get all approved versions by identifier
+        def get_approved_versions_by_identifier(identifier):
+            """Get all approved versions for the same compliance identifier"""
             try:
-                # Get all compliances with the same identifier
-                versions = Compliance.objects.filter(Identifier=identifier, Status='Approved')
-                print(f"Found {versions.count()} related versions with identifier {identifier}")
+                versions = Compliance.objects.filter(
+                    Identifier=identifier, 
+                    Status='Approved'
+                ).order_by('-ComplianceVersion')
+                print(f"Found {versions.count()} approved versions for identifier {identifier}")
                 return versions
             except Exception as e:
-                print(f"Error getting versions by identifier: {str(e)}")
-                return []
- 
-        # Get all versions with the same identifier
-        all_versions = get_all_versions_by_identifier(compliance.Identifier)
+                print(f"Error getting approved versions: {str(e)}")
+                return Compliance.objects.none()
         
-        if not all_versions:
-            print(f"No related versions found for identifier {compliance.Identifier}")
-            all_versions = [compliance]  # Fallback to just the current compliance
-       
-        # Determine action based on current status
-        is_deactivating = compliance.ActiveInactive == 'Active'
-        print(f"Action: {'Deactivating' if is_deactivating else 'Activating'} compliance {compliance_id}")
-       
-        # Sort versions by version number (descending)
-        sorted_versions = sorted(
-            all_versions,
-            key=lambda v: float(v.ComplianceVersion) if v.ComplianceVersion else 0,
-            reverse=True
-        )
-        
-        # Print the sorted versions for debugging
-        print("Sorted versions (descending):")
-        for v in sorted_versions:
-            print(f"  ID: {v.ComplianceId}, Version: {v.ComplianceVersion}, Status: {v.ActiveInactive}")
-        
-        # If deactivating the current active version, find the next highest version to activate
-        if is_deactivating:
-            # Find the next highest version after the current one
-            next_highest_version = None
-            for v in sorted_versions:
-                if v.ComplianceId != compliance_id and v.Status == 'Approved':
-                    next_highest_version = v
-                    break
+        # Helper function to ensure only one active version
+        def ensure_single_active_version(versions_queryset, target_compliance_id, should_be_active):
+            """Ensure only one version is active at a time"""
+            updated_count = 0
             
-            if next_highest_version:
-                print(f"Will activate next highest version: {next_highest_version.ComplianceId} (v{next_highest_version.ComplianceVersion})")
-            else:
-                print("No other approved version found to activate")
+            for version in versions_queryset:
+                try:
+                    if version.ComplianceId == target_compliance_id:
+                        # Set target compliance to desired state
+                        new_status = 'Active' if should_be_active else 'Inactive'
+                        if version.ActiveInactive != new_status:
+                            version.ActiveInactive = new_status
+                            version.save()
+                            updated_count += 1
+                            print(f"Set compliance {version.ComplianceId} to {new_status}")
+                    else:
+                        # Set all other versions to inactive
+                        if version.ActiveInactive != 'Inactive':
+                            version.ActiveInactive = 'Inactive'
+                            version.save()
+                            updated_count += 1
+                            print(f"Set compliance {version.ComplianceId} to Inactive")
+                except Exception as version_error:
+                    print(f"Error updating version {version.ComplianceId}: {str(version_error)}")
+                    continue
+            
+            return updated_count
         
-        # Update all versions
-        updated_count = 0
-        for version in all_versions:
-            try:
-                if is_deactivating:
-                    if version.ComplianceId == compliance_id:
-                        # Deactivate the target compliance
-                        version.ActiveInactive = 'Inactive'
-                        print(f"Setting compliance {version.ComplianceId} to Inactive")
-                    elif next_highest_version and version.ComplianceId == next_highest_version.ComplianceId:
-                        # Activate the next highest version
-                        version.ActiveInactive = 'Active'
-                        print(f"Setting next highest compliance {version.ComplianceId} to Active")
-                    else:
-                        # Keep other versions as they are
-                        print(f"Keeping compliance {version.ComplianceId} as {version.ActiveInactive}")
-                else:
-                    # When activating a specific version, deactivate all others
-                    if version.ComplianceId == compliance_id:
-                        version.ActiveInactive = 'Active'
-                        print(f"Setting target compliance {version.ComplianceId} to Active")
-                    else:
-                        version.ActiveInactive = 'Inactive'
-                        print(f"Setting other compliance {version.ComplianceId} to Inactive")
-                
-                version.save()
-                updated_count += 1
-            except Exception as version_error:
-                print(f"Error updating version {version.ComplianceId}: {str(version_error)}")
-                # Continue with other versions
+        # Get all approved versions with the same identifier
+        approved_versions = get_approved_versions_by_identifier(compliance.Identifier)
+        
+        if not approved_versions.exists():
+            print(f"No approved versions found for identifier {compliance.Identifier}")
+            return Response({
+                'success': False,
+                'message': 'No approved versions found for this compliance'
+            }, status=status.HTTP_400_BAD_REQUEST)
+       
+        # Determine the action based on current status
+        is_currently_active = compliance.ActiveInactive == 'Active'
+        print(f"Current status: {'Active' if is_currently_active else 'Inactive'}")
+        
+        if is_currently_active:
+            # RULE 3: When turning off active version
+            print("Deactivating currently active version")
+            
+            # Find the latest version that's not the current one
+            latest_other_version = approved_versions.exclude(ComplianceId=compliance_id).first()
+            
+            if latest_other_version:
+                print(f"Found latest other version: {latest_other_version.ComplianceId} (v{latest_other_version.ComplianceVersion})")
+                # Deactivate current and activate latest other version
+                updated_count = ensure_single_active_version(approved_versions, latest_other_version.ComplianceId, True)
+                message = f'Compliance version {compliance.ComplianceVersion} deactivated. Latest version {latest_other_version.ComplianceVersion} is now active.'
+            else:
+                print("No other approved versions found, just deactivating current")
+                # Just deactivate current version
+                updated_count = ensure_single_active_version(approved_versions, compliance_id, False)
+                message = f'Compliance version {compliance.ComplianceVersion} deactivated. No other approved versions available.'
+        else:
+            # RULE 2: When activating a version, ensure only one is active
+            print("Activating version and ensuring single active state")
+            updated_count = ensure_single_active_version(approved_versions, compliance_id, True)
+            message = f'Compliance version {compliance.ComplianceVersion} activated successfully'
 
-        print(f"Successfully updated {updated_count} out of {len(all_versions)} versions")
+        print(f"Successfully updated {updated_count} compliance versions")
 
         # Send notification to affected users
         try:
@@ -2082,7 +2089,7 @@ def toggle_compliance_version(request, compliance_id):
             # Get affected users (creator and reviewer)
             affected_users = set()
             
-            # Add creator's email - assuming CreatedByName contains user ID
+            # Add creator's email
             try:
                 creator_id = compliance.CreatedByName
                 creator_email, creator_name = notification_service.get_user_email_by_id(creator_id)
@@ -2104,7 +2111,6 @@ def toggle_compliance_version(request, compliance_id):
                 print(f"Error getting reviewer email: {str(re)}")
             
             if affected_users:
-                # Send notifications
                 notification_result = notification_service.send_compliance_version_toggle_notification(
                     compliance=compliance,
                     affected_users=list(affected_users)
@@ -2116,13 +2122,17 @@ def toggle_compliance_version(request, compliance_id):
             print(f"Error sending version toggle notification: {str(e)}")
             # Continue even if notification fails
        
-        new_status = 'Inactive' if is_deactivating else 'Active'
+        # Get the final status of the target compliance
+        compliance.refresh_from_db()
+        final_status = compliance.ActiveInactive
+        
         print("=== END TOGGLE_COMPLIANCE_VERSION DEBUG ===\n")
         return Response({
             'success': True,
-            'message': f'Compliance version {compliance.ComplianceVersion} {new_status.lower()}d successfully',
+            'message': message,
             'compliance_id': compliance_id,
-            'new_status': new_status
+            'new_status': final_status,
+            'updated_count': updated_count
         })
         
     except Compliance.DoesNotExist:
@@ -2137,8 +2147,128 @@ def toggle_compliance_version(request, compliance_id):
         traceback.print_exc()
         return Response({
             'success': False,
-            'message': str(e)
+            'message': f'Error toggling compliance version: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Compliance versioning validation helpers
+class ComplianceVersioningValidator:
+    """Helper class for compliance versioning validation and rules"""
+    
+    @staticmethod
+    def can_be_activated(compliance):
+        """Check if a compliance version can be activated"""
+        if compliance.Status != 'Approved':
+            return False, "Only approved compliances can be activated"
+        return True, "Compliance can be activated"
+    
+    @staticmethod
+    def get_active_version_for_identifier(identifier):
+        """Get the currently active version for a compliance identifier"""
+        try:
+            active_version = Compliance.objects.filter(
+                Identifier=identifier,
+                Status='Approved',
+                ActiveInactive='Active'
+            ).first()
+            return active_version
+        except Exception as e:
+            print(f"Error getting active version: {str(e)}")
+            return None
+    
+    @staticmethod
+    def get_all_approved_versions(identifier):
+        """Get all approved versions for a compliance identifier"""
+        try:
+            return Compliance.objects.filter(
+                Identifier=identifier,
+                Status='Approved'
+            ).order_by('-ComplianceVersion')
+        except Exception as e:
+            print(f"Error getting approved versions: {str(e)}")
+            return Compliance.objects.none()
+    
+    @staticmethod
+    def get_latest_version(identifier, exclude_id=None):
+        """Get the latest approved version for a compliance identifier"""
+        try:
+            queryset = Compliance.objects.filter(
+                Identifier=identifier,
+                Status='Approved'
+            ).order_by('-ComplianceVersion')
+            
+            if exclude_id:
+                queryset = queryset.exclude(ComplianceId=exclude_id)
+            
+            return queryset.first()
+        except Exception as e:
+            print(f"Error getting latest version: {str(e)}")
+            return None
+    
+    @staticmethod
+    def validate_versioning_rules(compliance_id, action='toggle'):
+        """Validate compliance versioning rules before performing actions"""
+        try:
+            compliance = Compliance.objects.get(ComplianceId=compliance_id)
+            
+            # Check if compliance can be activated
+            can_activate, message = ComplianceVersioningValidator.can_be_activated(compliance)
+            if not can_activate:
+                return False, message
+            
+            # Get all approved versions
+            approved_versions = ComplianceVersioningValidator.get_all_approved_versions(compliance.Identifier)
+            if not approved_versions.exists():
+                return False, "No approved versions found for this compliance"
+            
+            # Check current active version
+            current_active = ComplianceVersioningValidator.get_active_version_for_identifier(compliance.Identifier)
+            
+            if action == 'activate':
+                if current_active and current_active.ComplianceId != compliance_id:
+                    return True, f"Will deactivate version {current_active.ComplianceVersion} and activate version {compliance.ComplianceVersion}"
+                elif current_active and current_active.ComplianceId == compliance_id:
+                    return False, "This version is already active"
+                else:
+                    return True, f"Will activate version {compliance.ComplianceVersion}"
+            
+            elif action == 'deactivate':
+                if not current_active or current_active.ComplianceId != compliance_id:
+                    return False, "This version is not currently active"
+                
+                latest_other = ComplianceVersioningValidator.get_latest_version(compliance.Identifier, exclude_id=compliance_id)
+                if latest_other:
+                    return True, f"Will deactivate version {compliance.ComplianceVersion} and activate version {latest_other.ComplianceVersion}"
+                else:
+                    return True, f"Will deactivate version {compliance.ComplianceVersion}. No other approved versions available."
+            
+            return True, "Validation passed"
+            
+        except Compliance.DoesNotExist:
+            return False, "Compliance not found"
+        except Exception as e:
+            return False, f"Validation error: {str(e)}"
+    
+    @staticmethod
+    def get_version_status_info(identifier):
+        """Get detailed status information for all versions of a compliance"""
+        try:
+            versions = Compliance.objects.filter(Identifier=identifier).order_by('-ComplianceVersion')
+            status_info = []
+            
+            for version in versions:
+                status_info.append({
+                    'compliance_id': version.ComplianceId,
+                    'version': version.ComplianceVersion,
+                    'status': version.Status,
+                    'active_inactive': version.ActiveInactive,
+                    'can_be_activated': version.Status == 'Approved' and version.ActiveInactive != 'Active',
+                    'is_current_active': version.Status == 'Approved' and version.ActiveInactive == 'Active'
+                })
+            
+            return status_info
+        except Exception as e:
+            print(f"Error getting version status info: {str(e)}")
+            return []
 
 @api_view(['POST'])
 @permission_classes([ComplianceDeactivatePermission])
@@ -4157,7 +4287,6 @@ def get_compliance_details(request, compliance_id):
             'SubPolicy': compliance.SubPolicy_id,
             'PotentialRiskScenarios': compliance.PotentialRiskScenarios,
             'RiskType': compliance.RiskType,
-            'RiskCategory': compliance.RiskCategory,
             'RiskBusinessImpact': compliance.RiskBusinessImpact
         }
         
@@ -4909,6 +5038,11 @@ def edit_compliance(request, compliance_id):
         # Get the compliance item
         compliance = get_object_or_404(Compliance, ComplianceId=compliance_id)
         
+        # Get the latest version of this compliance by Identifier
+        latest_version = Compliance.objects.filter(
+            Identifier=compliance.Identifier
+        ).order_by('-ComplianceVersion').first()
+        
         # Get version type from request data
         version_type = request.data.get('versionType')
         if version_type not in ['Major', 'Minor']:
@@ -4919,7 +5053,7 @@ def edit_compliance(request, compliance_id):
         
         # Parse current version
         try:
-            major, minor = compliance.ComplianceVersion.split('.')
+            major, minor = latest_version.ComplianceVersion.split('.')
             current_major = int(major)
             current_minor = int(minor)
         except (ValueError, AttributeError):
@@ -4948,6 +5082,7 @@ def edit_compliance(request, compliance_id):
         # Create a new compliance instance with updated data
         new_compliance = Compliance.objects.create(
             SubPolicy=compliance.SubPolicy,  # Use the ForeignKey field directly
+            PreviousComplianceVersionId=latest_version,  # Store reference to the latest version object
             ComplianceTitle=request.data.get('ComplianceTitle', ''),
             ComplianceItemDescription=request.data.get('ComplianceItemDescription', ''),
             ComplianceType=request.data.get('ComplianceType', ''),
@@ -4970,9 +5105,9 @@ def edit_compliance(request, compliance_id):
             ComplianceVersion=new_version,
             Applicability=request.data.get('Applicability', ''),
             MaturityLevel=request.data.get('MaturityLevel', 'Initial'),
-            ActiveInactive='Active',
+            ActiveInactive='Inactive',  # Set to Inactive by default for new versions
             PermanentTemporary=request.data.get('PermanentTemporary', 'Permanent'),
-            CreatedByName=request.data.get('CreatedByName', ''),
+            CreatedByName=compliance.CreatedByName,  # Preserve the original creator's name
             CreatedByDate=datetime.date.today(),
             Identifier=compliance.Identifier  # Preserve the original identifier
         )
@@ -5077,9 +5212,10 @@ def clone_compliance(request, compliance_id):
         
         # Set default values if not provided
         data.setdefault('Status', 'Under Review')
-        data.setdefault('ActiveInactive', 'Active')
+        data.setdefault('ActiveInactive', 'Inactive')  # Set to Inactive by default for new versions
         data.setdefault('CreatedByDate', datetime.date.today())
         data.setdefault('ComplianceVersion', '1.0')
+        data.setdefault('CreatedByName', source_compliance.CreatedByName)  # Preserve original creator's name
         
         # Get ComplianceTitle from request or use source compliance title
         compliance_title = data.get('ComplianceTitle', source_compliance.ComplianceTitle)
@@ -5422,3 +5558,202 @@ def format_mitigation_data(mitigation_data):
     except Exception as e:
         print(f"DEBUG: Error formatting mitigation data: {str(e)}")
         return {}  # Return empty object on error
+
+@api_view(['GET'])
+@permission_classes([ComplianceViewPermission])
+@compliance_view_required
+def test_compliance_versioning_edge_cases(request):
+    """
+    Test endpoint to verify compliance versioning edge cases
+    """
+    try:
+        print(f"\n=== TESTING COMPLIANCE VERSIONING EDGE CASES ===")
+        
+        test_results = []
+        
+        # Test Case 1: No approved versions
+        print("Test Case 1: Testing with no approved versions...")
+        test_compliance_with_no_approved = Compliance.objects.filter(
+            Status__in=['Under Review', 'Rejected']
+        ).first()
+        
+        if test_compliance_with_no_approved:
+            can_validate, message = ComplianceVersioningValidator.validate_versioning_rules(
+                test_compliance_with_no_approved.ComplianceId, 
+                'activate'
+            )
+            test_results.append({
+                'test_case': 'No approved versions',
+                'compliance_id': test_compliance_with_no_approved.ComplianceId,
+                'expected_result': 'Should fail',
+                'actual_result': 'Passed' if can_validate else 'Failed',
+                'message': message,
+                'passed': not can_validate  # Should fail
+            })
+        
+        # Test Case 2: All versions inactive
+        print("Test Case 2: Testing with all versions inactive...")
+        sample_identifier = Compliance.objects.filter(
+            Status='Approved',
+            ActiveInactive='Inactive'
+        ).values_list('Identifier', flat=True).first()
+        
+        if sample_identifier:
+            inactive_versions = Compliance.objects.filter(
+                Identifier=sample_identifier,
+                Status='Approved',
+                ActiveInactive='Inactive'
+            )
+            
+            if inactive_versions.exists():
+                first_inactive = inactive_versions.first()
+                can_validate, message = ComplianceVersioningValidator.validate_versioning_rules(
+                    first_inactive.ComplianceId, 
+                    'activate'
+                )
+                test_results.append({
+                    'test_case': 'All versions inactive - activation',
+                    'compliance_id': first_inactive.ComplianceId,
+                    'expected_result': 'Should pass',
+                    'actual_result': 'Passed' if can_validate else 'Failed',
+                    'message': message,
+                    'passed': can_validate  # Should pass
+                })
+        
+        # Test Case 3: Already active version
+        print("Test Case 3: Testing with already active version...")
+        active_compliance = Compliance.objects.filter(
+            Status='Approved',
+            ActiveInactive='Active'
+        ).first()
+        
+        if active_compliance:
+            can_validate, message = ComplianceVersioningValidator.validate_versioning_rules(
+                active_compliance.ComplianceId, 
+                'activate'
+            )
+            test_results.append({
+                'test_case': 'Already active version - activation',
+                'compliance_id': active_compliance.ComplianceId,
+                'expected_result': 'Should fail',
+                'actual_result': 'Passed' if can_validate else 'Failed',
+                'message': message,
+                'passed': not can_validate  # Should fail
+            })
+        
+        # Test Case 4: Deactivation without other versions
+        print("Test Case 4: Testing deactivation without other versions...")
+        single_version_identifier = Compliance.objects.filter(
+            Status='Approved'
+        ).values('Identifier').annotate(
+            count=Count('Identifier')
+        ).filter(count=1).first()
+        
+        if single_version_identifier:
+            single_version = Compliance.objects.filter(
+                Identifier=single_version_identifier['Identifier'],
+                Status='Approved',
+                ActiveInactive='Active'
+            ).first()
+            
+            if single_version:
+                can_validate, message = ComplianceVersioningValidator.validate_versioning_rules(
+                    single_version.ComplianceId, 
+                    'deactivate'
+                )
+                test_results.append({
+                    'test_case': 'Deactivation without other versions',
+                    'compliance_id': single_version.ComplianceId,
+                    'expected_result': 'Should pass',
+                    'actual_result': 'Passed' if can_validate else 'Failed',
+                    'message': message,
+                    'passed': can_validate  # Should pass
+                })
+        
+        # Test Case 5: Multiple versions with one active
+        print("Test Case 5: Testing multiple versions with one active...")
+        multi_version_identifier = Compliance.objects.filter(
+            Status='Approved'
+        ).values('Identifier').annotate(
+            count=Count('Identifier')
+        ).filter(count__gt=1).first()
+        
+        if multi_version_identifier:
+            versions = Compliance.objects.filter(
+                Identifier=multi_version_identifier['Identifier'],
+                Status='Approved'
+            ).order_by('-ComplianceVersion')
+            
+            active_version = versions.filter(ActiveInactive='Active').first()
+            inactive_version = versions.filter(ActiveInactive='Inactive').first()
+            
+            if active_version and inactive_version:
+                # Test activating inactive version
+                can_validate, message = ComplianceVersioningValidator.validate_versioning_rules(
+                    inactive_version.ComplianceId, 
+                    'activate'
+                )
+                test_results.append({
+                    'test_case': 'Multiple versions - activate inactive',
+                    'compliance_id': inactive_version.ComplianceId,
+                    'expected_result': 'Should pass',
+                    'actual_result': 'Passed' if can_validate else 'Failed',
+                    'message': message,
+                    'passed': can_validate  # Should pass
+                })
+                
+                # Test deactivating active version
+                can_validate, message = ComplianceVersioningValidator.validate_versioning_rules(
+                    active_version.ComplianceId, 
+                    'deactivate'
+                )
+                test_results.append({
+                    'test_case': 'Multiple versions - deactivate active',
+                    'compliance_id': active_version.ComplianceId,
+                    'expected_result': 'Should pass',
+                    'actual_result': 'Passed' if can_validate else 'Failed',
+                    'message': message,
+                    'passed': can_validate  # Should pass
+                })
+        
+        # Test Case 6: Version status information
+        print("Test Case 6: Testing version status information...")
+        if multi_version_identifier:
+            status_info = ComplianceVersioningValidator.get_version_status_info(
+                multi_version_identifier['Identifier']
+            )
+            test_results.append({
+                'test_case': 'Version status information',
+                'compliance_id': 'N/A',
+                'expected_result': 'Should return status info',
+                'actual_result': f'Returned info for {len(status_info)} versions',
+                'message': f'Status info: {status_info}',
+                'passed': len(status_info) > 0
+            })
+        
+        # Calculate overall results
+        total_tests = len(test_results)
+        passed_tests = sum(1 for result in test_results if result['passed'])
+        
+        print(f"=== COMPLIANCE VERSIONING EDGE CASES TEST COMPLETED ===")
+        print(f"Total tests: {total_tests}, Passed: {passed_tests}, Failed: {total_tests - passed_tests}")
+        
+        return Response({
+            'success': True,
+            'message': 'Edge cases testing completed',
+            'results': {
+                'total_tests': total_tests,
+                'passed_tests': passed_tests,
+                'failed_tests': total_tests - passed_tests,
+                'test_results': test_results
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error in edge cases testing: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response({
+            'success': False,
+            'message': f'Error testing edge cases: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

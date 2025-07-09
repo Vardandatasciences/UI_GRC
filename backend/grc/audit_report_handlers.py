@@ -8,8 +8,13 @@ from .models import Audit, AuditReport
 from .notification_service import NotificationService
 from .logging_service import send_log
 from datetime import datetime
+from .rbac.decorators import (
+    audit_view_reports_required,
+    audit_assign_required
+)
 
 @api_view(['GET'])
+@audit_view_reports_required
 def check_audit_reports(request):
     """
     Check for existing audit reports based on framework, policy, and subpolicy IDs
@@ -234,6 +239,7 @@ def handle_selected_reports(audit, selected_reports):
         pass 
 
 @api_view(['GET'])
+@audit_view_reports_required
 def get_report_details(request):
     """
     Get details for specific report IDs

@@ -18,8 +18,19 @@ from .notification_service import NotificationService
 import json
 from typing import Optional, Dict, Any
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.db import connection
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional
+from django.utils import timezone
+from .rbac.decorators import (
+    audit_view_reports_required,
+    audit_review_required,
+    audit_conduct_required
+)
 
 @api_view(['GET'])
+@audit_view_reports_required
 def generate_audit_report(request, audit_id):
     """
     Generate and download an audit report in DOCX format with tables for each finding
@@ -387,6 +398,7 @@ def create_incidents_for_findings(audit_id: int) -> None:
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@audit_review_required
 def approve_audit_and_create_incidents(request, audit_id):
     """
     API endpoint to approve audit and create incidents for non-compliant findings

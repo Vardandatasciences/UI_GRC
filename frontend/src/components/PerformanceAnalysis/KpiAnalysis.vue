@@ -1,9 +1,9 @@
 <template>
   <div class="kpi-container">
-    <!-- FIRST ROW: Severity of Issues -->
+    <!-- First Row -->
     <div class="kpi-row">
       <!-- Severity of Issues Card -->
-      <div class="kpi-card-wrapper" style="flex: 1; min-width: 500px;">
+      <div class="kpi-card-wrapper">
         <v-card 
           :loading="severityLoading" 
           class="kpi-card"
@@ -63,10 +63,7 @@
           </v-card-text>
         </v-card>
       </div>
-    </div>
 
-    <!-- SECOND ROW: Audit Cycle Time, Time to Close Findings, Non-Compliance Issues -->
-    <div class="kpi-row">
       <!-- Audit Cycle Time Card -->
       <div class="kpi-card-wrapper">
         <v-card 
@@ -567,12 +564,9 @@
       </div>
     </div>
 
-    <!-- THIRD ROW: Closure Rate, Evidence Collection, Report Timeline -->
+    <!-- Second Row -->
     <div class="kpi-row">
-      <!-- Closure Rate Card -->
-      <!-- Findings Closure Rate Card removed and merged with Time to Close -->
-
-      <!-- Evidence Collection Completion Card -->
+      <!-- Evidence Collection Card -->
       <div class="kpi-card-wrapper">
         <v-card 
           :loading="evidenceLoading" 
@@ -756,10 +750,7 @@
           </v-card-text>
         </v-card>
       </div>
-    </div>
 
-    <!-- FOURTH ROW: Compliance Readiness, Audit Completion -->
-    <div class="kpi-row">
       <!-- Compliance Readiness Card -->
       <div class="kpi-card-wrapper">
         <v-card 

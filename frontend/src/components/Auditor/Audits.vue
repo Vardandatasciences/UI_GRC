@@ -329,6 +329,7 @@
 
 <script>
 import { api } from '../../data/api';
+import { AccessUtils } from '@/utils/accessUtils';
 
 export default {
   name: 'AuditsView',
@@ -383,9 +384,14 @@ export default {
         })
         .catch(err => {
           console.error("Error fetching audit data:", err);
+          // Handle access denied errors
+          if (AccessUtils.handleApiError(err, 'audit data access')) {
+            this.error = 'Access denied';
+          } else {
+            this.error = `Failed to load data: ${err.message || err}`;
+          }
           this.auditData = [];
           this.filteredAuditData = [];
-          this.error = `Failed to load data: ${err.message || err}`;
           this.loading = false;
         });
     },
@@ -479,7 +485,12 @@ export default {
         })
         .catch(err => {
           console.error("Error fetching audit details:", err);
-          this.error = err.response?.data?.error || `Failed to load audit details: ${err.message || err}`;
+          // Handle access denied errors
+          if (AccessUtils.handleApiError(err, 'audit details access')) {
+            this.error = 'Access denied';
+          } else {
+            this.error = err.response?.data?.error || `Failed to load audit details: ${err.message || err}`;
+          }
           this.loadingAuditDetails = false;
           this.showAuditDetails = false;
         });

@@ -4,8 +4,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Audit
 from .notification_service import NotificationService
+from .rbac.decorators import (
+    audit_view_reports_required,
+    audit_review_required
+)
 
 @api_view(['GET'])
+@audit_view_reports_required
 def get_audit_reports(request):
     """
     Get all completed audits for report viewing
@@ -61,6 +66,7 @@ def get_audit_reports(request):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@audit_view_reports_required
 def get_audit_report_versions(request, audit_id):
     """
     Get all report versions (R versions) for a specific audit
@@ -162,6 +168,7 @@ def get_audit_report_versions(request, audit_id):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@audit_review_required
 def delete_audit_report_version(request, audit_id, version):
     """
     Mark a report version as inactive (soft delete)
@@ -235,6 +242,7 @@ def delete_audit_report_version(request, audit_id, version):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@audit_view_reports_required
 def get_audit_report_s3_link(request, audit_id, version):
     """
     Get the S3 link for a specific audit report version

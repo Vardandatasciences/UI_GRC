@@ -335,11 +335,11 @@
       </div>
 
       <!-- Risk related fields - grouped together -->
-      <div class="field-group risk-fields" v-if="compliance.IsRisk">
+      <div class="field-group risk-fields">
         <div class="field-group-title">Risk Information</div>
         <div class="compliance-field full-width">
           <label>
-            Possible Damage 
+            Possible Impact
             <span class="required">*</span>
             <span class="field-requirements">(Minimum 10 characters)</span>
           </label>
@@ -472,24 +472,38 @@
               Risk Category
               <span class="required">*</span>
             </label>
-            <div class="input-wrapper">
-              <div class="searchable-dropdown">
-                <input 
-                  v-model="riskCategorySearch" 
-                  class="compliance-input" 
-                  :class="{
-                    'error': validationErrors.RiskCategory,
-                    'valid': isFieldValid('RiskCategory')
-                  }"
-                  placeholder="Search or add risk category"
-                  @input="validateFieldRealTime('RiskCategory')"
-                  @blur="validateField('RiskCategory')"
-                  :ref="'field_RiskCategory'"
-                />
-                <div class="validation-indicator" v-if="compliance.RiskCategory">
-                  <span v-if="isFieldValid('RiskCategory')" class="valid-icon">✓</span>
-                  <span v-else class="invalid-icon">!</span>
+            <div class="searchable-dropdown">
+              <input 
+                v-model="riskCategorySearch" 
+                class="compliance-input" 
+                :class="{
+                  'error': validationErrors.RiskCategory,
+                  'valid': isFieldValid('RiskCategory')
+                }"
+                placeholder="Search or add risk category"
+                @focus="showDropdown('RiskCategory')"
+                @input="filterOptions('RiskCategory')"
+                :ref="'field_RiskCategory'"
+              />
+              <div v-show="activeDropdown === 'RiskCategory'" class="dropdown-options">
+                <div v-if="filteredOptions.RiskCategory.length === 0 && riskCategorySearch" class="dropdown-add-option">
+                  <span>No matches found. Add new:</span>
+                  <button @click="addNewOption('RiskCategory', riskCategorySearch)" class="dropdown-add-btn">
+                    + Add "{{ riskCategorySearch }}"
+                  </button>
                 </div>
+                <div 
+                  v-for="option in filteredOptions.RiskCategory" 
+                  :key="option.id" 
+                  class="dropdown-option"
+                  @click="selectOption('RiskCategory', option.value)"
+                >
+                  {{ option.value }}
+                </div>
+              </div>
+              <div class="validation-indicator" v-if="compliance.RiskCategory">
+                <span v-if="isFieldValid('RiskCategory')" class="valid-icon">✓</span>
+                <span v-else class="invalid-icon">!</span>
               </div>
             </div>
             <div v-if="validationErrors.RiskCategory" class="field-error-message">
@@ -704,6 +718,7 @@
               required
               title="Type of version change"
               :ref="'field_versionType'"
+              @change="handleVersionTypeChange"
             >
               <option value="Major">Major</option>
               <option value="Minor">Minor</option>
@@ -856,17 +871,41 @@ export default {
             required: true, 
             message: 'At least one mitigation step is required for risks',
             validate: (value) => {
+              // Skip validation if not a risk
+              if (!this.compliance?.IsRisk) {
+                return true;
+              }
+              
+              // Check if we have any valid steps in the mitigationSteps array
+              if (this.mitigationSteps && this.mitigationSteps.length > 0) {
+                const hasValidStep = this.mitigationSteps.some(step => 
+                  step.description && step.description.trim().length > 0
+                );
+                if (hasValidStep) return true;
+              }
+              
+              // If no valid steps in mitigationSteps, check the value object
               if (!value) return false;
+              
               if (typeof value === 'object') {
                 return Object.values(value).some(step => step && step.trim().length > 0);
               }
-              return value.trim().length > 0;
+              
+              return typeof value === 'string' && value.trim().length > 0;
             }
           }
         ]
       },
       fieldStates: {}, // Track real-time validation states
       mitigationSteps: [{ description: '' }],
+    }
+  },
+  watch: {
+    'compliance.versionType': {
+      handler(newValue) {
+        console.log('Version type changed to:', newValue);
+      },
+      immediate: true
     }
   },
   async created() {
@@ -890,16 +929,24 @@ export default {
     document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
+    handleVersionTypeChange(event) {
+      const selectedType = event.target.value;
+      console.log('Version type changed to:', selectedType);
+      this.compliance.versionType = selectedType;
+    },
     async loadComplianceData(complianceId) {
       try {
         this.loading = true;
         const response = await complianceService.getComplianceById(complianceId);
         
         if (response.data && response.data.success) {
+          // Initialize compliance data
+          const versionType = response.data.data.versionType || 'Minor';
           this.compliance = {
             ...response.data.data,
-            versionType: 'Minor' // Set default version type
+            versionType // Use existing version type or default to Minor
           };
+          console.log('Initialized version type as:', versionType);
           
           // Set default reviewer if not present
           if (!this.compliance.reviewer_id && this.users.length > 0) {
@@ -911,6 +958,14 @@ export default {
           this.riskTypeSearch = this.compliance.RiskType || '';
           this.riskCategorySearch = this.compliance.RiskCategory || '';
           this.riskBusinessImpactSearch = this.compliance.RiskBusinessImpact || '';
+          
+          // Initialize filtered options
+          this.filteredOptions = {
+            BusinessUnitsCovered: this.categoryOptions.BusinessUnitsCovered || [],
+            RiskType: this.categoryOptions.RiskType || [],
+            RiskCategory: this.categoryOptions.RiskCategory || [],
+            RiskBusinessImpact: this.categoryOptions.RiskBusinessImpact || []
+          };
           
           // Log the mitigation data received from the backend
           console.log("Received mitigation data:", this.compliance.mitigation);
@@ -1044,13 +1099,6 @@ export default {
       
       // Validate all fields
       for (const fieldName in this.validationRules) {
-        // Skip risk-related fields if IsRisk is false
-        if (!this.compliance.IsRisk && 
-            ['PossibleDamage', 'RiskType', 'RiskCategory', 'RiskBusinessImpact', 'mitigation', 'PotentialRiskScenarios']
-            .includes(fieldName)) {
-          continue;
-        }
-
         if (!this.validateField(fieldName)) {
           isValid = false;
           if (!firstErrorField) {
@@ -1084,16 +1132,31 @@ export default {
       try {
         this.loading = true;
         
+        // Get and validate version type
+        const versionType = this.compliance.versionType;
+        console.log('Submitting with version type:', versionType);
+        
+        if (!versionType || !['Major', 'Minor'].includes(versionType)) {
+          this.error = 'Please select a valid version type (Major or Minor)';
+          return;
+        }
+        
         // Calculate new version based on version type
-        const currentVersion = parseFloat(this.compliance.ComplianceVersion) || 1.0;
+        const currentVersion = this.compliance.ComplianceVersion || '1.0';
         let newVersion;
         
-        if (this.compliance.versionType === 'Major') {
-          newVersion = Math.floor(currentVersion) + 1 + '.0';
+        if (versionType === 'Major') {
+          // For major version, increment the major number and reset minor to 0
+          const [major] = currentVersion.split('.');
+          newVersion = `${parseInt(major) + 1}.0`;
         } else {
-          const [major, minor] = currentVersion.toString().split('.');
+          // For minor version, keep major number and increment minor
+          const [major, minor] = currentVersion.split('.');
           newVersion = `${major}.${(parseInt(minor) || 0) + 1}`;
         }
+        
+        console.log('Current version:', currentVersion);
+        console.log('New version:', newVersion);
         
         // Process mitigation steps properly
         let mitigationData = {};
@@ -1116,7 +1179,8 @@ export default {
           ActiveInactive: 'Active',
           PreviousComplianceVersionId: this.originalComplianceId,
           mitigation: mitigationData, // Use the processed mitigation data
-          user_id: '1' // Add user ID
+          user_id: '1', // Add user ID
+          versionType: this.compliance.versionType // Explicitly include version type
         };
 
         console.log("DEBUG: Complete edit data being sent:", editData);
@@ -1308,13 +1372,6 @@ export default {
     validateFieldRealTime(fieldName) {
       // Skip validation if compliance data is not yet loaded
       if (!this.compliance) {
-        return true;
-      }
-
-      // Skip validation for risk-related fields if IsRisk is false
-      if (!this.compliance.IsRisk && ['PossibleDamage', 'mitigation', 'RiskType', 'RiskCategory', 'RiskBusinessImpact'].includes(fieldName)) {
-        this.validationErrors[fieldName] = '';
-        this.fieldStates[fieldName] = { valid: true, warning: false, dirty: true };
         return true;
       }
 
@@ -1539,10 +1596,7 @@ export default {
     submitForm() {
       // Ensure mitigation data is properly formatted before submission
       if (this.compliance.IsRisk && this.mitigationSteps.length > 0) {
-        // Update the mitigation data first
-        this.onMitigationStepChange();
-        
-        // Double-check that mitigation data is properly set
+        // Create mitigation data in the required format
         const mitigationJson = {};
         this.mitigationSteps.forEach((step, index) => {
           if (step.description && step.description.trim()) {
@@ -1550,13 +1604,16 @@ export default {
           }
         });
         
-        // Store the formatted JSON in the compliance object
-        this.compliance.mitigation = mitigationJson;
+        // Only update mitigation if we have valid steps
+        if (Object.keys(mitigationJson).length > 0) {
+          this.compliance.mitigation = mitigationJson;
+        } else {
+          this.compliance.mitigation = { "1": "No mitigation steps provided" };
+        }
         
         // Debug output
         console.log("submitForm - Mitigation steps:", this.mitigationSteps);
-        console.log("submitForm - Submitting mitigation data:", JSON.stringify(mitigationJson, null, 2));
-        console.log("submitForm - Compliance.mitigation:", this.compliance.mitigation);
+        console.log("submitForm - Submitting mitigation data:", JSON.stringify(this.compliance.mitigation, null, 2));
       } else if (!this.compliance.IsRisk) {
         // Ensure mitigation is at least an empty object for non-risk items
         this.compliance.mitigation = {};
@@ -1602,74 +1659,39 @@ export default {
     parseMitigationSteps(mitigation) {
       console.log("Parsing mitigation steps from:", mitigation, "Type:", typeof mitigation);
       
-      // Handle null or undefined
-      if (!mitigation) {
-        console.log("Mitigation is null/undefined, returning default empty step");
+      // Handle null, undefined, or empty object
+      if (!mitigation || Object.keys(mitigation).length === 0) {
         return [{ description: '' }];
       }
       
       try {
-        // Handle string format (could be JSON string or plain text)
+        // Handle string format (could be JSON string)
         if (typeof mitigation === 'string') {
-          if (!mitigation.trim()) {
-            console.log("Mitigation is empty string, returning default empty step");
-            return [{ description: '' }];
-          }
-          
           try {
-            // Try to parse as JSON
-            const parsed = JSON.parse(mitigation);
-            console.log("Successfully parsed mitigation JSON string:", parsed);
-            
-            if (typeof parsed === 'object' && parsed !== null) {
-              if (Array.isArray(parsed)) {
-                // Handle array format
-                console.log("Mitigation is array, mapping to steps");
-                return parsed.map(step => ({
-                  description: typeof step === 'string' ? step : (step?.description || '')
-                }));
-              } else {
-                // Handle object format (expected format: {"1": "Step 1", "2": "Step 2"})
-                console.log("Mitigation is object, converting to steps");
-                return Object.values(parsed).map(value => ({
-                  description: typeof value === 'string' ? value : (value?.description || '')
-                }));
-              }
-            }
+            mitigation = JSON.parse(mitigation);
           } catch (e) {
-            // Not valid JSON, treat as single step
-            console.log("Not valid JSON, treating as single step:", e);
-            return [{ description: mitigation }];
-          }
-        } 
-        // Handle array format directly
-        else if (Array.isArray(mitigation)) {
-          console.log("Mitigation is array, mapping to steps");
-          if (mitigation.length === 0) return [{ description: '' }];
-          
-          return mitigation.map(step => ({
-            description: typeof step === 'string' ? step : (step?.description || '')
-          }));
-        } 
-        // Handle object format directly (expected format: {"1": "Step 1", "2": "Step 2"})
-        else if (typeof mitigation === 'object' && mitigation !== null) {
-          console.log("Mitigation is object, converting to steps");
-          
-          // Check if it's an empty object
-          if (Object.keys(mitigation).length === 0) {
+            console.error('Error parsing mitigation JSON:', e);
             return [{ description: '' }];
           }
+        }
+        
+        // Handle object format (expected format: {"1": "Step 1", "2": "Step 2"})
+        if (typeof mitigation === 'object' && !Array.isArray(mitigation)) {
+          // Sort keys numerically to maintain step order
+          const steps = Object.entries(mitigation)
+            .sort(([a], [b]) => parseInt(a) - parseInt(b))
+            .map(([,value]) => ({  // Skip the key using array destructuring
+              description: value && typeof value === 'string' ? value.trim() : ''
+            }))
+            .filter(step => step.description);
           
-          return Object.values(mitigation).map(value => ({
-            description: typeof value === 'string' ? value : (value?.description || '')
-          }));
+          return steps.length > 0 ? steps : [{ description: '' }];
         }
       } catch (error) {
         console.error('Error parsing mitigation steps:', error);
       }
       
       // Default fallback
-      console.log("Using default fallback for mitigation");
       return [{ description: '' }];
     },
   }

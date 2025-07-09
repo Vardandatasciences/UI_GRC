@@ -16,6 +16,16 @@ from .models import Audit
 from .checklist_utils import update_lastchecklistitem_verified
 from .report_views import generate_report_file
 from .logging_service import send_log
+from django.http import JsonResponse
+from django.db import connection
+from django.utils import timezone
+from datetime import datetime
+from typing import Dict, Any, Optional
+from .rbac.decorators import (
+    audit_review_required,
+    audit_conduct_required,
+    audit_view_reports_required
+)
 
 # Load environment variables
 load_dotenv()
@@ -29,7 +39,7 @@ def upload_to_s3(file_path: str, bucket_name: str, s3_file_name: str) -> Optiona
         aws_access_key = os.getenv('AWS_ACCESS_KEY_ID')
         aws_secret_key = os.getenv('AWS_SECRET_ACCESS_KEY')
         aws_region = os.getenv('AWS_REGION', 'us-east-1')
-        aws_bucket = os.getenv('AWS_STORAGE_BUCKET_NAME')
+        aws_bucket = os.getenv('AWS_STORAGE_BUCKET_NAME',"orcashoimages")
 
         if not all([aws_access_key, aws_secret_key, aws_bucket]):
             print("ERROR: Missing required AWS credentials in .env file")
@@ -285,7 +295,7 @@ def create_incidents_for_findings(audit_id: int) -> None:
                     current_date,
                     current_time,
                     user_id,
-                    "audit findings",
+                    "Audit Finding",
                     comments,
                     "Open"
                 ])
@@ -298,6 +308,7 @@ def create_incidents_for_findings(audit_id: int) -> None:
         traceback.print_exc()
 
 @api_view(['POST'])
+@audit_review_required
 def update_audit_review_status(request, audit_id):
     """
     Update the review status of an audit and handle rejection/acceptance flows.
@@ -973,6 +984,7 @@ def update_audit_review_status(request, audit_id):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@audit_review_required
 def load_latest_review_data(request, audit_id):
     """
     Load the latest version data for review, sorted by datetime

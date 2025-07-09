@@ -11,6 +11,14 @@ from datetime import datetime, timedelta
 from .checklist_utils import update_lastchecklistitem_verified
 import html
 from .logging_service import send_log
+from django.db import connection
+from datetime import datetime
+from django.utils import timezone
+from .s3_fucntions import create_render_mysql_client
+from .rbac.decorators import (
+    audit_view_reports_required,
+    audit_conduct_required
+)
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -26,6 +34,7 @@ def escape_html(content):
 REPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'Reports')
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
+@audit_view_reports_required
 def generate_and_upload_report(audit_id, user_id='system'):
     """
     Generate an audit report and upload it to S3, then delete the local file
@@ -333,6 +342,7 @@ def generate_and_upload_report(audit_id, user_id='system'):
         return {'success': False, 'error': str(e)}
 
 
+@audit_view_reports_required
 def generate_report_file(audit_id, output_file_path, version=None):
     """
     Internal function to generate a report file for an audit
