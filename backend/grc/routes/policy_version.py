@@ -202,18 +202,42 @@ def create_policy_version(request, policy_id):
             
             print(f"DEBUG: Creating new policy with version: {new_version}")
             
-            # Resolve Reviewer UserName from UserId if given in request, fallback to original
-            reviewer_id = policy_data.get('Reviewer')
+            # Handle Reviewer field - can be either UserId or UserName
+            reviewer_input = policy_data.get('Reviewer')
             reviewer_name = None
-            if reviewer_id:
+            reviewer_id = None
+            if reviewer_input:
+                # First check if it's a numeric UserId
                 try:
+                    reviewer_id = int(reviewer_input)
                     user_obj = Users.objects.filter(UserId=reviewer_id).first()
                     if user_obj:
                         reviewer_name = user_obj.UserName
+                except (ValueError, TypeError):
+                    # If not numeric, treat as UserName directly
+                    reviewer_name = str(reviewer_input)
+                    # Verify the username exists and get the UserId
+                    user_obj = Users.objects.filter(UserName=reviewer_name).first()
+                    if user_obj:
+                        reviewer_id = user_obj.UserId
+                    else:
+                        print(f"DEBUG: Reviewer username '{reviewer_name}' not found, using original policy reviewer")
+                        reviewer_name = original_policy.Reviewer
+                        # Get the original reviewer's UserId
+                        orig_user_obj = Users.objects.filter(UserName=original_policy.Reviewer).first()
+                        reviewer_id = orig_user_obj.UserId if orig_user_obj else None
                 except Exception as e:
                     print(f"DEBUG: Error resolving reviewer: {str(e)}")
+                    reviewer_name = original_policy.Reviewer
+                    # Get the original reviewer's UserId
+                    orig_user_obj = Users.objects.filter(UserName=original_policy.Reviewer).first()
+                    reviewer_id = orig_user_obj.UserId if orig_user_obj else None
+            
             if not reviewer_name:
                 reviewer_name = original_policy.Reviewer  # fallback to existing username
+                # Get the original reviewer's UserId
+                orig_user_obj = Users.objects.filter(UserName=original_policy.Reviewer).first()
+                reviewer_id = orig_user_obj.UserId if orig_user_obj else None
             
             # Security: Sanitize policy data before database storage (Django ORM provides SQL injection protection)
             new_policy = Policy.objects.create(
@@ -455,7 +479,7 @@ def create_policy_version(request, policy_id):
             
             # Create policy approval entry for the new version
             print(f"DEBUG: Calling create_policy_approval_for_version for new policy ID: {new_policy.PolicyId}")
-            approval_created = create_policy_approval_for_version(new_policy.PolicyId)
+            approval_created = create_policy_approval_for_version(new_policy.PolicyId, request)
             print(f"DEBUG: Policy approval creation result: {approval_created}")
             
             # Verify the approval was created
@@ -589,23 +613,61 @@ def create_policy_version(request, policy_id):
         return Response({'error': 'Error creating new policy version', 'details': error_info}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-def create_policy_approval_for_version(policy_id):
+def create_policy_approval_for_version(policy_id, request=None):
     """
     Helper function to create a policy approval entry for a new policy version
     """
     try:
+        # Import security modules
+        from django.utils.html import escape as escape_html
+        
         # Get the policy
         policy = Policy.objects.get(PolicyId=policy_id)
         
-        # Get user ID from CreatedByName
-        user_obj = Users.objects.filter(UserName=policy.CreatedByName).first()
-        user_id = user_obj.UserId if user_obj else None
+        # Get the corresponding user version approval for this policy
+        try:
+            # First get the policy version to determine which user version to look for
+            policy_version = PolicyVersion.objects.get(PolicyId=policy_id)
+            version_number = policy_version.Version  # e.g. "1.2"
+            
+            print(f"DEBUG: Looking for approval with version {version_number}")
+            
+            # Find the corresponding user version approval
+            latest_approval = PolicyApproval.objects.filter(
+                PolicyId__PolicyName=policy.PolicyName,
+                Version='u1'  # Always get the initial user version
+            ).first()
+            
+            if latest_approval:
+                # Use the same user ID and reviewer ID from the user version
+                user_id = latest_approval.UserId
+                reviewer_id = latest_approval.ReviewerId
+                print(f"DEBUG: Found matching approval - Using user ID {user_id} and reviewer ID {reviewer_id}")
+            else:
+                print(f"DEBUG: No matching user version approval found for policy {policy.PolicyName}")
+        except Exception as e:
+            print(f"DEBUG: Error finding matching approval: {str(e)}")
+        else:
+            # If no previous approval exists, get IDs from session/policy
+            user_id = None
+            if request and hasattr(request, 'session'):
+                user_id = request.session.get('user_id')
+                print(f"DEBUG: Got user ID {user_id} from session")
+            
+            if not user_id:
+                user_id = request.session.get('grc_user_id') if request and hasattr(request, 'session') else None
+                print(f"DEBUG: Fallback - Got user ID {user_id} from grc_user_id")
+            
+            if not user_id:
+                user_obj = Users.objects.filter(UserName=policy.CreatedByName).first()
+                user_id = user_obj.UserId if user_obj else None
+                print(f"DEBUG: Final fallback - Got user ID {user_id} from CreatedByName: {policy.CreatedByName}")
+            
+            # Get reviewer ID from Reviewer name
+            reviewer_obj = Users.objects.filter(UserName=policy.Reviewer).first()
+            reviewer_id = reviewer_obj.UserId if reviewer_obj else None
         
-        # Get reviewer ID from Reviewer name
-        reviewer_obj = Users.objects.filter(UserName=policy.Reviewer).first()
-        reviewer_id = reviewer_obj.UserId if reviewer_obj else None
-        
-        print(f"DEBUG: Using user ID: {user_id} from CreatedByName: {policy.CreatedByName}")
+        print(f"DEBUG: Using user ID: {user_id} from logged in user or CreatedByName: {policy.CreatedByName}")
         print(f"DEBUG: Using reviewer ID: {reviewer_id} from Reviewer: {policy.Reviewer}")
         
         # Security: Escape policy name for safe logging (prevents log injection)
@@ -678,12 +740,31 @@ def create_policy_approval_for_version(policy_id):
         
         # Create the policy approval with direct SQL debug to verify it's working
         try:
+            if not user_id or not reviewer_id:
+                print(f"WARNING: Missing IDs for policy approval creation - user_id: {user_id}, reviewer_id: {reviewer_id}")
+                
+                # If we still don't have IDs, get them from the original policy
+                if not user_id:
+                    user_obj = Users.objects.filter(UserName=policy.CreatedByName).first()
+                    user_id = user_obj.UserId if user_obj else None
+                    print(f"DEBUG: Final attempt - Got user ID {user_id} from policy CreatedByName")
+                
+                if not reviewer_id:
+                    reviewer_obj = Users.objects.filter(UserName=policy.Reviewer).first()
+                    reviewer_id = reviewer_obj.UserId if reviewer_obj else None
+                    print(f"DEBUG: Final attempt - Got reviewer ID {reviewer_id} from policy Reviewer")
+            
+            print(f"DEBUG: Creating PolicyApproval with user_id: {user_id}, reviewer_id: {reviewer_id}")
+            
+            # Determine the version type (u1 or r1) based on the policy version
+            version_type = "r1" if hasattr(policy, 'reviewer') else "u1"
+            
             approval = PolicyApproval.objects.create(
                 PolicyId=policy,
                 ExtractedData=extracted_data,
-                UserId=user_id,  # Use actual user ID from CreatedByName
-                ReviewerId=reviewer_id,  # Use actual reviewer ID from Reviewer name
-                Version="u1",  # Default initial version
+                UserId=user_id,
+                ReviewerId=reviewer_id,
+                Version=version_type,
                 ApprovedNot=None  # Not yet approved
             )
             print(f"DEBUG: Successfully created policy approval with ID: {approval.ApprovalId}")

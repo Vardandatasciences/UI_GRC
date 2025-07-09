@@ -165,7 +165,9 @@ auth_urlpatterns = [
 rbac_urlpatterns = [
     # Core RBAC endpoints
     path('api/user-permissions/', rbac_views.get_user_permissions, name='api-user-permissions'),
-    path('api/user-role/', rbac_views.get_user_role, name='api-user-role'),
+    path('api/user-role/', views.get_user_role_simple, name='api-user-role'),  # Simple endpoint from session
+    path('api/user-role-rbac/', rbac_views.get_user_role, name='api-user-role-rbac'),  # Keep original as backup
+    path('api/users-for-dropdown/', views.get_users_for_dropdown_simple, name='api-users-for-dropdown'),  # Simple users dropdown
     path('api/debug-permissions/', rbac_views.debug_user_permissions, name='api-debug-permissions'),
     path('api/debug-rbac-data/', rbac_views.debug_rbac_data, name='api-debug-rbac-data'),
     path('api/debug-auth-status/', rbac_views.debug_auth_status, name='api-debug-auth-status'),
@@ -723,7 +725,7 @@ risk_urlpatterns = [
     path('risks-by-incident/<int:incident_id>/', risk_views.get_risks_by_incident, name='risks-by-incident'),
     path('risks-for-dropdown/', risk_views.get_all_risks_for_dropdown, name='risks-for-dropdown'),
     path('compliances-for-dropdown/', risk_views.get_all_compliances_for_dropdown, name='compliances-for-dropdown'),
-    path('users-for-dropdown/', risk_views.get_users_for_dropdown, name='users-for-dropdown'),
+    # path('users-for-dropdown/', risk_views.get_users_for_dropdown, name='users-for-dropdown'),  # Replaced with API version
     path('analyze-incident/', risk_views.analyze_incident, name='analyze-incident'),
     
     # Risk Reviewer Management

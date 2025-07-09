@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from ..models import Framework, Policy, SubPolicy, FrameworkVersion, PolicyVersion, PolicyApproval, Users, FrameworkApproval, ExportTask, PolicyCategory, Entity, LastChecklistItemVerified
 from ..serializers import FrameworkSerializer, PolicySerializer, SubPolicySerializer, PolicyApprovalSerializer, UserSerializer, EntitySerializer   
 from django.db import transaction, models
+from django.db.models import Q
 import traceback
 import sys
 from datetime import datetime, date, timedelta
@@ -148,6 +149,10 @@ def framework_list(request):
                 validated_params = validate_framework_query_params(request.GET)
                 include_all_status = validated_params['include_all_status']
                 include_all_for_identifiers = validated_params.get('include_all_for_identifiers', False)
+                
+                # NEW: Get user_id parameter for GRC Administrator filtering
+                filter_user_id = request.GET.get('user_id')
+                
             except ValidationError as e:
                 # Security: Log sanitized error message to prevent log injection
                 safe_error = escape_html(str(e))
@@ -167,6 +172,20 @@ def framework_list(request):
                 
                 return Response({"error": "Invalid query parameters"}, status=status.HTTP_400_BAD_REQUEST)
             
+            # NEW: Check if current user is GRC Administrator
+            is_grc_admin = False
+            current_user_id = getattr(request.user, 'id', None)
+            
+            if current_user_id:
+                try:
+                    from ..models import RBAC
+                    rbac_record = RBAC.objects.filter(user_id=current_user_id, is_active='Y').first()
+                    if rbac_record and rbac_record.is_grc_administrator():
+                        is_grc_admin = True
+                        logger.info(f"User {current_user_id} confirmed as GRC Administrator")
+                except Exception as rbac_error:
+                    logger.warning(f"Error checking GRC Administrator status: {rbac_error}")
+            
             # Security: Use Django ORM with parameterized queries (SQL injection protection)
             try:
                 if include_all_for_identifiers:
@@ -180,19 +199,66 @@ def framework_list(request):
                 elif include_all_status:
                     # For approval workflow, fetch frameworks with InActive status
                     # Django ORM automatically uses parameterized queries
-                    frameworks = Framework.objects.select_related().filter(
+                    frameworks_query = Framework.objects.select_related().filter(
                         ActiveInactive='InActive'
-                    ).only(
+                    )
+                    
+                    # NEW: Apply user filtering for GRC Administrators
+                    if is_grc_admin and filter_user_id:
+                        # Filter by specific user - match against CreatedByName field
+                        # First try to get the user's name by user ID
+                        try:
+                            target_user = Users.objects.filter(UserId=filter_user_id).first()
+                            if target_user:
+                                # Filter by both user ID (as string) and user name
+                                frameworks_query = frameworks_query.filter(
+                                    Q(CreatedByName=str(filter_user_id)) | 
+                                    Q(CreatedByName=target_user.UserName)
+                                )
+                                logger.info(f"Filtering frameworks for user {filter_user_id} ({target_user.UserName})")
+                            else:
+                                # If user not found, just filter by user ID as string
+                                frameworks_query = frameworks_query.filter(CreatedByName=str(filter_user_id))
+                                logger.info(f"Filtering frameworks for user ID {filter_user_id}")
+                        except Exception as user_lookup_error:
+                            logger.warning(f"Error looking up user {filter_user_id}: {user_lookup_error}")
+                            # Fallback to filtering by user ID as string
+                            frameworks_query = frameworks_query.filter(CreatedByName=str(filter_user_id))
+                    
+                    frameworks = frameworks_query.only(
                         'FrameworkId', 'FrameworkName', 'CurrentVersion', 'FrameworkDescription',
                         'CreatedByName', 'CreatedByDate', 'Category', 'DocURL', 'Identifier',
                         'StartDate', 'EndDate', 'Status', 'ActiveInactive', 'Reviewer', 'InternalExternal'
                     )
                 else:
                     # Default behavior - only approved and active frameworks
-                    frameworks = Framework.objects.select_related().filter(
+                    frameworks_query = Framework.objects.select_related().filter(
                         Status='Approved',
                         ActiveInactive='Active'
-                    ).only(
+                    )
+                    
+                    # NEW: Apply user filtering for GRC Administrators (for completed frameworks too)
+                    if is_grc_admin and filter_user_id:
+                        # Filter by specific user - match against CreatedByName field
+                        try:
+                            target_user = Users.objects.filter(UserId=filter_user_id).first()
+                            if target_user:
+                                # Filter by both user ID (as string) and user name
+                                frameworks_query = frameworks_query.filter(
+                                    Q(CreatedByName=str(filter_user_id)) | 
+                                    Q(CreatedByName=target_user.UserName)
+                                )
+                                logger.info(f"Filtering approved frameworks for user {filter_user_id} ({target_user.UserName})")
+                            else:
+                                # If user not found, just filter by user ID as string
+                                frameworks_query = frameworks_query.filter(CreatedByName=str(filter_user_id))
+                                logger.info(f"Filtering approved frameworks for user ID {filter_user_id}")
+                        except Exception as user_lookup_error:
+                            logger.warning(f"Error looking up user {filter_user_id}: {user_lookup_error}")
+                            # Fallback to filtering by user ID as string
+                            frameworks_query = frameworks_query.filter(CreatedByName=str(filter_user_id))
+                    
+                    frameworks = frameworks_query.only(
                         'FrameworkId', 'FrameworkName', 'CurrentVersion', 'FrameworkDescription',
                         'CreatedByName', 'CreatedByDate', 'Category', 'DocURL', 'Identifier',
                         'StartDate', 'EndDate', 'Status', 'ActiveInactive', 'Reviewer', 'InternalExternal'
@@ -221,13 +287,14 @@ def framework_list(request):
                     })
                 
                 # Security: Log successful operation (sanitized)
-                logger.info(f"Successfully retrieved {len(framework_data)} frameworks")
+                filter_info = f" (filtered by user {filter_user_id})" if is_grc_admin and filter_user_id else ""
+                logger.info(f"Successfully retrieved {len(framework_data)} frameworks{filter_info}")
                 
                 # Log successful framework list retrieval
                 send_log(
                     module="Framework",
                     actionType="VIEW_SUCCESS",
-                    description=f"Successfully retrieved {len(framework_data)} frameworks",
+                    description=f"Successfully retrieved {len(framework_data)} frameworks{filter_info}",
                     userId=getattr(request.user, 'id', None),
                     userName=getattr(request.user, 'username', 'Anonymous'),
                     entityType="Framework",
@@ -235,7 +302,9 @@ def framework_list(request):
                     additionalInfo={
                         "frameworks_count": len(framework_data), 
                         "include_all_status": include_all_status,
-                        "include_all_for_identifiers": include_all_for_identifiers
+                        "include_all_for_identifiers": include_all_for_identifiers,
+                        "is_grc_admin": is_grc_admin,
+                        "filter_user_id": filter_user_id
                     }
                 )
                 

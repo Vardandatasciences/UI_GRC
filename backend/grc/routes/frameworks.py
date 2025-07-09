@@ -1592,8 +1592,44 @@ def get_rejected_frameworks_for_user(request, framework_id=None, user_id=None):
         if not user_id:
             user_id = request.GET.get('user_id', 1)  # Default user
             
+        # NEW: Check if current user is GRC Administrator
+        is_grc_admin = False
+        current_user_id = getattr(request.user, 'id', None)
+        
+        if current_user_id:
+            try:
+                rbac_record = RBAC.objects.filter(user_id=current_user_id, is_active='Y').first()
+                if rbac_record and rbac_record.is_grc_administrator():
+                    is_grc_admin = True
+                    logger.info(f"User {current_user_id} confirmed as GRC Administrator for rejected frameworks")
+            except Exception as rbac_error:
+                logger.warning(f"Error checking GRC Administrator status: {rbac_error}")
+        
         # Get all frameworks with rejected status
-        rejected_frameworks = Framework.objects.filter(Status='Rejected')
+        rejected_frameworks_query = Framework.objects.filter(Status='Rejected')
+        
+        # NEW: Apply user filtering 
+        if user_id:
+            # Filter by specific user - match against CreatedByName field
+            try:
+                target_user = Users.objects.filter(UserId=user_id).first()
+                if target_user:
+                    # Filter by both user ID (as string) and user name
+                    rejected_frameworks_query = rejected_frameworks_query.filter(
+                        Q(CreatedByName=str(user_id)) | 
+                        Q(CreatedByName=target_user.UserName)
+                    )
+                    logger.info(f"Filtering rejected frameworks for user {user_id} ({target_user.UserName})")
+                else:
+                    # If user not found, just filter by user ID as string
+                    rejected_frameworks_query = rejected_frameworks_query.filter(CreatedByName=str(user_id))
+                    logger.info(f"Filtering rejected frameworks for user ID {user_id}")
+            except Exception as user_lookup_error:
+                logger.warning(f"Error looking up user {user_id}: {user_lookup_error}")
+                # Fallback to filtering by user ID as string
+                rejected_frameworks_query = rejected_frameworks_query.filter(CreatedByName=str(user_id))
+        
+        rejected_frameworks = rejected_frameworks_query
         
         # Find the latest approval for each rejected framework
         rejected_framework_data = []

@@ -2675,7 +2675,70 @@ def list_users(request):
             'error': 'Error fetching users',
             'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_user_role_simple(request):
+    """Simple user role endpoint that gets role from session"""
+    try:
+        # Get user ID from session
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({
+                'success': False,
+                'error': 'No user session found'
+            }, status=401)
+            
+        # Get role from RBAC table using session user_id
+        try:
+            from .models import RBAC
+            rbac_record = RBAC.objects.filter(user_id=user_id, is_active='Y').first()
+            if rbac_record:
+                return Response({
+                    'success': True,
+                    'user_id': user_id,
+                    'role': rbac_record.role,
+                    'username': rbac_record.username
+                })
+        except Exception as rbac_error:
+            print(f"RBAC lookup failed: {rbac_error}")
         
+        # Fallback if RBAC lookup fails
+        return Response({
+            'success': False,
+            'error': 'Could not determine user role'
+        }, status=500)
+        
+    except Exception as e:
+        print(f"Error in get_user_role_simple: {e}")
+        return Response({
+            'success': False,
+            'error': 'Failed to get role',
+            'details': str(e)
+        }, status=500)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_users_for_dropdown_simple(request):
+    """Simple users dropdown endpoint that gets users from session data"""
+    try:
+        # Get all users from RBAC table
+        from .models import RBAC
+        rbac_users = RBAC.objects.filter(is_active='Y').order_by('username')
+        
+        user_data = []
+        for rbac_user in rbac_users:
+            user_data.append({
+                'UserId': rbac_user.user_id,
+                'UserName': rbac_user.username,
+                'Role': rbac_user.role
+            })
+        
+        return Response(user_data)
+    except Exception as e:
+        print(f"Error fetching users for dropdown: {e}")
+        return Response({"error": str(e)}, status=500)
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_framework_explorer_data(request):
