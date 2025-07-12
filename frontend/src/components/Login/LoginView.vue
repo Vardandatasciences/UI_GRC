@@ -78,25 +78,28 @@ const login = async () => {
       return
     }
     
+    // Clear all existing auth data from localStorage
+    localStorage.clear()
+    
     // Send login request with credentials to create Django session  
     const response = await axios.post('/api/login/', {
-      username: username.value,  // Backend expects username field
+      username: username.value,
       password: password.value
-    })  // withCredentials configured globally in main.js
-    
-    if (response.data.success) {
+    })
+
+    // Check if response contains user data
+    if (response.data && response.data.user) {
       // Store authentication state in localStorage for UI state management
       localStorage.setItem('isAuthenticated', 'true')
       localStorage.setItem('user', JSON.stringify(response.data.user))
       
       // Store user_id for RBAC (primary auth method now)
-      localStorage.setItem('user_id', response.data.user.id || '1')
+      localStorage.setItem('user_id', response.data.user.id.toString())
       
-      // Store email for display purposes
+      // Store user info for display purposes
       localStorage.setItem('user_email', response.data.user.email)
-      
-      // Store name for display purposes
       localStorage.setItem('user_name', response.data.user.username)
+      localStorage.setItem('user_full_name', `${response.data.user.firstName} ${response.data.user.lastName}`)
       
       // Set login flag
       localStorage.setItem('is_logged_in', 'true')
@@ -110,12 +113,10 @@ const login = async () => {
       // Emit auth change event for App.vue to listen
       window.dispatchEvent(new Event('authChanged'))
       
-      // Redirect to home with a slight delay to ensure all data is stored
-      setTimeout(() => {
-        router.push({ name: 'home' })
-      }, 100)
+      // Redirect to home page
+      router.push('/home')
     } else {
-      errorMessage.value = response.data.message || 'Login failed'
+      errorMessage.value = 'Invalid response from server'
     }
   } catch (error) {
     if (error.response && error.response.data) {

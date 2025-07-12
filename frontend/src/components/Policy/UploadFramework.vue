@@ -1103,7 +1103,7 @@
       
       const fetchExtractedContent = async (id) => {
         try {
-          const response = await axios.get(`/api/get-sections/${id}/`)
+          const response = await axios.get(`/api/get-upload-sections/${id}/`)
           
           // Transform data for UI - only include txt_chunks files
           sections.value = response.data.map((section, index) => {

@@ -13,17 +13,33 @@
     </div>
     <div class="tab-content">
       <div v-if="activeTab === 'account'" class="account-section">
-        <!-- Error/Success Messages -->
-        <div v-if="error" class="message error-message">
-          <i class="fas fa-exclamation-circle"></i> {{ error }}
+          <!-- Error/Success Messages -->
+          <div v-if="error" class="message error-message">
+            <i class="fas fa-exclamation-circle"></i> {{ error }}
+          </div>
+          <div v-if="success" class="message success-message">
+            <i class="fas fa-check-circle"></i> {{ success }}
+          </div>
+          
+        <!-- Account Info Type Selector -->
+        <div class="account-type-selector">
+          <button 
+            :class="['selector-btn', { active: accountInfoType === 'personal' }]" 
+            @click="accountInfoType = 'personal'"
+          >
+            <i class="fas fa-user"></i> Personal Information
+          </button>
+          <button 
+            :class="['selector-btn', { active: accountInfoType === 'business' }]" 
+            @click="accountInfoType = 'business'"
+          >
+            <i class="fas fa-building"></i> Business Information
+          </button>
         </div>
-        <div v-if="success" class="message success-message">
-          <i class="fas fa-check-circle"></i> {{ success }}
-        </div>
-
+          
         <div class="account-container">
           <!-- Personal Information Section -->
-          <div class="account-section-left">
+          <div v-if="accountInfoType === 'personal'" class="account-section-content">
             <form class="profile-form" @submit.prevent="savePersonalInfo">
               <h2 class="section-title"><i class="fas fa-user"></i> Personal Information</h2>
               <p class="section-helper">Update your personal details and contact information.</p>
@@ -55,7 +71,7 @@
           </div>
 
           <!-- Business Information Section -->
-          <div class="account-section-right">
+          <div v-if="accountInfoType === 'business'" class="account-section-content">
             <form class="profile-form" @submit.prevent="saveBusinessInfo">
               <h2 class="section-title"><i class="fas fa-building"></i> Business Information</h2>
               <p class="section-helper">View your organizational details and business unit information.</p>
@@ -66,11 +82,11 @@
               </div>
               <div class="form-group">
                 <label>Business Unit:</label>
-                <input type="text" v-model="businessInfo.businessUnitName" disabled />
+                <input type="text" :value="businessInfo.businessUnitName + ' (' + businessInfo.businessUnitCode + ')'" disabled />
               </div>
               <div class="form-group">
                 <label>Entity:</label>
-                <input type="text" v-model="businessInfo.entityName" disabled />
+                <input type="text" :value="businessInfo.entityName + ' - ' + businessInfo.entityType" disabled />
               </div>
               <div class="form-group">
                 <label>Location:</label>
@@ -79,6 +95,44 @@
               <div class="form-group">
                 <label>Department Head:</label>
                 <input type="text" v-model="businessInfo.departmentHead" disabled />
+              </div>
+              
+              <!-- User Role and Permissions Section -->
+              <div class="permissions-section">
+                <h3 class="section-subtitle"><i class="fas fa-user-shield"></i> Role & Permissions</h3>
+                <div v-if="userPermissions.role" class="user-role">
+                  <span class="role-badge">{{ userPermissions.role }}</span>
+                </div>
+                
+                <div v-if="!userPermissions.modules || Object.keys(userPermissions.modules).length === 0" class="no-permissions">
+                  <p>No permissions assigned.</p>
+                </div>
+                
+                <div v-else class="permissions-container">
+                  <div 
+                    v-for="(module, moduleName) in userPermissions.modules" 
+                    :key="moduleName"
+                    class="permission-module"
+                  >
+                    <div class="module-header" @click="toggleModulePermissions(moduleName)">
+                      <span class="module-name">
+                        <i :class="getModuleIcon(moduleName)"></i>
+                        {{ formatModuleName(moduleName) }}
+                      </span>
+                      <i :class="expandedModules.includes(moduleName) ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+                    </div>
+                    <transition name="fade">
+                      <div v-if="expandedModules.includes(moduleName)" class="module-permissions">
+                        <div v-for="(value, permission) in module" :key="permission" class="permission-item">
+                          <span class="permission-name">{{ formatPermissionName(permission) }}</span>
+                          <span :class="['permission-value', value ? 'allowed' : 'denied']">
+                            <i :class="value ? 'fas fa-check' : 'fas fa-times'"></i>
+                          </span>
+                        </div>
+                      </div>
+                    </transition>
+                  </div>
+                </div>
               </div>
             </form>
           </div>
@@ -220,6 +274,7 @@ export default {
   data() {
     return {
       activeTab: 'account',
+      accountInfoType: 'personal', // New property to track which info type is displayed
       tabs: [
         { key: 'account', label: 'Account', icon: 'fas fa-user' },
         { key: 'role', label: 'Role', icon: 'fas fa-exchange-alt' },
@@ -240,59 +295,179 @@ export default {
         notifMobile: ''
       },
       businessInfo: {
+        departmentId: '',
         departmentName: '',
         businessUnitName: '',
+        businessUnitCode: '',
         entityName: '',
+        entityType: '',
         location: '',
         departmentHead: ''
       },
       notifDropdownOpen: null,
       loading: false,
       error: null,
-      success: null
+      success: null,
+      userPermissions: {
+        role: '',
+        modules: {}
+      },
+      expandedModules: []
     }
   },
   mounted() {
-    this.loadUserData()
+    this.loadUserData();
+    
+    // Listen for login events
+    window.addEventListener('userLoggedIn', this.handleUserLogin);
   },
+
+  beforeUnmount() {
+    // Clean up event listener
+    window.removeEventListener('userLoggedIn', this.handleUserLogin);
+  },
+
   methods: {
+    // Handle login event
+    handleUserLogin(event) {
+      if (event.detail && event.detail.user) {
+        const userId = event.detail.user.UserId;
+        if (userId) {
+          console.log('Storing user ID in session storage:', userId);
+          sessionStorage.setItem('userId', userId);
+          this.loadUserData();
+        }
+      }
+    },
+
+    // Add a method to get the current user ID from all possible sources
+    getCurrentUserId() {
+      // Try to get from URL params first
+      const urlParams = new URLSearchParams(window.location.search);
+      let userId = urlParams.get('userId');
+      
+      if (userId) {
+        console.log('Using userId from URL:', userId);
+        return userId;
+      }
+      
+      // Try session storage
+      userId = sessionStorage.getItem('userId');
+      if (userId) {
+        console.log('Using userId from sessionStorage:', userId);
+        return userId;
+      }
+      
+      // Try from session user object
+      const sessionUser = sessionStorage.getItem('user');
+      if (sessionUser) {
+        try {
+          const parsedUser = JSON.parse(sessionUser);
+          userId = parsedUser.UserId || parsedUser.userId;
+          if (userId) {
+            console.log('Using userId from session user object:', userId);
+            return userId;
+          }
+        } catch (e) {
+          console.error('Error parsing session user:', e);
+        }
+      }
+      
+      // Try localStorage
+      const localUser = localStorage.getItem('user');
+      if (localUser) {
+        try {
+          const parsedUser = JSON.parse(localUser);
+          userId = parsedUser.UserId || parsedUser.userId;
+          if (userId) {
+            console.log('Using userId from localStorage:', userId);
+            return userId;
+          }
+        } catch (e) {
+          console.error('Error parsing local user:', e);
+        }
+      }
+      
+      // Default to 1 if nothing else works
+      console.log('No user ID found, using default: 1');
+      return '1';
+    },
+
     async loadUserData() {
-      this.loading = true
-      this.error = null
+      this.loading = true;
+      this.error = null;
 
       try {
-        // Get user ID from localStorage
-        const userData = localStorage.getItem('user')
-        if (userData) {
-          const user = JSON.parse(userData)
-          const userId = user.UserId
-
+        const userId = this.getCurrentUserId();
+        
+        if (userId) {
+          console.log('Fetching user profile for userId:', userId);
+          
           // Fetch personal info
-          const profileResponse = await fetch(`http://localhost:8000/api/user-profile/${userId}/`)
+          const profileResponse = await fetch(`http://localhost:8000/api/user-profile/${userId}/`);
           if (profileResponse.ok) {
-            const profileData = await profileResponse.json()
+            const profileData = await profileResponse.json();
+            console.log('Profile data received:', profileData);
+            
             if (profileData.status === 'success') {
-              const data = profileData.data
-              this.form.firstName = data.firstName
-              this.form.lastName = data.lastName
-              this.form.email = data.email
+              const data = profileData.data;
+              this.form.firstName = data.firstName;
+              this.form.lastName = data.lastName;
+              this.form.email = data.email;
               
               // Fetch business info
-              const businessResponse = await fetch(`http://localhost:8000/api/user-business-info/${userId}/`)
+              console.log('Fetching business info for userId:', userId);
+              const businessResponse = await fetch(`http://localhost:8000/api/user-business-info/${userId}/`);
               if (businessResponse.ok) {
-                const businessData = await businessResponse.json()
+                const businessData = await businessResponse.json();
+                console.log('Business data received:', businessData);
+                
                 if (businessData.status === 'success') {
-                  this.businessInfo = businessData.data
+                  const data = businessData.data;
+                  this.businessInfo = {
+                    departmentId: data.DepartmentId,
+                    departmentName: data.DepartmentName,
+                    businessUnitName: data.BusinessUnitName || 'N/A',
+                    businessUnitCode: data.BusinessUnitCode || 'N/A',
+                    entityName: data.EntityName || 'N/A',
+                    entityType: data.EntityType || 'N/A',
+                    location: data.Location || 'N/A',
+                    departmentHead: data.DepartmentHead || 'N/A'
+                  };
                 }
+              } else {
+                console.error('Failed to fetch business info:', await businessResponse.text());
+                this.error = 'Failed to load business information. Please try again.';
+              }
+
+              // Fetch user permissions
+              console.log('Fetching user permissions for userId:', userId);
+              const permissionsResponse = await fetch(`http://localhost:8000/api/user-permissions/${userId}/`);
+              if (permissionsResponse.ok) {
+                const permissionsData = await permissionsResponse.json();
+                console.log('Permissions data received:', permissionsData);
+                if (permissionsData.status === 'success') {
+                  this.userPermissions = permissionsData.data;
+                  this.initializeExpandedModules();
+                }
+              } else {
+                console.error('Failed to fetch user permissions:', await permissionsResponse.text());
+                this.error = 'Failed to load user permissions. Please try again.';
               }
             }
+          } else {
+            console.error('Failed to fetch profile:', await profileResponse.text());
+            this.error = 'Failed to load profile information. Please try again.';
           }
+        } else {
+          console.error('No user ID found');
+          this.error = 'User ID not found. Please log in again.';
         }
       } catch (error) {
-        console.error('Error loading user data:', error)
-        this.error = 'Failed to load user data. Please try again.'
+        console.error('Error loading user data:', error);
+        this.error = 'Failed to load user data. Please try again.';
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
@@ -428,6 +603,46 @@ async updatePassword() {
         this.error = 'Failed to save notification settings. Please try again.'
       } finally {
         this.loading = false
+      }
+    },
+
+    formatModuleName(moduleName) {
+      return moduleName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    },
+
+    getModuleIcon(moduleName) {
+      switch (moduleName) {
+        case 'compliance':
+          return 'fas fa-clipboard-check';
+        case 'policy':
+          return 'fas fa-file-contract';
+        case 'audit':
+          return 'fas fa-tasks';
+        case 'risk':
+          return 'fas fa-exclamation-triangle';
+        case 'incident':
+          return 'fas fa-shield-alt';
+        default:
+          return 'fas fa-cog';
+      }
+    },
+
+    formatPermissionName(permissionName) {
+      return permissionName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    },
+
+    toggleModulePermissions(moduleName) {
+      const index = this.expandedModules.indexOf(moduleName);
+      if (index > -1) {
+        this.expandedModules.splice(index, 1);
+      } else {
+        this.expandedModules.push(moduleName);
+      }
+    },
+
+    initializeExpandedModules() {
+      if (this.userPermissions.modules && Object.keys(this.userPermissions.modules).length > 0) {
+        this.expandedModules = [Object.keys(this.userPermissions.modules)[0]];
       }
     }
   }
@@ -953,6 +1168,205 @@ async updatePassword() {
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   outline: none;
+}
+
+.account-type-selector {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  width: 100%;
+}
+
+.selector-btn {
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  min-width: 200px;
+}
+
+.selector-btn:hover {
+  background: #e2e8f0;
+  color: #3b82f6;
+}
+
+.selector-btn.active {
+  background: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.account-section-content {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.permissions-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-role {
+  background-color: #e0f2fe;
+  color: #1e40af;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.role-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-badge::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.no-permissions {
+  text-align: center;
+  color: #64748b;
+  padding: 24px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+}
+
+.permissions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.permission-module {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.permission-module:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 16px;
+  background-color: #f1f5f9;
+  transition: background-color 0.2s ease;
+}
+
+.module-header:hover {
+  background-color: #e2e8f0;
+}
+
+.module-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.module-name i {
+  font-size: 1.1rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #dbeafe;
+  border-radius: 50%;
+  padding: 5px;
+}
+
+.module-permissions {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.permission-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.permission-item:hover {
+  background-color: #f1f5f9;
+}
+
+.permission-name {
+  flex: 1;
+  margin-right: 10px;
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.permission-value {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.permission-value.allowed {
+  color: #16a34a;
+  background-color: #dcfce7;
+}
+
+.permission-value.denied {
+  color: #dc2626;
+  background-color: #fee2e2;
+}
+
+.permission-value i {
+  font-size: 0.8rem;
 }
 
 @media (max-width: 900px) {

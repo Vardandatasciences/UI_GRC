@@ -97,7 +97,7 @@
             <div class="form-group upload">
               <label>Upload Document</label>
               <span>{{ newFramework.DocURL ? newFramework.DocURL.name : 'Choose File' }}</span>
-              <button class="browse-btn" type="button" @click="() => $refs.frameworkFileInput.click()" title="Browse and select a document file">Browse</button>
+              <button class="browse-btn" type="button" @click="() => handleFrameworkFileUpload()" title="Browse and select a document file">Browse</button>
               <input type="file" ref="frameworkFileInput" style="display:none" @change="onFrameworkFileChange" />
               <div class="helper-text">Upload a supporting document for this framework (optional)</div>
             </div>
@@ -420,11 +420,11 @@
                 <div class="helper-text">Date when this policy expires or requires review/renewal</div>
               </div>
             </div>
-              <button class="upload-btn" type="button" @click="() => $refs['policyFileInput' + selectedPolicyIdx][0].click()" title="Upload supporting documentation for this policy">
+              <button class="upload-btn" type="button" @click="() => handlePolicyFileUpload(selectedPolicyIdx)" title="Upload supporting documentation for this policy">
               <i class="fas fa-plus"></i> Upload Document
             </button>
               <span v-if="policiesForm[selectedPolicyIdx].DocURL" class="selected-file-name">{{ policiesForm[selectedPolicyIdx].DocURL.name }}</span>
-              <input type="file" :ref="'policyFileInput' + selectedPolicyIdx" style="display:none" @change="e => onPolicyFileChange(e, selectedPolicyIdx)" />
+              <input type="file" :ref="el => setPolicyFileInputRef(el, selectedPolicyIdx)" style="display:none" @change="e => onPolicyFileChange(e, selectedPolicyIdx)" />
             </div>
           </div>
         </div>
@@ -1253,7 +1253,11 @@ export default {
             formData.append('frameworkName', frameworkFormData.value.FrameworkName)
 
             try {
-              const uploadResponse = await axios.post('http://localhost:5000/api/upload', formData)
+              const uploadResponse = await axios.post('http://localhost:8000/api/upload-policy-document/', formData, {
+                headers: {
+                  'Content-Type': 'multipart/form-data'
+                }
+              })
               if (uploadResponse.data.success) {
                 frameworkFormData.value.DocURL = uploadResponse.data.file.url
               } else {
@@ -1278,7 +1282,11 @@ export default {
               formData.append('policyName', policy.PolicyName)
 
               try {
-                const uploadResponse = await axios.post('http://localhost:5000/api/upload', formData)
+                const uploadResponse = await axios.post('http://localhost:8000/api/upload-policy-document/', formData, {
+                  headers: {
+                    'Content-Type': 'multipart/form-data'
+                  }
+                })
                 if (uploadResponse.data.success) {
                   policy.DocURL = uploadResponse.data.file.url
                 } else {
@@ -1353,7 +1361,11 @@ export default {
               formData.append('policyName', policy.PolicyName)
 
               try {
-                const uploadResponse = await axios.post('http://localhost:5000/api/upload', formData)
+                const uploadResponse = await axios.post('http://localhost:8000/api/upload-policy-document/', formData, {
+                  headers: {
+                    'Content-Type': 'multipart/form-data'
+                  }
+                })
                 if (uploadResponse.data.success) {
                   policy.DocURL = uploadResponse.data.file.url
                 } else {
@@ -1439,10 +1451,31 @@ export default {
 
     // File input handlers
     const frameworkFileInput = ref(null)
+    const policyFileInputRefs = ref({})
+    
+    const setPolicyFileInputRef = (el, idx) => {
+      if (el) {
+        policyFileInputRefs.value[idx] = el
+      }
+    }
+    
+    const handleFrameworkFileUpload = () => {
+      if (frameworkFileInput.value) {
+        frameworkFileInput.value.click()
+      }
+    }
+    
+    const handlePolicyFileUpload = (idx) => {
+      if (policyFileInputRefs.value[idx]) {
+        policyFileInputRefs.value[idx].click()
+      }
+    }
+    
     const onFrameworkFileChange = (e) => {
       const file = e.target.files[0]
       if (file) newFramework.value.DocURL = file
     }
+    
     const onPolicyFileChange = (e, idx) => {
       const file = e.target.files[0]
       if (file) policiesForm.value[idx].DocURL = file
@@ -1515,6 +1548,10 @@ export default {
       handleChangeFramework,
       frameworkFormData,
       frameworkFileInput,
+      policyFileInputRefs,
+      setPolicyFileInputRef,
+      handleFrameworkFileUpload,
+      handlePolicyFileUpload,
       onFrameworkFileChange,
       onPolicyFileChange,
       getCategoriesForType,

@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .models import Framework, Policy, SubPolicy, FrameworkVersion, PolicyVersion, PolicyApproval, Users
+from .models import Framework, Policy, SubPolicy, FrameworkVersion, PolicyVersion, PolicyApproval, Users, Department, BusinessUnit, Entity, Location
 from .serializers import FrameworkSerializer, PolicySerializer, SubPolicySerializer, PolicyApprovalSerializer, UserSerializer   
 from django.db import transaction
 import traceback
@@ -23,6 +23,8 @@ from rest_framework import status
 from .models import Users
 import json
 import logging
+from django.views.decorators.http import require_http_methods
+from django.db import connection
 
 logger = logging.getLogger(__name__)
 
@@ -4300,131 +4302,85 @@ def acknowledge_policy(request, policy_id):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_user(request):
-    """
-    Authenticate a user with Django session and return a success response with user data
-    """
     try:
-        from django.contrib.auth import authenticate, login
-        from django.contrib.auth.models import User as DjangoUser
-        from django.contrib.sessions.models import Session
-        
-        data = request.data
+        data = json.loads(request.body)
         username = data.get('username')
         password = data.get('password')
         
-        if not username or not password:
-            return Response({
-                'success': False,
-                'message': 'Username and password are required'
-            }, status=status.HTTP_400_BAD_REQUEST)
+        logger.debug(f"Login attempt for username: {username}")
         
-        # Log the login attempt
-        logger.info(f"Login attempt for user: {username}")
+        # Clear any existing session data first
+        request.session.flush()
         
-        # Find the user in the GRC Users table
+        # Check if user exists in database
         try:
-            grc_user = Users.objects.get(UserName=username)
+            user = Users.objects.get(UserName=username, Password=password)
+            logger.debug(f"User found: {user.UserId} - {user.UserName}")
             
-            # Validate password (in production, use proper hashing)
-            if grc_user.Password == password:
-                # Create or get Django User for session management
-                django_user, created = DjangoUser.objects.get_or_create(
-                    username=username,
-                    defaults={
-                        'email': grc_user.Email,
-                        'first_name': grc_user.UserName,
-                        'is_active': True,
-                        'is_staff': False,
-                        'is_superuser': username == 'admin.grc'
-                    }
-                )
-                
-                # If user was created, set a default password
-                if created:
-                    django_user.set_password(password)
-                    django_user.save()
-                
-                # Authenticate and login with Django's session system
-                # First try to authenticate
-                auth_user = authenticate(request, username=username, password=password)
-                if not auth_user:
-                    # If authentication fails, update the password and try again
-                    django_user.set_password(password)
-                    django_user.save()
-                    auth_user = authenticate(request, username=username, password=password)
-                
-                if auth_user:
-                    # Login the user (creates session)
-                    login(request, auth_user)
-                    
-                    # Store GRC user ID in session for RBAC
-                    request.session['user_id'] = grc_user.UserId  # Changed from grc_user_id to user_id for RBACUtils
-                    request.session['grc_user_id'] = grc_user.UserId  # Keep both for backwards compatibility
-                    request.session['grc_username'] = grc_user.UserName
-                    request.session.save()
-                    
-                    # Log user permissions on login using RBAC system
-                    try:
-                        from .rbac.utils import RBACUtils
-                        RBACUtils.log_user_login_permissions(grc_user.UserId)
-                    except Exception as rbac_error:
-                        logger.warning(f"Could not log RBAC permissions for user {grc_user.UserId}: {rbac_error}")
-                    
-                    logger.info(f"Successful login for user: {username}")
-                    
-                    return Response({
-                        'success': True,
-                        'message': 'Login successful',
-                        'user': {
-                            'id': grc_user.UserId,
-                            'username': grc_user.UserName,
-                            'email': grc_user.Email,
-                            'django_user_id': django_user.id,
-                            'session_key': request.session.session_key
-                        }
-                    })
-                else:
-                    logger.error(f"Django authentication failed for user: {username}")
-                    return Response({
-                        'success': False,
-                        'message': 'Authentication system error'
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                    
-            else:
-                # Invalid password
-                logger.warning(f"Invalid password for user: {username}")
-                return Response({
-                    'success': False,
-                    'message': 'Invalid credentials'
-                }, status=status.HTTP_401_UNAUTHORIZED)
-                
+            # Set session data
+            request.session['user_id'] = user.UserId
+            request.session['grc_user_id'] = user.UserId  # Backup key
+            request.session['grc_username'] = user.UserName
+            request.session.save()  # Explicitly save session
+            
+            # Create response with user details including UserId
+            response_data = {
+                'status': 'success',
+                'message': 'Login successful',
+                'user': {
+                    'id': user.UserId,
+                    'UserId': user.UserId,
+                    'username': user.UserName,
+                    'email': user.Email,
+                    'firstName': user.FirstName,
+                    'lastName': user.LastName
+                }
+            }
+            
+            logger.info(f"Login successful for user: {user.UserName} (ID: {user.UserId})")
+            return Response(response_data)
+            
         except Users.DoesNotExist:
-            # User not found
-            logger.warning(f"User not found: {username}")
+            logger.warning(f"Login failed - invalid credentials for username: {username}")
             return Response({
-                'success': False,
+                'status': 'error',
                 'message': 'Invalid credentials'
             }, status=status.HTTP_401_UNAUTHORIZED)
             
     except Exception as e:
-        # Log the error
         logger.error(f"Login error: {str(e)}")
-        import traceback
-        logger.error(f"Login traceback: {traceback.format_exc()}")
         return Response({
-            'success': False,
-            'message': 'An error occurred during login'
+            'status': 'error',
+            'message': 'Server error during login',
+            'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def logout_user(request):
-    """
-    Log out a user (client-side only in this implementation)
-    """
-    return Response({
-        'success': True,
-        'message': 'Logged out successfully'
-    })
+    try:
+        # Log the logout attempt
+        user_id = request.session.get('user_id')
+        if user_id:
+            logger.info(f"Logout initiated for user ID: {user_id}")
+        
+        # Clear all session data
+        request.session.flush()
+        
+        # Delete the session completely
+        request.session.delete()
+        
+        return Response({
+            'status': 'success',
+            'message': 'Logged out successfully'
+        })
+    except Exception as e:
+        logger.error(f"Logout error: {str(e)}")
+        return Response({
+            'status': 'error',
+            'message': 'Error during logout',
+            'details': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -4627,6 +4583,208 @@ def save_user_session(request):
             'success': False,
             'message': 'Error saving user session',
             'error': str(e)
+        }, status=500)
+
+@require_http_methods(["GET"])
+def get_user_profile(request, user_id):
+    try:
+        logger.debug(f"Fetching user profile for user_id: {user_id}")
+        user = Users.objects.get(UserId=user_id)
+        
+        user_data = {
+            'firstName': user.FirstName,
+            'lastName': user.LastName,
+            'email': user.Email,
+            'username': user.UserName,
+            'isActive': user.IsActive,
+            'departmentId': user.DepartmentId
+        }
+        
+        logger.debug(f"User data fetched: {user_data}")
+        return JsonResponse({
+            'status': 'success',
+            'data': user_data
+        })
+
+    except Users.DoesNotExist:
+        logger.error(f"User not found with id: {user_id}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'User not found'
+        }, status=404)
+    except Exception as e:
+        logger.error(f"Error fetching user profile: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+@require_http_methods(["GET"])
+def get_user_business_info(request, user_id):
+    try:
+        logger.debug(f"Fetching business info for user_id: {user_id}")
+        
+        # Get user's department ID
+        user = Users.objects.get(UserId=user_id)
+        department_id = user.DepartmentId
+        
+        logger.debug(f"Found department_id: {department_id}")
+
+        # Get department info with related data using raw SQL for efficient joins
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    d.DepartmentId,
+                    d.DepartmentName,
+                    d.DepartmentHead,
+                    bu.BusinessUnitId,
+                    bu.Name as BusinessUnitName,
+                    bu.Code as BusinessUnitCode,
+                    e.Id as EntityId,
+                    e.EntityName,
+                    e.EntityType,
+                    l.LocationID,
+                    CONCAT(l.AddressLine, ', ', l.City, 
+                        CASE WHEN l.State IS NOT NULL THEN CONCAT(', ', l.State) ELSE '' END,
+                        ', ', l.Country,
+                        CASE WHEN l.PostalCode IS NOT NULL THEN CONCAT(' - ', l.PostalCode) ELSE '' END
+                    ) as Location
+                FROM department d
+                LEFT JOIN businessunits bu ON d.BusinessUnitId = bu.BusinessUnitId
+                LEFT JOIN mainentities e ON d.EntityId = e.Id
+                LEFT JOIN locations l ON e.LocationId = l.LocationID
+                WHERE d.DepartmentId = %s
+            """, [department_id])
+            
+            columns = [col[0] for col in cursor.description]
+            row = cursor.fetchone()
+            
+            if row:
+                result = dict(zip(columns, row))
+                logger.debug(f"Raw business info fetched: {result}")
+
+                # Get department head name
+                if result['DepartmentHead']:
+                    dept_head = Users.objects.filter(UserId=result['DepartmentHead']).first()
+                    if dept_head:
+                        result['DepartmentHead'] = f"{dept_head.FirstName} {dept_head.LastName}"
+                        logger.debug(f"Department head name: {result['DepartmentHead']}")
+
+                return JsonResponse({
+                    'status': 'success',
+                    'data': result
+                })
+            else:
+                logger.warning(f"No business info found for department_id: {department_id}")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'No business information found'
+                }, status=404)
+
+    except Users.DoesNotExist:
+        logger.error(f"User not found with id: {user_id}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'User not found'
+        }, status=404)
+    except Exception as e:
+        logger.error(f"Error fetching business info: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+@require_http_methods(["GET"])
+def get_user_permissions(request, user_id):
+    try:
+        logger.debug(f"Fetching permissions for user_id: {user_id}")
+        
+        # Get user from Users table
+        user = Users.objects.get(UserId=user_id)
+        
+        # Get RBAC permissions for the user
+        from .models import RBAC
+        rbac_entries = RBAC.objects.filter(user=user, is_active='Y')
+        
+        if not rbac_entries.exists():
+            logger.warning(f"No RBAC permissions found for user_id: {user_id}")
+            return JsonResponse({
+                'status': 'success',
+                'data': {
+                    'role': '',
+                    'modules': {}
+                }
+            })
+        
+        # Use the first role entry (in case user has multiple roles)
+        rbac = rbac_entries.first()
+        
+        # Format permissions by module
+        permissions = {
+            'role': rbac.role,
+            'modules': {
+                'compliance': {
+                    'create_compliance': rbac.create_compliance,
+                    'edit_compliance': rbac.edit_compliance,
+                    'approve_compliance': rbac.approve_compliance,
+                    'view_all_compliance': rbac.view_all_compliance,
+                    'compliance_performance_analytics': rbac.compliance_performance_analytics
+                },
+                'policy': {
+                    'create_policy': rbac.create_policy,
+                    'edit_policy': rbac.edit_policy,
+                    'approve_policy': rbac.approve_policy,
+                    'create_framework': rbac.create_framework,
+                    'approve_framework': rbac.approve_framework,
+                    'view_all_policy': rbac.view_all_policy,
+                    'policy_performance_analytics': rbac.policy_performance_analytics
+                },
+                'audit': {
+                    'assign_audit': rbac.assign_audit,
+                    'conduct_audit': rbac.conduct_audit,
+                    'review_audit': rbac.review_audit,
+                    'view_audit_reports': rbac.view_audit_reports,
+                    'audit_performance_analytics': rbac.audit_performance_analytics
+                },
+                'risk': {
+                    'create_risk': rbac.create_risk,
+                    'edit_risk': rbac.edit_risk,
+                    'approve_risk': rbac.approve_risk,
+                    'assign_risk': rbac.assign_risk,
+                    'evaluate_assigned_risk': rbac.evaluate_assigned_risk,
+                    'view_all_risk': rbac.view_all_risk,
+                    'risk_performance_analytics': rbac.risk_performance_analytics
+                },
+                'incident': {
+                    'create_incident': rbac.create_incident,
+                    'edit_incident': rbac.edit_incident,
+                    'assign_incident': rbac.assign_incident,
+                    'evaluate_assigned_incident': rbac.evaluate_assigned_incident,
+                    'escalate_to_risk': rbac.escalate_to_risk,
+                    'view_all_incident': rbac.view_all_incident,
+                    'incident_performance_analytics': rbac.incident_performance_analytics
+                }
+            }
+        }
+        
+        logger.debug(f"Permissions data prepared for user_id {user_id}: {permissions}")
+        
+        return JsonResponse({
+            'status': 'success',
+            'data': permissions
+        })
+        
+    except Users.DoesNotExist:
+        logger.error(f"User not found with id: {user_id}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'User not found'
+        }, status=404)
+    except Exception as e:
+        logger.error(f"Error fetching user permissions: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
         }, status=500)
 
 

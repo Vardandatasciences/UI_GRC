@@ -153,9 +153,8 @@ const logout = async () => {
     // Call the logout API endpoint
     await axios.post('/api/logout/');
     
-    // Clear authentication data
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('user');
+    // Clear all authentication data from localStorage
+    localStorage.clear()
     
     // Emit auth change event
     window.dispatchEvent(new Event('authChanged'));
@@ -165,9 +164,8 @@ const logout = async () => {
   } catch (error) {
     console.error('Logout error:', error);
     
-    // Even if the API call fails, still log out on the client side
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('user');
+    // Even if the API call fails, still clear local storage and redirect
+    localStorage.clear()
     window.dispatchEvent(new Event('authChanged'));
     router.push('/login');
   }

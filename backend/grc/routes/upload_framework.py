@@ -18,10 +18,13 @@ from langchain.chains import LLMChain
 from django.db import transaction
 from django.utils import timezone
 from datetime import datetime
-from grc.models import Framework, Policy, SubPolicy, Compliance
+from ..models import Framework, Policy, SubPolicy, Compliance
 
 # Import the processing function from final_adithya.py
-from grc.routes.final_adithya import extract_document_sections
+from grc.routes.final_adithya import (
+    extract_document_sections, find_toc_page, extract_text_with_styles_from_pages, 
+    get_num_pages
+)
 from grc.routes.policy_text_extract import process_checked_sections
 
 # RBAC Permission imports
@@ -48,8 +51,8 @@ def update_progress(task_id, progress, message, status='processing', operation=N
 def process_pdf_framework(pdf_path, task_id, output_dir):
     """Process PDF framework with detailed progress tracking."""
     try:
-        def progress_callback(progress, message, operation=None):
-            update_progress(task_id, progress, message, operation=operation)
+        def progress_callback(progress, message, operation=None, status='processing'):
+            update_progress(task_id, progress, message, status=status, operation=operation)
 
         # Initialize processing
         progress_callback(0, "Starting document processing", {
@@ -110,7 +113,7 @@ def process_pdf_framework(pdf_path, task_id, output_dir):
             'progress': 90
         })
 
-        result = process_extracted_content(text_data, sections)
+        result = {'sections': sections, 'text_data': text_data}
         
         progress_callback(100, "Document processing completed", {
             'file': os.path.basename(pdf_path),
@@ -147,22 +150,60 @@ def upload_framework_file(request):
                 'error': f'File type not allowed. Allowed types: {", ".join(allowed_extensions)}'
             }, status=400)
         
+        # STEP 1: Check if MEDIA_ROOT is configured and set up directory
+        media_root = getattr(settings, 'MEDIA_ROOT', None)
+        if not media_root:
+            # Fallback to a default path if MEDIA_ROOT is not configured
+            media_root = os.path.join(settings.BASE_DIR, 'MEDIA_ROOT')
+            print(f"MEDIA_ROOT not configured, using fallback: {media_root}")
+        
+        # Check if MEDIA folder exists and delete it if exists
+        if os.path.exists(media_root):
+            print(f"Removing existing MEDIA directory: {media_root}")
+            shutil.rmtree(media_root)
+        
+        # STEP 2: Create new MEDIA folder
+        os.makedirs(media_root, exist_ok=True)
+        print(f"Created new MEDIA directory: {media_root}")
+        
+        # STEP 3: Create framework subfolder under MEDIA
+        framework_base_dir = os.path.join(media_root, 'framework')
+        os.makedirs(framework_base_dir, exist_ok=True)
+        print(f"Created framework directory: {framework_base_dir}")
+        
         # Generate task ID for progress tracking
         task_id = f"upload_{int(time.time())}_{uploaded_file.name}"
         
-        # Create task-specific upload directory
-        upload_dir = os.path.join('framework_uploads', task_id)
-        full_upload_dir = os.path.join(settings.MEDIA_ROOT, upload_dir)
-        if not os.path.exists(full_upload_dir):
-            os.makedirs(full_upload_dir)
+        # STEP 4: Create all directories under MEDIA/framework structure
+        framework_uploads_dir = os.path.join(framework_base_dir, 'uploads', task_id)
+        extracted_sections_dir = os.path.join(framework_base_dir, 'extracted_sections', task_id)
+        checked_sections_dir = os.path.join(framework_base_dir, 'checked_sections', task_id)
+        extracted_policies_dir = os.path.join(framework_base_dir, 'extracted_policies', task_id)
+        updated_policies_dir = os.path.join(framework_base_dir, 'updated_policies', task_id)
+        complete_packages_dir = os.path.join(framework_base_dir, 'complete_packages', task_id)
+        policy_details_dir = os.path.join(framework_base_dir, 'policy_details', task_id)
         
-        # Save file in task-specific directory
-        file_path = os.path.join(upload_dir, uploaded_file.name)
-        saved_path = default_storage.save(file_path, ContentFile(uploaded_file.read()))
-        full_file_path = os.path.join(settings.MEDIA_ROOT, saved_path)
+        # Create all directories
+        os.makedirs(framework_uploads_dir, exist_ok=True)
+        os.makedirs(extracted_sections_dir, exist_ok=True)
+        os.makedirs(checked_sections_dir, exist_ok=True)
+        os.makedirs(extracted_policies_dir, exist_ok=True)
+        os.makedirs(updated_policies_dir, exist_ok=True)
+        os.makedirs(complete_packages_dir, exist_ok=True)
+        os.makedirs(policy_details_dir, exist_ok=True)
         
-        # Create output directory for extracted sections
-        output_dir = os.path.join(settings.MEDIA_ROOT, 'extracted_sections', task_id)
+        print(f"Created all framework directories under: {framework_base_dir}")
+        
+        # Save file in framework uploads directory
+        file_path = os.path.join(framework_uploads_dir, uploaded_file.name)
+        with open(file_path, 'wb') as f:
+            f.write(uploaded_file.read())
+        
+        full_file_path = file_path
+        output_dir = extracted_sections_dir
+        
+        print(f"Saved uploaded file to: {full_file_path}")
+        print(f"Output directory set to: {output_dir}")
         
         # Start actual PDF processing in background thread
         def background_process():
@@ -227,6 +268,8 @@ def upload_framework_file(request):
                     
                     # Store the output directory path for later use
                     cache.set(f'output_dir_{task_id}', output_dir, timeout=3600)
+                    # Also store the new framework structure info
+                    cache.set(f'framework_base_dir_{task_id}', framework_base_dir, timeout=3600)
                     
                     update_progress(task_id, 100, f"{file_extension.upper()} file processed successfully!", status='completed', operation='file_processing')
                     
@@ -240,7 +283,7 @@ def upload_framework_file(request):
         return JsonResponse({
             'message': 'File uploaded successfully. Processing started.',
             'filename': uploaded_file.name,
-            'file_path': saved_path,
+            'file_path': full_file_path,
             'file_size': uploaded_file.size,
             'task_id': task_id,
             'processing': True,
@@ -445,18 +488,24 @@ def create_checked_structure(request):
         
         # Get the output directory from cache
         output_dir = cache.get(f'output_dir_{task_id}')
+        framework_base_dir = cache.get(f'framework_base_dir_{task_id}')
+        
         if not output_dir or not os.path.exists(output_dir):
             return JsonResponse({'error': 'Extracted sections not found'}, status=404)
         
-        # Create output directory for checked items
-        checked_output_dir = os.path.join(settings.MEDIA_ROOT, 'checked_sections', task_id)
+        if not framework_base_dir:
+            return JsonResponse({'error': 'Framework structure not found'}, status=404)
+        
+        # Create output directory for checked items under framework structure
+        checked_output_dir = os.path.join(framework_base_dir, 'checked_sections', task_id)
         
         # Delete existing checked_sections directory if it exists
         if os.path.exists(checked_output_dir):
             print(f"Removing existing checked_sections directory: {checked_output_dir}")
             shutil.rmtree(checked_output_dir)
         
-        os.makedirs(checked_output_dir, exist_ok=True)
+        # Create fresh directory
+        os.makedirs(checked_output_dir)
         print(f"Created checked_sections directory: {checked_output_dir}")
         
         # Process each section
@@ -536,9 +585,13 @@ def get_extracted_policies(request, task_id):
                 'source': 'cache'
             })
         
-        # If not in cache, check in the extracted_policies directory
-        media_root = settings.MEDIA_ROOT
-        extracted_policies_dir = os.path.join(media_root, 'extracted_policies', task_id)
+        # If not in cache, check in the extracted_policies directory under framework structure
+        framework_base_dir = cache.get(f'framework_base_dir_{task_id}')
+        
+        if not framework_base_dir:
+            return JsonResponse({'error': 'Framework structure not found'}, status=404)
+        
+        extracted_policies_dir = os.path.join(framework_base_dir, 'extracted_policies', task_id)
         
         if not os.path.exists(extracted_policies_dir):
             os.makedirs(extracted_policies_dir, exist_ok=True)
@@ -580,10 +633,17 @@ def get_extracted_policies(request, task_id):
         
         if not excel_files:
             # No Excel files found, create an empty one
-            empty_df = pd.DataFrame(columns=[
-                'section_name', 'file_name', 'Sub_policy_id', 'sub_policy_name', 
-                'control', 'discussion', 'related_controls', 'control_enhancements', 'references'
-            ])
+            empty_df = pd.DataFrame({
+                'section_name': [],
+                'file_name': [],
+                'Sub_policy_id': [],
+                'sub_policy_name': [],
+                'control': [],
+                'discussion': [],
+                'related_controls': [],
+                'control_enhancements': [],
+                'references': []
+            })
             
             output_file = os.path.join(extracted_policies_dir, f"extracted_policies_{task_id}.xlsx")
             empty_df.to_excel(output_file, index=False)
@@ -630,7 +690,7 @@ def direct_process_checked_sections(request):
     """
     try:
         # Create a task ID
-        task_id = f"direct_{int(time())}"
+        task_id = f"direct_{int(time.time())}"
         
         # Update progress status
         update_progress(task_id, 10, "Starting direct policy extraction...", status='processing', operation='direct_policy_extraction')
@@ -698,11 +758,24 @@ def save_updated_policies(request):
         # Create output directory for updated policies
         media_root = settings.MEDIA_ROOT
         updated_policies_dir = os.path.join(media_root, 'updated_policies')
+        
+        # Ensure the directory exists
         os.makedirs(updated_policies_dir, exist_ok=True)
+        
+        # Create task-specific directory
+        task_updated_dir = os.path.join(updated_policies_dir, task_id)
+        
+        # Delete existing task-specific directory if it exists
+        if os.path.exists(task_updated_dir):
+            print(f"Removing existing updated_policies directory: {task_updated_dir}")
+            shutil.rmtree(task_updated_dir)
+        
+        # Create fresh directory
+        os.makedirs(task_updated_dir, exist_ok=True)
         
         # Generate filename with timestamp
         timestamp = int(time.time())
-        output_file = os.path.join(updated_policies_dir, f"updated_policies_{task_id}_{timestamp}.xlsx")
+        output_file = os.path.join(task_updated_dir, f"updated_policies_{task_id}_{timestamp}.xlsx")
         
         # Save to Excel
         df.to_excel(output_file, index=False)
@@ -752,6 +825,13 @@ def save_policies(request):
         # 1. Save to extracted_policies (original location)
         media_root = settings.MEDIA_ROOT
         extracted_policies_dir = os.path.join(media_root, 'extracted_policies', task_id)
+        
+        # Delete existing extracted_policies directory if it exists
+        if os.path.exists(extracted_policies_dir):
+            print(f"Removing existing extracted_policies directory: {extracted_policies_dir}")
+            shutil.rmtree(extracted_policies_dir)
+        
+        # Create fresh directory
         os.makedirs(extracted_policies_dir, exist_ok=True)
         
         source_file = os.path.join(extracted_policies_dir, f"extracted_policies_{task_id}.xlsx")
@@ -759,6 +839,13 @@ def save_policies(request):
         
         # 2. Create a copy in updated_policies with timestamp
         updated_policies_dir = os.path.join(media_root, 'updated_policies', task_id)
+        
+        # Delete existing updated_policies directory if it exists
+        if os.path.exists(updated_policies_dir):
+            print(f"Removing existing updated_policies directory: {updated_policies_dir}")
+            shutil.rmtree(updated_policies_dir)
+        
+        # Create fresh directory
         os.makedirs(updated_policies_dir, exist_ok=True)
         
         # Generate filename with timestamp
@@ -841,6 +928,13 @@ def save_single_policy(request):
         
         # 1. Save to extracted_policies (original location) to update the source file
         extracted_policies_dir = os.path.join(media_root, 'extracted_policies', task_id)
+        
+        # Delete existing extracted_policies directory if it exists
+        if os.path.exists(extracted_policies_dir):
+            print(f"Removing existing extracted_policies directory for single policy update: {extracted_policies_dir}")
+            shutil.rmtree(extracted_policies_dir)
+        
+        # Create fresh directory
         os.makedirs(extracted_policies_dir, exist_ok=True)
         
         source_file = os.path.join(extracted_policies_dir, f"extracted_policies_{task_id}.xlsx")
@@ -863,6 +957,13 @@ def save_single_policy(request):
         
         # 2. Also save a copy to updated_policies with timestamp
         updated_policies_dir = os.path.join(media_root, 'updated_policies', task_id)
+        
+        # Delete existing updated_policies directory if it exists
+        if os.path.exists(updated_policies_dir):
+            print(f"Removing existing updated_policies directory for single policy: {updated_policies_dir}")
+            shutil.rmtree(updated_policies_dir)
+        
+        # Create fresh directory
         os.makedirs(updated_policies_dir, exist_ok=True)
         
         # Generate filename with timestamp
@@ -1004,8 +1105,19 @@ def save_complete_policy_package(request):
             return JsonResponse({'error': 'Task ID is required'}, status=400)
         
         # Create directories if they don't exist
-        media_root = settings.MEDIA_ROOT
-        complete_package_dir = os.path.join(media_root, 'complete_packages', task_id)
+        framework_base_dir = cache.get(f'framework_base_dir_{task_id}')
+        
+        if not framework_base_dir:
+            return JsonResponse({'error': 'Framework structure not found'}, status=404)
+        
+        complete_package_dir = os.path.join(framework_base_dir, 'complete_packages', task_id)
+        
+        # Delete existing directory if it exists
+        if os.path.exists(complete_package_dir):
+            print(f"Removing existing complete_packages directory: {complete_package_dir}")
+            shutil.rmtree(complete_package_dir)
+            
+        # Create fresh directory
         os.makedirs(complete_package_dir, exist_ok=True)
         
         # Create hierarchical JSON structure
@@ -1299,8 +1411,21 @@ def save_framework_to_database(request):
             return JsonResponse({'error': 'Task ID is required'}, status=400)
         
         # Find the latest JSON file in the complete_packages directory
-        media_root = settings.MEDIA_ROOT
-        complete_package_dir = os.path.join(media_root, 'complete_packages', task_id)
+        framework_base_dir = cache.get(f'framework_base_dir_{task_id}')
+        
+        if not framework_base_dir:
+            return JsonResponse({'error': 'Framework structure not found'}, status=404)
+        
+        complete_package_dir = os.path.join(framework_base_dir, 'complete_packages', task_id)
+        
+        # Ensure extracted_policies directory is clean
+        extracted_policies_dir = os.path.join(framework_base_dir, 'extracted_policies', task_id)
+        if os.path.exists(extracted_policies_dir):
+            print(f"Removing existing extracted_policies directory: {extracted_policies_dir}")
+            shutil.rmtree(extracted_policies_dir)
+            
+        # Create fresh directory for extracted policies
+        os.makedirs(extracted_policies_dir, exist_ok=True)
         
         if not os.path.exists(complete_package_dir):
             return JsonResponse({'error': 'Complete package directory not found'}, status=404)
@@ -1520,6 +1645,27 @@ def load_default_data(request):
         # Generate a unique task ID for the default data loading
         task_id = f"default_{int(time.time())}_{str(uuid.uuid4())[:8]}"
         
+        # STEP 1: Check if MEDIA_ROOT is configured and set up directory
+        media_root = getattr(settings, 'MEDIA_ROOT', None)
+        if not media_root:
+            # Fallback to a default path if MEDIA_ROOT is not configured
+            media_root = os.path.join(settings.BASE_DIR, 'MEDIA_ROOT')
+            print(f"MEDIA_ROOT not configured, using fallback: {media_root}")
+        
+        # Check if MEDIA folder exists and delete it if exists
+        if os.path.exists(media_root):
+            print(f"Removing existing MEDIA directory: {media_root}")
+            shutil.rmtree(media_root)
+        
+        # STEP 2: Create new MEDIA folder
+        os.makedirs(media_root, exist_ok=True)
+        print(f"Created new MEDIA directory: {media_root}")
+        
+        # STEP 3: Create framework subfolder under MEDIA
+        framework_base_dir = os.path.join(media_root, 'framework')
+        os.makedirs(framework_base_dir, exist_ok=True)
+        print(f"Created framework directory: {framework_base_dir}")
+        
         # Define the default data directory - using the correct temp_media path
         temp_media_base = os.path.join(os.path.dirname(settings.BASE_DIR), 'backend', 'temp_media')
         default_upload_dir = os.path.join(temp_media_base, 'framework_uploads', 'upload_1750339433_NIST.SP.800-53r5.pdf')
@@ -1534,12 +1680,12 @@ def load_default_data(request):
                 'error': f'Default data not found at: {default_extracted_dir}'
             }, status=404)
         
-        # Create new directories for this task
-        new_upload_dir = os.path.join(settings.MEDIA_ROOT, 'framework_uploads', task_id)
-        new_extracted_dir = os.path.join(settings.MEDIA_ROOT, 'extracted_sections', task_id)
-        new_complete_packages_dir = os.path.join(settings.MEDIA_ROOT, 'complete_packages', task_id)
-        new_checked_sections_dir = os.path.join(settings.MEDIA_ROOT, 'checked_sections', task_id)
-        new_extracted_policies_dir = os.path.join(settings.MEDIA_ROOT, 'extracted_policies', task_id)
+        # Create new directories under framework structure
+        new_upload_dir = os.path.join(framework_base_dir, 'uploads', task_id)
+        new_extracted_dir = os.path.join(framework_base_dir, 'extracted_sections', task_id)
+        new_complete_packages_dir = os.path.join(framework_base_dir, 'complete_packages', task_id)
+        new_checked_sections_dir = os.path.join(framework_base_dir, 'checked_sections', task_id)
+        new_extracted_policies_dir = os.path.join(framework_base_dir, 'extracted_policies', task_id)
         
         # Copy default data to new task directories
         def background_copy():
@@ -1573,6 +1719,7 @@ def load_default_data(request):
                 
                 # Store the output directory path for later use
                 cache.set(f'output_dir_{task_id}', new_extracted_dir, timeout=3600)
+                cache.set(f'framework_base_dir_{task_id}', framework_base_dir, timeout=3600)
                 
                 # Store additional info about this being default data
                 cache.set(f'is_default_data_{task_id}', True, timeout=3600)

@@ -105,6 +105,7 @@ from .routes.upload_framework import (
     save_framework_to_database,
     load_default_data
 )
+from .routes.policy import get_policy_extraction_progress
 from .routes.frameworks import (
     create_framework_approval,
     get_framework_approvals,
@@ -145,7 +146,7 @@ from .risk_views import RiskViewSet, IncidentViewSet, ComplianceViewSet, RiskIns
 from .routes import previous_version
 from .routes import compliance
 from .routes import user_profile
-
+from .routes.user_profile import *
 # ============================================================================
 # AUTHENTICATION URLs
 # ============================================================================
@@ -314,7 +315,7 @@ policy_urlpatterns = [
     path('policy-status-change-requests-by-reviewer/<int:reviewer_id>/', get_policy_status_change_requests_by_reviewer, name='get-policy-status-change-requests-by-reviewer-filtered'),
     path('policies/<int:policy_id>/test-debug/', test_policy_status_debug, name='test-policy-status-debug'),
     path('upload-policy-document/', upload_policy_document, name='upload-policy-document'),
-    
+    path('api/upload-policy-document/', upload_policy_document, name='api-upload-policy-document'),
     # Entities and Utilities
     path('entities/', get_entities, name='get-entities'),
     path('update-activeinactive-by-date/', update_existing_activeinactive_by_date, name='update-activeinactive-by-date'),
@@ -326,21 +327,34 @@ policy_urlpatterns = [
     
     # Upload Framework Management
     path('upload-framework/', upload_framework_file, name='upload-framework'),
+    path('api/upload-framework/', upload_framework_file, name='api-upload-framework'),
     path('load-default-data/', load_default_data, name='load-default-data'),
+    path('api/load-default-data/', load_default_data, name='api-load-default-data'),
     path('processing-status/<str:task_id>/', get_processing_status, name='processing-status'),
-    path('get-sections/<str:task_id>/', get_sections, name='get-sections'),
+    path('api/processing-status/<str:task_id>/', get_processing_status, name='api-processing-status'),
+    path('get-upload-sections/<str:task_id>/', get_sections, name='get-upload-sections'),
+    path('api/get-upload-sections/<str:task_id>/', get_sections, name='api-get-upload-sections'),
     path('update-section/', update_section, name='update-section'),
+    path('api/update-section/', update_section, name='api-update-section'),
     path('create-checked-structure/', create_checked_structure, name='create-checked-structure'),
+    path('api/create-checked-structure/', create_checked_structure, name='api-create-checked-structure'),
     path('extracted-policies/<str:task_id>/', get_extracted_policies, name='get-extracted-policies'),
+    path('api/get-extracted-policies/<str:task_id>/', get_extracted_policies, name='api-get-extracted-policies'),
     path('direct-process-checked-sections/', direct_process_checked_sections, name='direct-process-checked-sections'),
     path('save-updated-policies/', save_updated_policies, name='save-updated-policies'),
     path('save-policies/', save_policies, name='save-policies'),
+    path('api/save-policies/', save_policies, name='api-save-policies'),
     path('save-single-policy/', save_single_policy, name='save-single-policy'),
+    path('api/save-single-policy/', save_single_policy, name='api-save-single-policy'),
     path('saved-excel-files/<str:task_id>/', get_saved_excel_files, name='get-saved-excel-files'),
     path('policy-extraction-progress/<str:task_id>/', get_policy_extraction_progress, name='get-policy-extraction-progress'),
+    path('api/policy-extraction-progress/<str:task_id>/', get_policy_extraction_progress, name='api-get-policy-extraction-progress'),
     path('save-policy-details/', save_policy_details, name='save-policy-details'),
+    path('api/save-policy-details/', save_policy_details, name='api-save-policy-details'),
     path('save-complete-policy-package/', save_complete_policy_package, name='save-complete-policy-package'),
+    path('api/save-complete-policy-package/', save_complete_policy_package, name='api-save-complete-policy-package'),
     path('save-framework-to-database/', save_framework_to_database, name='save-framework-to-database'),
+    path('api/save-framework-to-database/', save_framework_to_database, name='api-save-framework-to-database'),
 ]
 
 # ============================================================================
@@ -839,4 +853,10 @@ urlpatterns = [
     # NOTIFICATIONS
     # ========================================================================
     *notification_urlpatterns,
+    
+    # User Profile URLs
+    path('user-profile/<int:user_id>/', views.get_user_profile, name='user_profile'),
+    path('user-business-info/<int:user_id>/', views.get_user_business_info, name='user_business_info'),
+    path('user-permissions/<int:user_id>/', views.get_user_permissions, name='user_permissions'),
+    path('current-user/', user_profile.get_current_user, name='current-user'),
 ]

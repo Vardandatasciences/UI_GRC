@@ -17,7 +17,7 @@ class Users(models.Model):
     FirstName=models.CharField(max_length=255)
     LastName=models.CharField(max_length=255)
     IsActive=models.BooleanField(default=True)
-    Department=models.CharField(max_length=50)
+    DepartmentId=models.CharField(max_length=50)
 
 
     class Meta:

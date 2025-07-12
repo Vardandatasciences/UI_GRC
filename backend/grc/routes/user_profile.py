@@ -1,7 +1,11 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.db import connection
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 from ..models import Users, Department, BusinessUnit, Entity, Location
+from ..rbac.utils import RBACUtils
 
 @require_http_methods(["GET"])
 def get_user_business_info(request, user_id):
@@ -54,6 +58,7 @@ def get_user_business_info(request, user_id):
 @require_http_methods(["GET"])
 def get_user_profile(request, user_id):
     try:
+        logger.debug(f"Fetching user profile for user_id: {user_id}")
         user = Users.objects.get(UserId=user_id)
         
         return JsonResponse({
@@ -78,3 +83,47 @@ def get_user_profile(request, user_id):
             'status': 'error',
             'message': str(e)
         }, status=500) 
+
+
+
+
+@api_view(['GET'])
+def get_current_user(request):
+    """
+    Returns the current logged-in user's details including their role from session
+    """
+    try:
+        # Get user details from session using RBAC utils
+        user_id = RBACUtils.get_user_id_from_request(request)
+        
+        if not user_id:
+            return Response(
+                {'error': 'User not authenticated or session expired'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Get RBAC record which contains role and username
+        rbac_record = RBACUtils.get_user_rbac_record(user_id)
+        
+        if not rbac_record:
+            return Response(
+                {'error': 'No RBAC record found for user'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        user_data = {
+            'UserId': user_id,
+            'UserName': rbac_record.username,
+            'role': rbac_record.role,
+            'permissions': RBACUtils.get_user_permissions_summary(user_id)
+        }
+        
+        print("Constructed user_data:", user_data)
+        
+        return Response(user_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to fetch user details: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

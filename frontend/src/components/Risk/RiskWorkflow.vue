@@ -19,14 +19,35 @@
       </div>
       
       <div class="risk-workflow-user-filter">
-        <div v-if="loading && users.length === 0" class="risk-workflow-loading-indicator">Loading users...</div>
-        <CustomDropdown
-          v-else
-          v-model="selectedUserId"
-          :config="userDropdownConfig"
-          @change="fetchData"
-        />
-      </div>
+  <!-- Show loading state while fetching user info -->
+  <div v-if="isLoadingUser" class="risk-workflow-loading-indicator">
+    Loading user information...
+  </div>
+  
+  <!-- Show dropdown only for GRC Administrator -->
+  <div v-else-if="isGRCAdministrator">
+    <div v-if="loading && users.length === 0" class="risk-workflow-loading-indicator">
+      Loading users...
+    </div>
+    <CustomDropdown
+      v-else
+      v-model="selectedUserId"
+      :config="userDropdownConfig"
+      @change="fetchData"
+    />
+  </div>
+  
+  <!-- Show logged-in user info for non-GRC administrators -->
+  <div v-else class="risk-workflow-logged-user-info">
+    <div class="user-info-display">
+      <i class="fas fa-user"></i>
+      <span>{{ loggedInUser ? loggedInUser.UserName : 'Unknown User' }}</span>
+      <span v-if="loggedInUser && loggedInUser.department" class="user-department">
+        ({{ loggedInUser.department }})
+      </span>
+    </div>
+  </div>
+</div>
       
       <!-- Tabs for User Tasks and Reviewer Tasks -->
       <div class="risk-workflow-tabs">
@@ -992,6 +1013,8 @@ export default {
       userNotifications: [],
       reviewCompleted: false,
       reviewApproved: false,
+      loggedInUser: null,
+      isLoadingUser: true,
       formDetails: {
         cost: '',
         impact: '',
@@ -1027,6 +1050,9 @@ export default {
     }
   },
   computed: {
+    isGRCAdministrator() {
+    return this.loggedInUser && this.loggedInUser.role === 'GRC Administrator';
+  },
     userCount() {
       console.log('Current users in data:', this.users.length, this.users);
       return this.users.length;
@@ -1092,6 +1118,7 @@ export default {
   mounted() {
     // Fetch users immediately when component mounts
     this.fetchUsers();
+    this.fetchLoggedInUser();
     
     // Set a small delay to ensure the DOM is fully rendered
     setTimeout(() => {
@@ -1102,9 +1129,50 @@ export default {
     }, 500);
   },
   methods: {
+    async fetchLoggedInUser() {
+    this.isLoadingUser = true;
+    try {
+      // Call your backend API to get logged-in user details
+      const response = await axios.get('http://localhost:8000/api/current-user/');
+      this.loggedInUser = response.data;
+      
+      console.log('Logged in user:', this.loggedInUser);
+      
+      // If not GRC Administrator, automatically set the selected user
+      if (!this.isGRCAdministrator) {
+        this.selectedUserId = this.loggedInUser.UserId;
+        console.log('Auto-selected user ID:', this.selectedUserId);
+      }
+      
+      // Now fetch users list (only if GRC Administrator)
+      if (this.isGRCAdministrator) {
+        await this.fetchUsers();
+      } else {
+        // For non-GRC administrators, create a single-user array
+        this.users = [this.loggedInUser];
+        this.loading = false;
+      }
+      
+      // Fetch data after user is loaded
+      this.fetchData();
+      
+    } catch (error) {
+      console.error('Error fetching logged-in user:', error);
+      this.error = `Failed to fetch user details: ${error.message}`;
+    } finally {
+      this.isLoadingUser = false;
+    }
+  },
     fetchUsers() {
       console.log('Fetching users...');
       this.loading = true;
+
+        // ADD THIS CHECK AT THE BEGINNING:
+      if (!this.isGRCAdministrator) {
+        console.log('Not GRC Administrator, skipping user list fetch');
+        this.loading = false;
+        return;
+      }
       
       // Try both endpoints to ensure we get users data
       axios.get('http://localhost:8000/api/custom-users/')

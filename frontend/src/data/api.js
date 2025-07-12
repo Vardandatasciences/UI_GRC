@@ -79,6 +79,7 @@ export const api = {
   // Incidents
   getIncidents: () => axiosInstance.get('/api/incident-incidents/'),
 
+
   // Audits
   getAllAudits: () => axiosInstance.get('/audits/'),
   getMyAudits: () => axiosInstance.get('/my-audits/'),
@@ -138,6 +139,8 @@ export const api = {
       'Accept': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     }
   }),
+
+  fetchExtractedContent: (id) => axiosInstance.get(`/api/get-upload-sections/${id}/`),
 
   // Debug
   debugPrintAuditData: (id) => {

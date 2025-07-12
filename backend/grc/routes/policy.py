@@ -1,8 +1,9 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 from ..models import Framework, Policy, SubPolicy, FrameworkVersion, PolicyVersion, PolicyApproval, Users, FrameworkApproval, ExportTask, PolicyCategory, Entity, LastChecklistItemVerified
 from ..serializers import FrameworkSerializer, PolicySerializer, SubPolicySerializer, PolicyApprovalSerializer, UserSerializer, EntitySerializer   
 from django.db import transaction, models
@@ -8479,9 +8480,14 @@ def get_policies_paginated_by_status(request):
         )
 
 
+# Import necessary modules
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import parser_classes
+
 # New file upload endpoint for policy documents
 @api_view(['POST'])
 @permission_classes([PolicyCreatePermission])
+@parser_classes([MultiPartParser, FormParser])
 def upload_policy_document(request):
     """
     Upload a policy document to S3 via the RenderS3Client
@@ -8503,6 +8509,12 @@ def upload_policy_document(request):
     # Configure secure logging to prevent log injection
     logger = logging.getLogger(__name__)
     
+    # Debug: Log request details
+    logger.info("=== Policy Document Upload Request ===")
+    logger.info(f"Content-Type: {request.content_type}")
+    logger.info(f"Files: {request.FILES.keys()}")
+    logger.info(f"POST data: {request.POST.keys()}")
+    
     # Log upload attempt
     send_log(
         module="Policy",
@@ -8517,10 +8529,12 @@ def upload_policy_document(request):
     try:
         # Validate request
         if 'file' not in request.FILES:
+            logger.error("No file provided in request")
             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
         
         # Get file from request
         file = request.FILES['file']
+        logger.info(f"Processing file: {file.name} (size: {file.size} bytes)")
         
         # Get other parameters
         user_id = request.data.get('userId', getattr(request.user, 'id', 'default-user'))
@@ -8528,17 +8542,19 @@ def upload_policy_document(request):
         doc_type = request.data.get('type', 'policy')
         policy_name = request.data.get('policyName', 'Unnamed Policy')
         
+        logger.info(f"Upload parameters - user_id: {user_id}, file_name: {file_name}, doc_type: {doc_type}, policy_name: {policy_name}")
+        
         # Security: Sanitize inputs
         user_id = escape_html(str(user_id))
         file_name = escape_html(file_name)
         doc_type = escape_html(doc_type)
         policy_name = escape_html(policy_name)
         
-        logger.info(f"Processing document upload: {file_name} ({doc_type}) for policy {policy_name}")
-        
         # Save file temporarily
         temp_file_path = os.path.join('temp_uploads', file_name)
         os.makedirs(os.path.dirname(temp_file_path), exist_ok=True)
+        
+        logger.info(f"Saving file temporarily to: {temp_file_path}")
         
         with open(temp_file_path, 'wb+') as destination:
             for chunk in file.chunks():
@@ -8546,6 +8562,7 @@ def upload_policy_document(request):
         
         # Initialize S3 client
         s3_client = RenderS3Client()
+        logger.info("Initialized S3 client, attempting upload...")
         
         # Upload file to S3
         upload_result = s3_client.upload(
@@ -8557,8 +8574,11 @@ def upload_policy_document(request):
         # Clean up temporary file
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
+            logger.info("Cleaned up temporary file")
         
         if upload_result.get('success'):
+            logger.info(f"Upload successful. S3 URL: {upload_result['file_info']['url']}")
+            
             # Log successful upload
             send_log(
                 module="Policy",
@@ -8587,6 +8607,8 @@ def upload_policy_document(request):
                 }
             })
         else:
+            logger.error(f"Upload failed: {upload_result.get('error')}")
+            
             # Log upload failure
             send_log(
                 module="Policy",
@@ -8605,6 +8627,8 @@ def upload_policy_document(request):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
     except Exception as e:
+        logger.error(f"Unexpected error during upload: {str(e)}", exc_info=True)
+        
         # Log unexpected error
         send_log(
             module="Policy",

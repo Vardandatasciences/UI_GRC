@@ -3286,3 +3286,30 @@ button.review-btn:hover, .user-tasks-table .review-btn:hover {
     padding-right: 10px;
   }
 }
+
+/* Add at the end of RiskWorkflow.css */
+.risk-workflow-logged-user-info {
+  margin: 20px 0;
+  padding: 0 20px;
+}
+
+.user-info-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.user-info-display i {
+  color: #666;
+}
+
+.user-info-display .user-department {
+  color: #666;
+  font-style: italic;
+}
