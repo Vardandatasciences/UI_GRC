@@ -640,28 +640,12 @@ def login(request):
     email = request.data.get('email')
     password = request.data.get('password')
    
-    # Hardcoded credentials
-    if email == "admin@example.com" and password == "password123":
-        # Set user_id in session for RBAC
-        request.session['user_id'] = 1  # Default admin user ID
-        request.session['email'] = email
-        request.session['name'] = 'Admin User'
-        request.session.save()  # Ensure session is saved
-        
-        return Response({
-            'success': True,
-            'message': 'Login successful',
-            'user': {
-                'email': email,
-                'name': 'Admin User',
-                'user_id': 1
-            }
-        })
-    else:
-        return Response({
-            'success': False,
-            'message': 'Invalid credentials'
-        }, status=status.HTTP_401_UNAUTHORIZED)
+    # This is a test/demo login endpoint - in production, use proper authentication
+    # For now, we'll comment this out to force proper authentication
+    return Response({
+        'success': False,
+        'message': 'Please use the main login endpoint at /api/login/'
+    }, status=status.HTTP_401_UNAUTHORIZED)
  
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -950,7 +934,12 @@ def create_compliance(request):
     print(f"Received request data: {request.data}")
     
     # Get user_id from session for logging and tracking
-    user_id = request.session.get('user_id', 1)  # Default to 1 if no session
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return Response({
+            'success': False,
+            'message': 'User authentication required. Please log in and try again.'
+        }, status=status.HTTP_401_UNAUTHORIZED)
     print(f"User ID from session: {user_id}")
     
     try:
@@ -1911,17 +1900,10 @@ def get_rejected_approvals(request, reviewer_id):
             
             # Only include if not already resubmitted
             if not is_resubmitted:
-                # Check if this is the latest version for this identifier to avoid duplicates
-                latest_approval = PolicyApproval.objects.filter(
-                    Identifier=approval.Identifier,
-                    ApprovedNot=False
-                ).order_by('-ApprovalId').first()
-                
-                if latest_approval and latest_approval.ApprovalId == approval.ApprovalId:
-                    approvals_list.append(approval_dict)
-                    print(f"Added rejection for {approval.Identifier} (ID: {approval.ApprovalId})")
-                else:
-                    print(f"Skipping {approval.Identifier} (ID: {approval.ApprovalId}) as it's not the latest rejected version")
+                # Include all rejected approvals for editing and resubmission
+                # Don't deduplicate since each rejection represents a separate submission
+                approvals_list.append(approval_dict)
+                print(f"Added rejection for {approval.Identifier} (ID: {approval.ApprovalId})")
             else:
                 print(f"Skipping {approval.Identifier} as it's already in resubmission process")
            

@@ -121,8 +121,20 @@ def create_framework_approval(request, framework_id):
         print(f"DEBUG: Creating framework approval for: {safe_framework_name} (ID: {framework_id})")
         
         # Extract data for the approval
-        user_id = request.data.get('UserId', 1)  # Default to 1 if not provided
-        reviewer_id = framework.Reviewer if framework.Reviewer else request.data.get('ReviewerId', 2)  # Default to 2
+        # UserId should be the framework creator, not from request data
+        user_id = framework.CreatedBy if framework.CreatedBy else request.session.get('user_id')
+        if not user_id:
+            return Response(
+                {"error": "User authentication required. Please log in and try again."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        reviewer_id = framework.Reviewer if framework.Reviewer else request.data.get('ReviewerId')
+        if not reviewer_id:
+            return Response(
+                {"error": "Reviewer assignment required. Please select a reviewer and try again."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Security: XSS Protection - Escape policy and subpolicy text fields before adding to approval data
         policies_data = []
@@ -442,7 +454,9 @@ def submit_framework_review(request, framework_id):
         
         # Get current version info
         current_version = request.data.get('currentVersion', 'u1')
-        user_id = request.data.get('UserId', 1)
+        user_id = request.data.get('UserId') or getattr(request.user, 'id', None)
+        if not user_id:
+            return Response({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
         reviewer_id = request.data.get('ReviewerId', 2)
         approved = request.data.get('ApprovedNot')
         extracted_data = request.data.get('ExtractedData')
@@ -905,7 +919,17 @@ def approve_reject_subpolicy_in_framework(request, framework_id, policy_id, subp
     Approve or reject a specific subpolicy within a framework approval process
     """
     try:
-        framework = Framework.objects.get(FrameworkId=framework_id)
+        # First check if all database records exist
+        try:
+            framework = Framework.objects.get(FrameworkId=framework_id)
+            policy = Policy.objects.get(PolicyId=policy_id, FrameworkId=framework)
+            subpolicy = SubPolicy.objects.get(SubPolicyId=subpolicy_id, PolicyId=policy)
+        except Framework.DoesNotExist:
+            return Response({"error": "Framework not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Policy.DoesNotExist:
+            return Response({"error": "Policy not found in framework"}, status=status.HTTP_404_NOT_FOUND)
+        except SubPolicy.DoesNotExist:
+            return Response({"error": "Subpolicy not found in policy"}, status=status.HTTP_404_NOT_FOUND)
         
         # Get the latest framework approval
         latest_approval = FrameworkApproval.objects.filter(
@@ -923,35 +947,27 @@ def approve_reject_subpolicy_in_framework(request, framework_id, policy_id, subp
             return Response({"error": "Approval status not provided"}, status=status.HTTP_400_BAD_REQUEST)
         
         # Create a copy of the extracted data for the new version
-        extracted_data = latest_approval.ExtractedData.copy()
+        extracted_data = latest_approval.ExtractedData.copy() if latest_approval.ExtractedData else {}
         
         # Find and update the subpolicy status in JSON
         policies = extracted_data.get('policies', [])
-        policy_found = False
-        subpolicy_found = False
         
         with transaction.atomic():
-            for policy in policies:
-                if str(policy.get('PolicyId')) == str(policy_id):
-                    policy_found = True
-                    subpolicies = policy.get('subpolicies', [])
+            # Update the policy and subpolicy in the extracted data
+            for policy_data in policies:
+                if str(policy_data.get('PolicyId')) == str(policy_id):
+                    subpolicies = policy_data.get('subpolicies', [])
                     
-                    for subpolicy in subpolicies:
-                        if str(subpolicy.get('SubPolicyId')) == str(subpolicy_id):
-                            subpolicy_found = True
-                            
-                            # Update the actual SubPolicy record in database
+                    for subpolicy_data in subpolicies:
+                        if str(subpolicy_data.get('SubPolicyId')) == str(subpolicy_id):
                             try:
-                                db_subpolicy = SubPolicy.objects.get(SubPolicyId=subpolicy_id)
-                                db_policy = Policy.objects.get(PolicyId=policy_id)
-                                db_framework = framework
                                 submitter = Users.objects.get(UserId=latest_approval.UserId)
                                 reviewer = Users.objects.get(UserId=latest_approval.ReviewerId)
                                 notification_service = NotificationService()
                                 
                                 if approved:
-                                    db_subpolicy.Status = 'Approved'
-                                    subpolicy['Status'] = 'Approved'
+                                    subpolicy.Status = 'Approved'
+                                    subpolicy_data['Status'] = 'Approved'
                                     
                                     # Check if all subpolicies for this policy are approved
                                     all_subpolicies = SubPolicy.objects.filter(PolicyId=policy_id)
@@ -959,9 +975,9 @@ def approve_reject_subpolicy_in_framework(request, framework_id, policy_id, subp
                                     
                                     # If all subpolicies are approved, we can mark the policy as ready for approval
                                     if all_approved:
-                                        db_policy.Status = 'Ready for Approval'
-                                        db_policy.save()
-                                        policy['Status'] = 'Ready for Approval'
+                                        policy.Status = 'Ready for Approval'
+                                        policy.save()
+                                        policy_data['Status'] = 'Ready for Approval'
                                     
                                     # Send notification to submitter about approval
                                     if submitter and reviewer:
@@ -971,28 +987,28 @@ def approve_reject_subpolicy_in_framework(request, framework_id, policy_id, subp
                                             'email_type': 'gmail',
                                             'template_data': [
                                                 submitter.UserName,
-                                                db_policy.PolicyName,
+                                                policy.PolicyName,
                                                 reviewer.UserName,
-                                                db_framework.FrameworkName
+                                                framework.FrameworkName
                                             ]
                                         }
                                         notification_service.send_multi_channel_notification(notification_data)
                                 else:
-                                    db_subpolicy.Status = 'Rejected'
-                                    subpolicy['Status'] = 'Rejected'
+                                    subpolicy.Status = 'Rejected'
+                                    subpolicy_data['Status'] = 'Rejected'
                                     
                                     # Also update the policy status in database
-                                    db_policy.Status = 'Rejected'
-                                    db_policy.save()
-                                    policy['Status'] = 'Rejected'
+                                    policy.Status = 'Rejected'
+                                    policy.save()
+                                    policy_data['Status'] = 'Rejected'
                                     
                                     # Add rejection details to framework ExtractedData
                                     extracted_data['framework_approval'] = {
                                         'approved': False,
-                                        'remarks': rejection_reason or f'Subpolicy "{subpolicy.get("SubPolicyName", "")}" was rejected',
+                                        'remarks': rejection_reason or f'Subpolicy "{subpolicy_data.get("SubPolicyName", "")}" was rejected',
                                         'rejected_by': 'Reviewer',
                                         'rejection_level': 'subpolicy',
-                                        'rejected_item': f'Subpolicy: {subpolicy.get("SubPolicyName", "")}'
+                                        'rejected_item': f'Subpolicy: {subpolicy_data.get("SubPolicyName", "")}'
                                     }
                                     
                                     # Send notification to submitter about rejection
@@ -1003,9 +1019,9 @@ def approve_reject_subpolicy_in_framework(request, framework_id, policy_id, subp
                                             'email_type': 'gmail',
                                             'template_data': [
                                                 submitter.UserName,
-                                                db_policy.PolicyName,
+                                                policy.PolicyName,
                                                 reviewer.UserName,
-                                                rejection_reason or f'Policy "{policy.get("PolicyName", "")}" was rejected'
+                                                rejection_reason or f'Policy "{policy_data.get("PolicyName", "")}" was rejected'
                                             ]
                                         }
                                         notification_service.send_multi_channel_notification(notification_data)
@@ -1037,21 +1053,12 @@ def approve_reject_subpolicy_in_framework(request, framework_id, policy_id, subp
                                         # Create new reviewer version without final submission
                                         return create_reviewer_version(framework, extracted_data, latest_approval, False, rejection_reason)
                                 
-                                db_subpolicy.save()
+                                subpolicy.save()
                                 
-                            except SubPolicy.DoesNotExist:
-                                return Response({"error": "SubPolicy not found in database"}, status=status.HTTP_404_NOT_FOUND)
+                            except Users.DoesNotExist:
+                                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
                             
                             break
-                    
-                    if not approved:
-                        break  # No need to continue if rejecting
-            
-            if not policy_found:
-                return Response({"error": "Policy not found in framework"}, status=status.HTTP_404_NOT_FOUND)
-            
-            if not subpolicy_found:
-                return Response({"error": "Subpolicy not found in policy"}, status=status.HTTP_404_NOT_FOUND)
             
             # If approved, just update the current approval
             latest_approval.ExtractedData = extracted_data
@@ -1062,8 +1069,6 @@ def approve_reject_subpolicy_in_framework(request, framework_id, policy_id, subp
                 "subpolicy_status": "Approved" if approved else "Rejected"
             }, status=status.HTTP_200_OK)
         
-    except Framework.DoesNotExist:
-        return Response({"error": "Framework not found"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -1666,11 +1671,20 @@ def request_framework_status_change(request, framework_id):
     Creates a framework approval entry that needs to be approved by a reviewer
     """
     logger.info(f"Framework status change request for framework ID: {framework_id}")
+    
+    # Get user ID from session or request data
+    user_id = request.session.get('user_id') or request.data.get('UserId') or getattr(request.user, 'id', None)
+    print('UserId--------------------------------------------------------------------:', user_id)
+    
+    if not user_id:
+        logger.error("User ID not found in session or request")
+        return Response({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
     send_log(
         module="Framework",
         actionType="REQUEST_STATUS_CHANGE",
         description=f"Framework status change request for framework ID: {framework_id}",
-        userId=getattr(request.user, 'id', None),
+        userId=user_id,
         userName=getattr(request.user, 'username', 'Anonymous'),
         entityType="FrameworkApproval",
         ipAddress=get_client_ip(request)
@@ -1691,9 +1705,11 @@ def request_framework_status_change(request, framework_id):
             return Response({"error": "Only Active frameworks can be submitted for status change approval"}, 
                            status=status.HTTP_400_BAD_REQUEST)
         
-        # Extract data for the approval
-        user_id = request.data.get('UserId', 1)  # Default to 1 if not provided
-        reviewer_id = request.data.get('ReviewerId', 2)  # Default to 2
+        # Extract reviewer ID from request
+        reviewer_id = request.data.get('ReviewerId')
+        if not reviewer_id:
+            return Response({"error": "Reviewer ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
         print(f"DEBUG: UserId: {user_id}, ReviewerId: {reviewer_id}")
         
         reviewer_email = None
@@ -1906,11 +1922,17 @@ def approve_framework_status_change(request, approval_id):
     Approve or reject a framework status change request
     """
     logger.info(f"Framework status change approval attempt for approval ID: {approval_id}")
+    
+    # Get user_id from request data, fallback to request.user.id
+    user_id = request.data.get('user_id') or getattr(request.user, 'id', None)
+    if not user_id:
+        return Response({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
     send_log(
         module="Framework",
         actionType="APPROVE_STATUS_CHANGE",
         description=f"Framework status change approval attempt for approval ID: {approval_id}",
-        userId=getattr(request.user, 'id', None),
+        userId=user_id,
         userName=getattr(request.user, 'username', 'Anonymous'),
         entityType="FrameworkApproval",
         ipAddress=get_client_ip(request)
@@ -1948,7 +1970,7 @@ def approve_framework_status_change(request, approval_id):
                 extracted_data['status_change_approval'] = {
                     'approved': True,
                     'remarks': remarks or 'Status change approved',
-                    'approved_by': 'Reviewer',
+                    'approved_by': user_id,  # Use the provided user_id
                     'approval_date': timezone.now().date().isoformat()
                 }
                 
@@ -1981,126 +2003,126 @@ def approve_framework_status_change(request, approval_id):
                                 # Update subpolicies in extracted data
                                 for subpolicy_data in policy_data.get('subpolicies', []):
                                     subpolicy_data['Status'] = 'Approved'
-            else:
-                logger.info(f"Rejecting status change for framework {framework.FrameworkId}")
-                # Reject status change request, revert framework status
-                framework.Status = 'Approved'  # Reset from "Under Review"
-                framework.save()
+                else:
+                    logger.info(f"Rejecting status change for framework {framework.FrameworkId}")
+                    # Reject status change request, revert framework status
+                    framework.Status = 'Approved'  # Reset from "Under Review"
+                    framework.save()
+                    
+                    # Update extracted data
+                    extracted_data['status_change_approval'] = {
+                        'approved': False,
+                        'remarks': remarks or 'Status change rejected',
+                        'rejected_by': 'Reviewer',
+                        'rejection_date': timezone.now().date().isoformat()
+                    }
                 
-                # Update extracted data
-                extracted_data['status_change_approval'] = {
-                    'approved': False,
-                    'remarks': remarks or 'Status change rejected',
-                    'rejected_by': 'Reviewer',
-                    'rejection_date': timezone.now().date().isoformat()
-                }
-            
-            # Determine the next reviewer version
-            latest_reviewer_version = FrameworkApproval.objects.filter(
-                FrameworkId=framework,
-                Version__startswith='r'
-            ).order_by('-ApprovalId').first()
-            
-            if latest_reviewer_version:
-                try:
-                    version_num = int(latest_reviewer_version.Version[1:])
-                    new_version = f'r{version_num + 1}'
-                except ValueError:
+                # Determine the next reviewer version
+                latest_reviewer_version = FrameworkApproval.objects.filter(
+                    FrameworkId=framework,
+                    Version__startswith='r'
+                ).order_by('-ApprovalId').first()
+                
+                if latest_reviewer_version:
+                    try:
+                        version_num = int(latest_reviewer_version.Version[1:])
+                        new_version = f'r{version_num + 1}'
+                    except ValueError:
+                        new_version = 'r1'
+                else:
                     new_version = 'r1'
-            else:
-                new_version = 'r1'
+                    
+                # Create a new approval record with the reviewer version
+                new_approval = FrameworkApproval.objects.create(
+                    FrameworkId=framework,
+                    ExtractedData=extracted_data,
+                    UserId=approval.UserId,
+                    ReviewerId=approval.ReviewerId,
+                    Version=new_version,
+                    ApprovedNot=approved
+                )
                 
-            # Create a new approval record with the reviewer version
-            new_approval = FrameworkApproval.objects.create(
-                FrameworkId=framework,
-                ExtractedData=extracted_data,
-                UserId=approval.UserId,
-                ReviewerId=approval.ReviewerId,
-                Version=new_version,
-                ApprovedNot=approved
+                # Set approval date if approved
+                if approved:
+                    new_approval.ApprovedDate = timezone.now().date()
+                    new_approval.save()
+                
+                # Send notification to submitter about approval or rejection
+                submitter_email = None
+                submitter_name = framework.CreatedByName
+                if submitter_name:
+                    submitter_user = Users.objects.filter(UserName=submitter_name).first()
+                    if submitter_user:
+                        submitter_email = submitter_user.Email
+                reviewer_name = None
+                if approval.ReviewerId:
+                    reviewer_user = Users.objects.filter(UserId=approval.ReviewerId).first()
+                    if reviewer_user:
+                        reviewer_name = reviewer_user.UserName
+                if submitter_email and reviewer_name:
+                    notification_service = NotificationService()
+                    if approved:
+                        notification_data = {
+                            'notification_type': 'frameworkInactivationApproved',
+                            'email': submitter_email,
+                            'email_type': 'gmail',
+                            'template_data': [
+                                submitter_name,
+                                framework.FrameworkName,
+                                reviewer_name,
+                                remarks or 'Status change approved'
+                            ]
+                        }
+                    else:
+                        notification_data = {
+                            'notification_type': 'frameworkInactivationRejected',
+                            'email': submitter_email,
+                            'email_type': 'gmail',
+                            'template_data': [
+                                framework.FrameworkName,
+                                submitter_name,
+                                reviewer_name,
+                                remarks or 'Status change rejected'
+                            ]
+                        }
+                    notification_result = notification_service.send_multi_channel_notification(notification_data)
+                    print(f"Framework inactivation approval notification result: {notification_result}")
+                
+            logger.info(f"Framework status change {'approved' if approved else 'rejected'} successfully for approval {approval_id}")
+            send_log(
+                module="Framework",
+                actionType="APPROVE_STATUS_CHANGE_SUCCESS",
+                description=f"Framework status change {'approved' if approved else 'rejected'} successfully for framework '{framework.FrameworkName}'",
+                userId=user_id,
+                userName=getattr(request.user, 'username', 'Anonymous'),
+                entityType="FrameworkApproval",
+                entityId=new_approval.ApprovalId,
+                ipAddress=get_client_ip(request),
+                additionalInfo={
+                    "framework_id": framework.FrameworkId,
+                    "framework_name": framework.FrameworkName,
+                    "approved": approved,
+                    "approval_id": new_approval.ApprovalId,
+                    "remarks": remarks
+                }
             )
             
-            # Set approval date if approved
-            if approved:
-                new_approval.ApprovedDate = timezone.now().date()
-                new_approval.save()
+            return Response({
+                "message": f"Framework status change request {'approved' if approved else 'rejected'}",
+                "ApprovalId": new_approval.ApprovalId,
+                "Version": new_approval.Version,
+                "ApprovedNot": approved,
+                "framework_status": framework.Status,
+                "framework_active_inactive": framework.ActiveInactive
+            }, status=status.HTTP_200_OK)
             
-            # Send notification to submitter about approval or rejection
-            submitter_email = None
-            submitter_name = framework.CreatedByName
-            if submitter_name:
-                submitter_user = Users.objects.filter(UserName=submitter_name).first()
-                if submitter_user:
-                    submitter_email = submitter_user.Email
-            reviewer_name = None
-            if approval.ReviewerId:
-                reviewer_user = Users.objects.filter(UserId=approval.ReviewerId).first()
-                if reviewer_user:
-                    reviewer_name = reviewer_user.UserName
-            if submitter_email and reviewer_name:
-                notification_service = NotificationService()
-                if approved:
-                    notification_data = {
-                        'notification_type': 'frameworkInactivationApproved',
-                        'email': submitter_email,
-                        'email_type': 'gmail',
-                        'template_data': [
-                            submitter_name,
-                            framework.FrameworkName,
-                            reviewer_name,
-                            remarks or 'Status change approved'
-                        ]
-                    }
-                else:
-                    notification_data = {
-                        'notification_type': 'frameworkInactivationRejected',
-                        'email': submitter_email,
-                        'email_type': 'gmail',
-                        'template_data': [
-                            framework.FrameworkName,
-                            submitter_name,
-                            reviewer_name,
-                            remarks or 'Status change rejected'
-                        ]
-                    }
-                notification_result = notification_service.send_multi_channel_notification(notification_data)
-                print(f"Framework inactivation approval notification result: {notification_result}")
-            
-        logger.info(f"Framework status change {'approved' if approved else 'rejected'} successfully for approval {approval_id}")
-        send_log(
-            module="Framework",
-            actionType="APPROVE_STATUS_CHANGE_SUCCESS",
-            description=f"Framework status change {'approved' if approved else 'rejected'} successfully for framework '{framework.FrameworkName}'",
-            userId=getattr(request.user, 'id', None),
-            userName=getattr(request.user, 'username', 'Anonymous'),
-            entityType="FrameworkApproval",
-            entityId=new_approval.ApprovalId,
-            ipAddress=get_client_ip(request),
-            additionalInfo={
-                "framework_id": framework.FrameworkId,
-                "framework_name": framework.FrameworkName,
-                "approved": approved,
-                "approval_id": new_approval.ApprovalId,
-                "remarks": remarks
-            }
-        )
-        
-        return Response({
-            "message": f"Framework status change request {'approved' if approved else 'rejected'}",
-            "ApprovalId": new_approval.ApprovalId,
-            "Version": new_approval.Version,
-            "ApprovedNot": approved,
-            "framework_status": framework.Status,
-            "framework_active_inactive": framework.ActiveInactive
-        }, status=status.HTTP_200_OK)
-        
     except FrameworkApproval.DoesNotExist:
         logger.error(f"Framework approval not found with ID: {approval_id}")
         send_log(
             module="Framework",
             actionType="APPROVE_STATUS_CHANGE_FAILED",
             description=f"Framework status change approval failed - approval not found (ID: {approval_id})",
-            userId=getattr(request.user, 'id', None),
+            userId=user_id,
             userName=getattr(request.user, 'username', 'Anonymous'),
             entityType="FrameworkApproval",
             logLevel="ERROR",
@@ -2114,7 +2136,7 @@ def approve_framework_status_change(request, approval_id):
             module="Framework",
             actionType="APPROVE_STATUS_CHANGE_FAILED",
             description=f"Framework status change approval failed with error: {str(e)}",
-            userId=getattr(request.user, 'id', None),
+            userId=user_id,
             userName=getattr(request.user, 'username', 'Anonymous'),
             entityType="FrameworkApproval",
             logLevel="ERROR",
@@ -2563,3 +2585,60 @@ def create_test_users(request):
         import traceback
         traceback.print_exc()
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([PolicyViewPermission])
+def get_frameworks(request):
+    """
+    Get all frameworks with optional filtering
+    """
+    try:
+        # Get query parameters
+        user_id = request.GET.get('user_id')
+        include_all_status = request.GET.get('include_all_status', 'false').lower() == 'true'
+        
+        # Base query
+        frameworks = Framework.objects.all()
+        
+        # Apply user filter if provided
+        if user_id:
+            frameworks = frameworks.filter(
+                Q(CreatedBy=user_id) |  # Frameworks created by user
+                Q(Reviewer=user_id)     # Frameworks assigned to user for review
+            )
+        
+        # If include_all_status is false, only return frameworks that need review
+        if not include_all_status:
+            frameworks = frameworks.filter(Status='Under Review')
+        
+        # Convert frameworks to list of dictionaries
+        frameworks_list = []
+        for framework in frameworks:
+            framework_dict = {
+                'FrameworkId': framework.FrameworkId,
+                'FrameworkName': framework.FrameworkName,
+                'FrameworkDescription': framework.FrameworkDescription,
+                'Category': framework.Category,
+                'Status': framework.Status,
+                'CreatedBy': framework.CreatedBy,
+                'CreatedByName': framework.CreatedByName,
+                'CreatedByDate': framework.CreatedByDate,
+                'StartDate': framework.StartDate,
+                'EndDate': framework.EndDate,
+                'Identifier': framework.Identifier,
+                'DocURL': framework.DocURL,
+                'Reviewer': framework.Reviewer,
+                'ReviewerId': framework.ReviewerId,
+                'InternalExternal': framework.InternalExternal,
+                'CurrentVersion': framework.CurrentVersion,
+                'UserId': framework.CreatedBy  # Include UserId for consistency
+            }
+            frameworks_list.append(framework_dict)
+        
+        return Response(frameworks_list)
+    except Exception as e:
+        logger.error(f"Error in get_frameworks: {str(e)}")
+        return Response(
+            {"error": "Failed to fetch frameworks"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

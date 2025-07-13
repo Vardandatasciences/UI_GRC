@@ -630,16 +630,25 @@ def framework_list(request):
                         if not creator_user_id and 'policies' in request.data and len(request.data['policies']) > 0:
                             creator_user_id = request.data['policies'][0].get('CreatedById')
                         
+                        # Try to get user ID from session if not provided in request
+                        if not creator_user_id:
+                            creator_user_id = request.session.get('user_id')
+                        
                         if not creator_user_id and framework_data['CreatedByName']:
                             try:
                                 creator_user = Users.objects.filter(
                                     UserName=framework_data['CreatedByName']
                                 ).only('UserId').first()
-                                creator_user_id = creator_user.UserId if creator_user else 1
+                                creator_user_id = creator_user.UserId if creator_user else None
                             except Exception:
-                                creator_user_id = 1  # Default to admin user
-                        else:
-                            creator_user_id = 1  # Default to admin user
+                                creator_user_id = None
+                        
+                        # If still no user ID, return error instead of using hardcoded fallback
+                        if not creator_user_id:
+                            return Response(
+                                {"error": "User authentication required. Please log in and try again."},
+                                status=status.HTTP_401_UNAUTHORIZED
+                            )
                         
                         # Security: Ensure numeric IDs to prevent injection
                         if isinstance(creator_user_id, str):
@@ -649,12 +658,19 @@ def framework_list(request):
                                 creator_user_id = 1
                         
                         if reviewer_id is None or reviewer_id == '':
-                            reviewer_id = 2  # Default reviewer ID
+                            # Instead of hardcoded fallback, make reviewer assignment explicit
+                            return Response(
+                                {"error": "Reviewer assignment required. Please select a reviewer and try again."},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
                         elif isinstance(reviewer_id, str):
                             try:
                                 reviewer_id = int(reviewer_id)
                             except (ValueError, TypeError):
-                                reviewer_id = 2
+                                return Response(
+                                    {"error": "Invalid reviewer ID format. Please select a valid reviewer."},
+                                    status=status.HTTP_400_BAD_REQUEST
+                                )
                         
                         # Security: Create extracted data with sanitized content
                         extracted_data = {
@@ -3688,24 +3704,16 @@ def list_rejected_policy_approvals_for_user(request, user_id):
         additionalInfo={"user_id": user_id}
     )
     
-    # Filter policies by ReviewerId (not UserId) since we want reviewer's view
+    # Filter policies where the user is either the creator (UserId) or the reviewer (ReviewerId)
+    # and the approval status is rejected (ApprovedNot=0)
     rejected_approvals = PolicyApproval.objects.filter(
-        ReviewerId=user_id,
+        Q(ReviewerId=user_id) | Q(UserId=user_id),
         ApprovedNot=0  # Use 0 instead of False for consistency
     ).order_by('-ApprovalId')  # Get the most recent first
     
-    # Get unique policy IDs to ensure we only return the latest version of each policy
-    unique_policies = {}
-    
-    for approval in rejected_approvals:
-        policy_id = approval.PolicyId_id if approval.PolicyId_id else f"approval_{approval.ApprovalId}"
-        
-        # If we haven't seen this policy yet, or if this is a newer version
-        if policy_id not in unique_policies or float(approval.Version.lower().replace('r', '').replace('u', '') or 0):
-            unique_policies[policy_id] = approval
-    
-    # Convert to a list of unique approvals
-    unique_approvals = list(unique_policies.values())
+    # Return all rejected approvals - don't deduplicate since each rejection 
+    # represents a separate submission that can be edited and resubmitted
+    unique_approvals = list(rejected_approvals)
     
     # Log successful rejected policy approvals listing for user
     send_log(
@@ -6735,10 +6743,17 @@ def create_tailored_framework(request):
             }
             
             # Get user ID for framework approval
-            user_id = 1  # Default user ID
-            created_by_user = Users.objects.filter(UserName=framework.CreatedByName).first()
-            if created_by_user:
-                user_id = created_by_user.UserId
+            user_id = request.session.get('user_id')
+            if not user_id:
+                # Try to get user ID from the framework creator name
+                created_by_user = Users.objects.filter(UserName=framework.CreatedByName).first()
+                if created_by_user:
+                    user_id = created_by_user.UserId
+                else:
+                    return Response(
+                        {"error": "User authentication required. Please log in and try again."},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
             
             framework_approval = FrameworkApproval.objects.create(
                 FrameworkId=framework,
@@ -6957,12 +6972,21 @@ def create_tailored_policy(request):
             return Response({'error': 'No reviewer ID found'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Get user ID for policy approval
-        user_id = 1  # Default user ID
-        created_by_name = data.get('CreatedByName', '')
-        if created_by_name:
-            created_by_user = Users.objects.filter(UserName=created_by_name).first()
-            if created_by_user:
-                user_id = created_by_user.UserId
+        user_id = request.session.get('user_id')
+        if not user_id:
+            # Try to get user ID from the creator name
+            created_by_name = data.get('CreatedByName', '')
+            if created_by_name:
+                created_by_user = Users.objects.filter(UserName=created_by_name).first()
+                if created_by_user:
+                    user_id = created_by_user.UserId
+            
+            # If still no user ID, return error
+            if not user_id:
+                return Response(
+                    {"error": "User authentication required. Please log in and try again."},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
         
         # Validate policy category combination
         try:
@@ -7029,6 +7053,16 @@ def create_tailored_policy(request):
             entities_data = data.get('Entities', [])
             print(f"DEBUG: Entities data received in create_tailored_policy: {entities_data} (type: {type(entities_data)})")
             
+            # Get creator information
+            created_by_name = data.get('CreatedByName', '')
+            if not created_by_name:
+                # Try to get from session/user
+                created_by_name = getattr(request.user, 'username', None)
+                if not created_by_name:
+                    created_by_name = request.session.get('grc_username')
+                if not created_by_name:
+                    return Response({"error": "Creator name not provided"}, status=status.HTTP_400_BAD_REQUEST)
+
             # Security: Sanitize policy data before database storage (Django ORM provides SQL injection protection)
             new_policy_data = {
                 'FrameworkId': target_framework,
@@ -7273,33 +7307,35 @@ def create_tailored_policy(request):
 
 @api_view(['PUT'])
 @permission_classes([PolicyApprovePermission])
-def resubmit_policy_approval(request, policy_id):
+def resubmit_policy_approval(request, approval_id):
     """
     Resubmit a rejected policy with updated data
     Creates new PolicyApproval record with incremented version
     """
-    # Import security modules
-    from django.utils.html import escape as escape_html
-    import shlex
-    
     try:
-        print(f"DEBUG: resubmit_policy_approval called for policy_id: {policy_id}")
+        print(f"DEBUG: resubmit_policy_approval called for approval_id: {approval_id}")
         print(f"DEBUG: Request data: {request.data}")
         
-        # Get the policy
-        policy = Policy.objects.get(PolicyId=policy_id)
+        # Get the approval and policy
+        approval = PolicyApproval.objects.get(ApprovalId=approval_id)
+        policy = approval.PolicyId
         print(f"DEBUG: Found policy with name: {policy.PolicyName}, status: {policy.Status}")
         
-        # Verify policy exists and is rejected
-        if policy.Status != 'Rejected':
-            print(f"DEBUG: Policy status is not 'Rejected', it's '{policy.Status}'")
-            return Response({"error": "Only rejected policies can be resubmitted"}, status=400)
-        
-        # Get the latest PolicyApproval for this policy to determine next version
+        # Verify policy exists and can be resubmitted
+        allowed_statuses = ['Rejected', 'Under Review']
+        if policy.Status not in allowed_statuses:
+            print(f"DEBUG: Policy status '{policy.Status}' is not in allowed statuses {allowed_statuses}")
+            return Response({"error": "Only rejected or under review policies can be resubmitted"}, status=400)
+            
+        # Get the latest PolicyApproval to check its status
         latest_approval = PolicyApproval.objects.filter(
             PolicyId=policy
         ).order_by('-Version').first()
         
+        if latest_approval and latest_approval.ApprovedNot is True:
+            return Response({"error": "Cannot resubmit an approved policy"}, status=400)
+        
+        # Get the latest PolicyApproval for this policy to determine next version
         if latest_approval:
             # Parse the version and increment
             current_version = latest_approval.Version or 'u1'
@@ -7315,19 +7351,27 @@ def resubmit_policy_approval(request, policy_id):
         
         print(f"DEBUG: New version will be: {new_version}")
         
-        # Security: Sanitize input data before updating policy
-        if 'PolicyName' in request.data:
-            policy.PolicyName = escape_html(request.data['PolicyName'])
-        if 'PolicyDescription' in request.data:
-            policy.PolicyDescription = escape_html(request.data['PolicyDescription'])
-        if 'Scope' in request.data:
-            policy.Scope = escape_html(request.data['Scope'])
-        if 'Objective' in request.data:
-            policy.Objective = escape_html(request.data['Objective'])
-        if 'Department' in request.data:
-            policy.Department = escape_html(request.data['Department'])
-        if 'Applicability' in request.data:
-            policy.Applicability = escape_html(request.data['Applicability'])
+        # Get ExtractedData from request
+        extracted_data = request.data.get('ExtractedData')
+        if not extracted_data:
+            return Response({"error": "ExtractedData is required"}, status=400)
+            
+        print(f"DEBUG: Received ExtractedData: {extracted_data}")
+        
+        # Update policy fields from ExtractedData
+        policy.PolicyName = extracted_data.get('PolicyName', policy.PolicyName)
+        policy.PolicyDescription = extracted_data.get('PolicyDescription', policy.PolicyDescription)
+        policy.Scope = extracted_data.get('Scope', policy.Scope)
+        policy.Objective = extracted_data.get('Objective', policy.Objective)
+        policy.Department = extracted_data.get('Department', policy.Department)
+        policy.Applicability = extracted_data.get('Applicability', policy.Applicability)
+        
+        # Preserve the original creator information
+        original_creator = Users.objects.filter(UserId=approval.UserId).first()
+        if original_creator:
+            policy.CreatedByName = original_creator.UserName
+            extracted_data['CreatedByName'] = original_creator.UserName
+            extracted_data['CreatedBy'] = original_creator.UserId
         
         # Update policy status to Under Review
         policy.Status = 'Under Review'
@@ -7335,70 +7379,52 @@ def resubmit_policy_approval(request, policy_id):
         print(f"DEBUG: Updated policy status to 'Under Review'")
         
         # Process subpolicies if provided
-        if 'subpolicies' in request.data and request.data['subpolicies']:
-            print(f"DEBUG: Processing {len(request.data['subpolicies'])} subpolicies")
+        if 'subpolicies' in extracted_data and extracted_data['subpolicies']:
+            print(f"DEBUG: Processing {len(extracted_data['subpolicies'])} subpolicies")
             
-            for subpolicy_data in request.data['subpolicies']:
+            for subpolicy_data in extracted_data['subpolicies']:
                 print(f"DEBUG: Processing subpolicy: {subpolicy_data}")
                 
                 if 'SubPolicyId' in subpolicy_data and subpolicy_data['SubPolicyId']:
                     try:
                         subpolicy = SubPolicy.objects.get(SubPolicyId=subpolicy_data['SubPolicyId'])
                         
-                        # Security: Sanitize subpolicy fields before updating
-                        if 'SubPolicyName' in subpolicy_data:
-                            subpolicy.SubPolicyName = escape_html(subpolicy_data['SubPolicyName'])
-                        if 'Description' in subpolicy_data:
-                            subpolicy.Description = escape_html(subpolicy_data['Description'])
-                        if 'Control' in subpolicy_data:
-                            subpolicy.Control = escape_html(subpolicy_data['Control'])
+                        # Update subpolicy fields
+                        subpolicy.SubPolicyName = subpolicy_data.get('SubPolicyName', subpolicy.SubPolicyName)
+                        subpolicy.Description = subpolicy_data.get('Description', subpolicy.Description)
+                        subpolicy.Control = subpolicy_data.get('Control', subpolicy.Control)
                         
-                        # Reset subpolicy status to Under Review
-                        subpolicy.Status = 'Under Review'
+                        # Reset subpolicy status to Under Review if it was Rejected
+                        if subpolicy.Status == 'Rejected':
+                            subpolicy.Status = 'Under Review'
                         subpolicy.save()
                         print(f"DEBUG: Updated subpolicy {subpolicy.SubPolicyId}")
                         
                     except SubPolicy.DoesNotExist:
                         print(f"DEBUG: SubPolicy with ID {subpolicy_data['SubPolicyId']} not found")
         
-        # Security: Prepare ExtractedData with sanitized content for the new PolicyApproval
-        extracted_data = {
-            'PolicyName': policy.PolicyName,  # Already escaped above
-            'PolicyDescription': policy.PolicyDescription,  # Already escaped above
-            'Scope': policy.Scope,  # Already escaped above
-            'Objective': policy.Objective,  # Already escaped above
-            'Department': policy.Department,  # Already escaped above
-            'Applicability': policy.Applicability,  # Already escaped above
-            'Status': 'Under Review',
-            'subpolicies': []
-        }
-        
-        # Security: XSS Protection - Escape subpolicy data before adding to ExtractedData
-        subpolicies = SubPolicy.objects.filter(PolicyId=policy)
-        for subpolicy in subpolicies:
-            extracted_data['subpolicies'].append({
-                'SubPolicyId': subpolicy.SubPolicyId,
-                'SubPolicyName': subpolicy.SubPolicyName,  # May be already escaped if updated above
-                'Description': subpolicy.Description,  # May be already escaped if updated above
-                'Control': subpolicy.Control,  # May be already escaped if updated above
-                'Status': subpolicy.Status,
-                'Identifier': escape_html(subpolicy.Identifier)  # Escape identifier for HTML context
-            })
-        
-        print(f"DEBUG: Prepared ExtractedData with {len(extracted_data['subpolicies'])} subpolicies")
-        
-        # Create new PolicyApproval record
+        # Use the original approval's user and reviewer IDs
+        user_id = approval.UserId
+        reviewer_id = approval.ReviewerId
+
+        # Ensure creator information is preserved in ExtractedData
+        original_creator = Users.objects.filter(UserId=user_id).first()
+        if original_creator:
+            extracted_data['CreatedByName'] = original_creator.UserName
+            extracted_data['CreatedBy'] = original_creator.UserId
+
+        # Create new PolicyApproval record with the provided ExtractedData
         new_policy_approval = PolicyApproval.objects.create(
             PolicyId=policy,
-            ExtractedData=extracted_data,
+            ExtractedData=extracted_data,  # Use the ExtractedData with preserved creator info
             Version=new_version,
-            UserId=request.data.get('UserId', 1),  # Default to user 1 if not provided
-            ReviewerId=None,  # Will be assigned when reviewer picks it up
-            ApprovedNot=None,  # Reset approval status
+            UserId=user_id,
+            ReviewerId=reviewer_id,
+            ApprovedNot=None,
             ApprovedDate=None,
             Identifier=f"POL-{policy.PolicyId}-{new_version}"
         )
-        
+
         print(f"DEBUG: Created new PolicyApproval with ID: {new_policy_approval.ApprovalId}, Version: {new_version}")
         
         # Send notification to reviewer about policy resubmission
@@ -7412,15 +7438,14 @@ def resubmit_policy_approval(request, policy_id):
             if new_policy_approval.UserId:
                 submitter = Users.objects.get(UserId=new_policy_approval.UserId)
             if reviewer and reviewer.Email:
-                # Security: XSS Protection - Escape HTML content before building email template
                 notification_data = {
                     'notification_type': 'policyResubmitted',
                     'email': reviewer.Email,
                     'email_type': 'gmail',
                     'template_data': [
-                        escape_html(reviewer.UserName),  # Escape reviewer name for HTML context
-                        escape_html(policy.PolicyName),  # Policy name already escaped but ensure consistency
-                        escape_html(submitter.UserName if submitter else '')  # Escape submitter name for HTML context
+                        reviewer.UserName,
+                        policy.PolicyName,
+                        submitter.UserName if submitter else ''
                     ]
                 }
                 notification_service.send_multi_channel_notification(notification_data)
@@ -7431,7 +7456,8 @@ def resubmit_policy_approval(request, policy_id):
             "message": "Policy resubmitted successfully",
             "ApprovalId": new_policy_approval.ApprovalId,
             "Version": new_version,
-            "Status": "Under Review"
+            "Status": "Under Review",
+            "ExtractedData": extracted_data
         })
         
     except Policy.DoesNotExist:
@@ -7586,6 +7612,27 @@ def get_policy_categories(request):
         return Response(categories_data)
     except Exception as e:
         print(f"Error in get_policy_categories: {str(e)}")
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([PolicyViewPermission])
+def get_policy_subcategories(request):
+    try:
+        policy_type = request.GET.get('policy_type')
+        policy_category = request.GET.get('policy_category')
+
+        if not policy_type or not policy_category:
+            return Response({"error": "Both policy_type and policy_category are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get unique subcategories for the given type and category
+        subcategories = PolicyCategory.objects.filter(
+            PolicyType=policy_type,
+            PolicyCategory=policy_category
+        ).values_list('PolicySubCategory', flat=True).distinct()
+
+        return Response(list(subcategories))
+    except Exception as e:
+        print(f"Error in get_policy_subcategories: {str(e)}")
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -7788,7 +7835,9 @@ def _handle_policy_status_change_request(request, policy_id, reason, reviewer_id
                        status=status.HTTP_400_BAD_REQUEST)
     
     # Security: Sanitize input data
-    user_id = request.data.get('UserId', 1)  # Default to 1 if not provided
+    user_id = request.data.get('UserId') or getattr(request.user, 'id', None)
+    if not user_id:
+        return Response({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
     reviewer_email = None
     if policy.Reviewer:
         reviewer_user = Users.objects.filter(UserName=policy.Reviewer).first()
@@ -7930,9 +7979,17 @@ def request_policy_status_change(request, policy_id):
         print(f"DEBUG: API request_policy_status_change called for policy ID: {policy_id}")
         print(f"DEBUG: Request data: {request.data}")
         
+        # Get user ID from request data or logged in user
+        user_id = request.data.get('UserId') or getattr(request.user, 'id', None)
+        if not user_id:
+            return Response({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
         # Extract parameters from request
-        reason = request.data.get('reason', 'No reason provided')
-        reviewer_id = request.data.get('ReviewerId', 2)
+        reason = request.data.get('reason', '')
+        reviewer_id = request.data.get('ReviewerId')
+        if not reviewer_id:
+            return Response({"error": "Reviewer ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
         cascade_to_subpolicies = request.data.get('cascadeToSubpolicies', True)
         
         # Call the core function
@@ -7952,6 +8009,11 @@ def approve_policy_status_change(request, approval_id):
     # Import security modules
     from django.utils.html import escape as escape_html
     import shlex
+    
+    # Get user_id from request data, fallback to request.user.id
+    user_id = request.data.get('user_id') or getattr(request.user, 'id', None)
+    if not user_id:
+        return Response({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
         approval = PolicyApproval.objects.get(ApprovalId=approval_id)
@@ -7981,7 +8043,7 @@ def approve_policy_status_change(request, approval_id):
                 extracted_data['status_change_approval'] = {
                     'approved': True,
                     'remarks': remarks or 'Status change approved',
-                    'approved_by': 'Reviewer',
+                    'approved_by': user_id,  # Use the provided user_id
                     'approval_date': timezone.now().date().isoformat()
                 }
                 
@@ -8009,7 +8071,7 @@ def approve_policy_status_change(request, approval_id):
                 extracted_data['status_change_approval'] = {
                     'approved': False,
                     'remarks': remarks or 'Status change rejected',
-                    'rejected_by': 'Reviewer',
+                    'rejected_by': user_id,  # Use the provided user_id
                     'rejection_date': timezone.now().date().isoformat()
                 }
             

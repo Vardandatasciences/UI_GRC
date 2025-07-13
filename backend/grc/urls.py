@@ -75,6 +75,7 @@ from .routes.policy import (
     create_tailored_framework,
     create_tailored_policy,
     get_policy_categories,
+    get_policy_subcategories,
     save_policy_category,
     get_entities,
     get_policy_compliance_stats,
@@ -153,10 +154,10 @@ auth_urlpatterns = [
     path('logout/', views.logout_user, name='logout'),
     path('register/', views.register_user, name='register'),
     path('test-connection/', views.test_connection, name='test-connection'),
-    path('api/login/', views.login_user, name='api-login'),
-    path('api/logout/', views.logout_user, name='api-logout'),
-    path('api/register/', views.register_user, name='api-register'),
-    path('api/test-connection/', views.test_connection, name='api-test-connection'),
+    path('login/', views.login_user, name='api-login'),
+    path('logout/', views.logout_user, name='api-logout'),
+    path('register/', views.register_user, name='api-register'),
+    path('test-connection/', views.test_connection, name='api-test-connection'),
 ]
 
 # ============================================================================
@@ -164,30 +165,30 @@ auth_urlpatterns = [
 # ============================================================================
 rbac_urlpatterns = [
     # Core RBAC endpoints
-    path('api/user-permissions/', rbac_views.get_user_permissions, name='api-user-permissions'),
-    path('api/user-role/', views.get_user_role_simple, name='api-user-role'),  # Simple endpoint from session
-    path('api/user-role-rbac/', rbac_views.get_user_role, name='api-user-role-rbac'),  # Keep original as backup
-    path('api/users-for-dropdown/', views.get_users_for_dropdown_simple, name='api-users-for-dropdown'),  # Simple users dropdown
-    path('api/debug-permissions/', rbac_views.debug_user_permissions, name='api-debug-permissions'),
-    path('api/debug-rbac-data/', rbac_views.debug_rbac_data, name='api-debug-rbac-data'),
-    path('api/debug-auth-status/', rbac_views.debug_auth_status, name='api-debug-auth-status'),
-    path('api/debug-user-permissions/', incident_views.debug_user_permissions_endpoint, name='api-debug-user-permissions'),
-    path('api/test-user-permissions/', incident_views.test_user_permissions_comprehensive, name='api-test-user-permissions'),
+    path('user-permissions/', rbac_views.get_user_permissions, name='api-user-permissions'),
+    path('user-role/', views.get_user_role_simple, name='api-user-role'),  # Simple endpoint from session
+    path('user-role-rbac/', rbac_views.get_user_role, name='api-user-role-rbac'),  # Keep original as backup
+    path('users-for-dropdown/', views.get_users_for_dropdown_simple, name='api-users-for-dropdown'),  # Simple users dropdown
+    path('debug-permissions/', rbac_views.debug_user_permissions, name='api-debug-permissions'),
+    path('debug-rbac-data/', rbac_views.debug_rbac_data, name='api-debug-rbac-data'),
+    path('debug-auth-status/', rbac_views.debug_auth_status, name='api-debug-auth-status'),
+    path('debug-user-permissions/', incident_views.debug_user_permissions_endpoint, name='api-debug-user-permissions'),
+    path('test-user-permissions/', incident_views.test_user_permissions_comprehensive, name='api-test-user-permissions'),
     
     # RBAC test endpoints
-    path('api/test-policy-view/', rbac_views.test_policy_view_permission, name='api-test-policy-view'),
-    path('api/test-policy-create/', rbac_views.test_policy_create_permission, name='api-test-policy-create'),
-    path('api/test-policy-approve/', rbac_views.test_policy_approve_permission, name='api-test-policy-approve'),
-    path('api/test-incident-view/', rbac_views.test_incident_view_permission, name='test-incident-view-permission'),
-    path('api/test-incident-create/', rbac_views.test_incident_create_permission, name='test-incident-create-permission'),
-    path('api/test-incident-assign/', rbac_views.test_incident_assign_permission, name='test-incident-assign-permission'),
-    path('api/test-any-permission/', rbac_views.test_any_permission, name='api-test-any-permission'),
-    path('api/test-all-permissions/', rbac_views.test_all_permissions, name='api-test-all-permissions'),
-    path('api/test-endpoint-permission/', rbac_views.test_endpoint_permission, name='api-test-endpoint-permission'),
+    path('test-policy-view/', rbac_views.test_policy_view_permission, name='api-test-policy-view'),
+    path('test-policy-create/', rbac_views.test_policy_create_permission, name='api-test-policy-create'),
+    path('test-policy-approve/', rbac_views.test_policy_approve_permission, name='api-test-policy-approve'),
+    path('test-incident-view/', rbac_views.test_incident_view_permission, name='test-incident-view-permission'),
+    path('test-incident-create/', rbac_views.test_incident_create_permission, name='test-incident-create-permission'),
+    path('test-incident-assign/', rbac_views.test_incident_assign_permission, name='test-incident-assign-permission'),
+    path('test-any-permission/', rbac_views.test_any_permission, name='api-test-any-permission'),
+    path('test-all-permissions/', rbac_views.test_all_permissions, name='api-test-all-permissions'),
+    path('test-endpoint-permission/', rbac_views.test_endpoint_permission, name='api-test-endpoint-permission'),
     
     # User management test endpoints
-    path('api/test-user-details/<int:user_id>/', views.get_user_details_by_id, name='test-user-details'),
-    path('api/save-user-session/', views.save_user_session, name='save-user-session'),
+    path('test-user-details/<int:user_id>/', views.get_user_details_by_id, name='test-user-details'),
+    path('save-user-session/', views.save_user_session, name='save-user-session'),
 ]
 
 # ============================================================================
@@ -308,6 +309,7 @@ policy_urlpatterns = [
     # Policy Categories and Status Changes
     path('policy-categories/', get_policy_categories, name='policy-categories'),
     path('policy-categories/save/', save_policy_category, name='save_policy_category'),
+    path('policy-subcategories/', get_policy_subcategories, name='policy-subcategories'),
     path('policies/<int:policy_id>/request-status-change/', request_policy_status_change, name='request-policy-status-change'),
     path('policy-approvals/<int:approval_id>/approve-status-change/', approve_policy_status_change, name='approve-policy-status-change'),
     path('policy-status-change-requests/', get_policy_status_change_requests, name='get-policy-status-change-requests'),

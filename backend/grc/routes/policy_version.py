@@ -31,6 +31,10 @@ def create_policy_version(request, policy_id):
     
     This is used from the Versioning.vue component.
     """
+    print(f"DEBUG: Received version creation request for policy {policy_id}")
+    print(f"DEBUG: Request data: {request.data}")
+    print(f"DEBUG: Request user: {getattr(request.user, 'username', 'Anonymous')}")
+    
     # Log policy version creation attempt
     send_log(
         module="Policy",
@@ -279,11 +283,10 @@ def create_policy_version(request, policy_id):
                 entityId=new_policy.PolicyId,
                 ipAddress=get_client_ip(request),
                 additionalInfo={
-                    "policy_name": new_policy.PolicyName,
-                    "new_version": new_version,
-                    "previous_version": current_version,
-                    "version_type": version_type,
-                    "original_policy_id": policy_id
+                    "original_policy_id": policy_id,
+                    "new_policy_id": new_policy.PolicyId,
+                    "version": new_version,
+                    "reviewer": new_policy.Reviewer
                 }
             )
             
@@ -768,6 +771,35 @@ def create_policy_approval_for_version(policy_id, request=None):
                 ApprovedNot=None  # Not yet approved
             )
             print(f"DEBUG: Successfully created policy approval with ID: {approval.ApprovalId}")
+            
+            # Send notification to reviewer if available
+            if reviewer_id:
+                try:
+                    reviewer_user = Users.objects.get(UserId=reviewer_id)
+                    reviewer_email = reviewer_user.Email
+                    
+                    if reviewer_email:
+                        from ..notification_service import NotificationService
+                        notification_service = NotificationService()
+                        notification_data = {
+                            'notification_type': 'policyVersionSubmitted',
+                            'email': reviewer_email,
+                            'email_type': 'gmail',
+                            'template_data': [
+                                policy.PolicyName,
+                                reviewer_user.UserName,
+                                policy.CreatedByName,
+                                str(policy.CurrentVersion)
+                            ]
+                        }
+                        notification_result = notification_service.send_multi_channel_notification(notification_data)
+                        print(f"DEBUG: Policy version approval notification sent: {notification_result}")
+                    else:
+                        print(f"DEBUG: No email found for reviewer ID: {reviewer_id}")
+                except Users.DoesNotExist:
+                    print(f"DEBUG: Reviewer user not found with ID: {reviewer_id}")
+                except Exception as e:
+                    print(f"DEBUG: Error sending policy version approval notification: {str(e)}")
             
             # Log successful policy approval creation
             send_log(

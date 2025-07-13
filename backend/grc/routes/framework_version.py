@@ -290,6 +290,22 @@ def create_framework_version(request, framework_id):
                 CreatedDate=timezone.now().date()
             )
             
+            # Create framework approval for the new version
+            approval_created = create_framework_approval_for_version(new_framework.FrameworkId, request)
+            if not approval_created:
+                print("ERROR: Failed to create framework approval")
+                # Log the error but continue with the version creation
+                send_log(
+                    module="Framework",
+                    actionType="APPROVAL_CREATE_FAILED",
+                    description=f"Failed to create approval for framework version {new_version_float}",
+                    userId=request.data.get('UserId', getattr(request.user, 'id', None)),
+                    userName=getattr(request.user, 'username', 'Anonymous'),
+                    entityType="Framework",
+                    entityId=new_framework.FrameworkId,
+                    ipAddress=get_client_ip(request)
+                )
+            
             # Log successful framework version creation
             send_log(
                 module="Framework",
@@ -301,11 +317,10 @@ def create_framework_version(request, framework_id):
                 entityId=new_framework.FrameworkId,
                 ipAddress=get_client_ip(request),
                 additionalInfo={
-                    "framework_name": new_framework.FrameworkName,
-                    "new_version": new_version_float,
-                    "previous_version": current_version_float,
-                    "version_type": version_type,
-                    "original_framework_id": framework_id
+                    "original_framework_id": framework_id,
+                    "new_framework_id": new_framework.FrameworkId,
+                    "version": new_version_float,
+                    "reviewer": reviewer_name
                 }
             )
             
@@ -551,20 +566,21 @@ def create_framework_version(request, framework_id):
                             )
             
             # Create framework approval entry
-            create_framework_approval_for_version(new_framework.FrameworkId)
-            
+            create_framework_approval_for_version(new_framework.FrameworkId, request)  # Pass request object
+
             # Mark the original framework as inactive
             # Note: This doesn't actually deactivate the framework right away - 
             # it will only be deactivated when the new version is approved
             # But we'll keep a reference to it for future processing
             print(f"INFO: Original framework ID {original_framework.FrameworkId} will be deactivated when the new version is approved")
-            
+
             # After creating the new framework version, send notification to reviewer if email is available
             framework_reviewer_email = None
             if reviewer_name:
                 reviewer_user = Users.objects.filter(UserName=reviewer_name).first()
                 if reviewer_user:
                     framework_reviewer_email = reviewer_user.Email
+
             if framework_reviewer_email:
                 notification_service = NotificationService()
                 # Security: XSS Protection - Escape HTML content before building email template
@@ -581,7 +597,9 @@ def create_framework_version(request, framework_id):
                 }
                 notification_result = notification_service.send_multi_channel_notification(notification_data)
                 print(f"Framework version notification result: {notification_result}")
-            
+            else:
+                print(f"DEBUG: No reviewer email found for reviewer: {reviewer_name}")
+
             # Log successful framework version completion
             send_log(
                 module="Framework",
@@ -645,13 +663,58 @@ def create_framework_version(request, framework_id):
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-def create_framework_approval_for_version(framework_id):
+def create_framework_approval_for_version(framework_id, request=None):
     """
     Helper function to create a framework approval entry for a new framework version
     """
     try:
         # Get the framework
         framework = Framework.objects.get(FrameworkId=framework_id)
+        
+        # Check if an approval already exists for this framework
+        existing_approval = FrameworkApproval.objects.filter(
+            FrameworkId=framework,
+            Version="u1",  # Only check for initial version
+            ApprovedNot=None  # Only check for unapproved versions
+        ).first()
+        
+        if existing_approval:
+            print(f"Framework approval already exists for framework {framework_id}")
+            return True
+        
+        # Get user ID from request data first, then fall back to request.user
+        user_id = None
+        if request and request.data and 'UserId' in request.data:
+            user_id = request.data.get('UserId')
+            print(f"DEBUG: Got user ID from request data: {user_id}")
+        elif request and hasattr(request, 'user'):
+            if hasattr(request.user, 'id'):
+                user_id = request.user.id
+            elif hasattr(request.user, 'UserId'):
+                user_id = request.user.UserId
+            # If we still don't have a user ID, try to get it from the username
+            if not user_id and hasattr(request.user, 'username'):
+                try:
+                    user = Users.objects.get(UserName=request.user.username)
+                    user_id = user.UserId
+                except Users.DoesNotExist:
+                    print(f"Could not find user with username: {request.user.username}")
+        
+        # Fallback: get user from framework's CreatedByName
+        if not user_id:
+            try:
+                user = Users.objects.get(UserName=framework.CreatedByName)
+                user_id = user.UserId
+                print(f"DEBUG: Got user ID {user_id} from framework CreatedByName: {framework.CreatedByName}")
+            except Users.DoesNotExist:
+                print(f"Could not find user with name: {framework.CreatedByName}")
+                # Final fallback - try to parse as numeric ID
+                if framework.CreatedByName and framework.CreatedByName.isdigit():
+                    user_id = int(framework.CreatedByName)
+                else:
+                    user_id = 1  # Default user ID
+        
+        print(f"DEBUG: Final user ID for framework approval: {user_id}")
         
         # For approval, we need reviewer ID, not name
         reviewer_id = None
@@ -747,14 +810,44 @@ def create_framework_approval_for_version(framework_id):
         }
             
         # Create the framework approval
-        FrameworkApproval.objects.create(
+        framework_approval = FrameworkApproval.objects.create(
             FrameworkId=framework,
             ExtractedData=extracted_data,
-            UserId=1,  # Default user id
+            UserId=user_id,  # Use the user ID we got from request.user
             ReviewerId=reviewer_id,  # Use reviewer ID, not name
             Version="u1",  # Default initial version
             ApprovedNot=None  # Not yet approved
         )
+        
+        print(f"DEBUG: Created framework approval with ID: {framework_approval.ApprovalId}")
+        
+        # Send notification to reviewer if available
+        if reviewer_id:
+            try:
+                reviewer_user = Users.objects.get(UserId=reviewer_id)
+                reviewer_email = reviewer_user.Email
+                
+                if reviewer_email:
+                    notification_service = NotificationService()
+                    notification_data = {
+                        'notification_type': 'frameworkVersionSubmitted',
+                        'email': reviewer_email,
+                        'email_type': 'gmail',
+                        'template_data': [
+                            framework.FrameworkName,
+                            reviewer_user.UserName,
+                            framework.CreatedByName,
+                            str(framework.CurrentVersion)
+                        ]
+                    }
+                    notification_result = notification_service.send_multi_channel_notification(notification_data)
+                    print(f"DEBUG: Framework version approval notification sent: {notification_result}")
+                else:
+                    print(f"DEBUG: No email found for reviewer ID: {reviewer_id}")
+            except Users.DoesNotExist:
+                print(f"DEBUG: Reviewer user not found with ID: {reviewer_id}")
+            except Exception as e:
+                print(f"DEBUG: Error sending framework version approval notification: {str(e)}")
         
         return True
     except Exception as e:

@@ -62,7 +62,7 @@ def add_compliance(request, subpolicy_id):
             policy_approval = PolicyApproval(
                 PolicyId=subpolicy.PolicyId,  # Associate with the parent policy
                 ExtractedData=extracted_data,
-                UserId=data.get('UserId', 1),  # Default to user 1 if not provided
+                UserId=data.get('UserId') or getattr(request.user, 'id', None),  # Get user ID from request or logged in user
                 ReviewerId=data.get('ReviewerId', 1),  # Default to reviewer 1 if not provided
                 Version='u1',
                 ApprovedNot=None  # Not yet approved
@@ -307,6 +307,33 @@ def submit_compliance_review(request, approval_id):
         
         if 'ApprovedNot' in request.data:
             approval.ApprovedNot = request.data['ApprovedNot']
+            
+            # Update version based on whether it's a reviewer or user
+            current_version = approval.Version or ''
+            
+            # If this is a reviewer submitting a review
+            if approval.ReviewerId and str(approval.ReviewerId) == str(request.data.get('reviewer_id')):
+                # If current version is a reviewer version, increment it
+                if current_version.startswith('r'):
+                    try:
+                        version_num = int(current_version[1:])
+                        approval.Version = f'r{version_num + 1}'
+                    except ValueError:
+                        approval.Version = 'r1'
+                else:
+                    # Start with r1 if no reviewer version exists
+                    approval.Version = 'r1'
+            else:
+                # This is a user resubmitting
+                if current_version.startswith('u'):
+                    try:
+                        version_num = int(current_version[1:])
+                        approval.Version = f'u{version_num + 1}'
+                    except ValueError:
+                        approval.Version = 'u1'
+                else:
+                    # Start with u1 if no user version exists
+                    approval.Version = 'u1'
         
         # Save the updated approval
         approval.save()
@@ -333,7 +360,8 @@ def submit_compliance_review(request, approval_id):
         
         return Response({
             'message': 'Compliance review submitted successfully',
-            'ApprovalId': approval_id
+            'ApprovalId': approval_id,
+            'Version': approval.Version
         }, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({
@@ -362,18 +390,16 @@ def resubmit_compliance_approval(request, approval_id):
         if approval.ExtractedData and 'Status' in approval.ExtractedData:
             approval.ExtractedData['Status'] = 'Under Review'
         
-        # Create a new version if needed (increment the user version)
-        current_version = approval.Version
-        if current_version and current_version.startswith('u'):
-            # Try to extract the number part
+        # Handle versioning for resubmission (always a user version since it's a resubmission)
+        current_version = approval.Version or ''
+        if current_version.startswith('u'):
             try:
                 version_num = int(current_version[1:])
                 approval.Version = f'u{version_num + 1}'
             except ValueError:
-                # If version doesn't follow expected format, just set to u1
                 approval.Version = 'u1'
         else:
-            # If not a user version, start with u1
+            # If coming from a reviewer version or no version, start a new user version
             approval.Version = 'u1'
         
         # Save the updated approval
@@ -404,7 +430,7 @@ def resubmit_compliance_approval(request, approval_id):
         return Response({
             'message': 'Compliance resubmitted successfully',
             'ApprovalId': approval_id,
-            'new_version': approval.Version
+            'Version': approval.Version
         }, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({
