@@ -1,0 +1,310 @@
+{
+  "metadata": {
+    "task_id": "upload_1752422258_NIST.SP.800-53r5.pdf",
+    "creation_timestamp": 1752423017,
+    "creation_date": "2025-07-13 21:40:17",
+    "total_policies": 2,
+    "total_sub_policies": 3,
+    "total_compliance_items": 10,
+    "unique_sections": [
+      "Access Control",
+      "Audit and Accountability"
+    ],
+    "hierarchy_levels": 4
+  },
+  "hierarchy": {
+    "level_1_framework": {
+      "level": 1,
+      "type": "framework",
+      "data": {
+        "title": "3333333333333",
+        "description": "33333333333333333333333333333333",
+        "category": "33333333333333",
+        "effectiveDate": "2025-07-13",
+        "startDate": "2025-07-13",
+        "endDate": ""
+      },
+      "children": [
+        {
+          "level": 2,
+          "type": "policy",
+          "section_name": "Access Control",
+          "section_index": 1,
+          "data": {
+            "documentUrl": "333333",
+            "identifier": "33333333333333333333333333333",
+            "createdBy": "3333333333333333333",
+            "reviewer": "33333333333333333",
+            "policyName": "333333333333333333",
+            "department": "3333333333333333",
+            "scope": "333333333333333333333",
+            "applicability": "3333333333333",
+            "objective": "33333333333333333333333333333333",
+            "coverageRate": 33
+          },
+          "children": [
+            {
+              "level": 3,
+              "type": "sub_policy",
+              "section_name": "Access Control",
+              "sub_policy_index": 1,
+              "parent_policy_section": "Access Control",
+              "data": {
+                "section_name": "Access Control",
+                "Sub_policy_id": "AC-1",
+                "sub_policy_name": "Access Control Policy and Procedures",
+                "control": "a. Develop, document, and disseminate access control policy. b. Review and update the current access control policy. c. Designate an official to manage the access control policy and procedures.",
+                "scope": "Organization-wide",
+                "department": "IT Security",
+                "objective": "Establish access control framework",
+                "applicability": "All systems",
+                "coverage_rate": 100,
+                "related_controls": "AC-2, AC-3",
+                "start_date": "2024-01-01",
+                "end_date": "2024-12-31"
+              },
+              "children": [
+                {
+                  "level": 4,
+                  "type": "compliance",
+                  "section_name": "Access Control",
+                  "parent_section": "AC-1",
+                  "sub_policy_id": "AC-1",
+                  "compliance_index": 1,
+                  "compliance_id": "compliance_1",
+                  "data": {
+                    "letter": "a",
+                    "name": "Develop, document, and disseminate access control polic",
+                    "description": "Develop, document, and disseminate access control polic",
+                    "status": "pending",
+                    "assignee": "3333333333333333",
+                    "dueDate": ""
+                  }
+                },
+                {
+                  "level": 4,
+                  "type": "compliance",
+                  "section_name": "Access Control",
+                  "parent_section": "AC-1",
+                  "sub_policy_id": "AC-1",
+                  "compliance_index": 2,
+                  "compliance_id": "compliance_3",
+                  "data": {
+                    "letter": "b",
+                    "name": "Review and update the current access control polic",
+                    "description": "Review and update the current access control polic",
+                    "status": "pending",
+                    "assignee": "333333333333333333",
+                    "dueDate": ""
+                  }
+                },
+                {
+                  "level": 4,
+                  "type": "compliance",
+                  "section_name": "Access Control",
+                  "parent_section": "AC-1",
+                  "sub_policy_id": "AC-1",
+                  "compliance_index": 3,
+                  "compliance_id": "compliance_5",
+                  "data": {
+                    "letter": "c",
+                    "name": "Designate an official to manage the access control policy and procedure",
+                    "description": "Designate an official to manage the access control policy and procedure",
+                    "status": "pending",
+                    "assignee": "3333333333333",
+                    "dueDate": ""
+                  }
+                }
+              ]
+            },
+            {
+              "level": 3,
+              "type": "sub_policy",
+              "section_name": "Access Control",
+              "sub_policy_index": 2,
+              "parent_policy_section": "Access Control",
+              "data": {
+                "section_name": "Access Control",
+                "Sub_policy_id": "AC-2",
+                "sub_policy_name": "Account Management",
+                "control": "a. Identify and select account types. b. Assign account managers. c. Establish conditions for group membership. d. Monitor the use of accounts.",
+                "scope": "System accounts",
+                "department": "IT Security",
+                "objective": "Manage system accounts",
+                "applicability": "Information systems",
+                "coverage_rate": 95,
+                "related_controls": "AC-1, AC-3",
+                "start_date": "2024-01-01",
+                "end_date": "2024-12-31"
+              },
+              "children": [
+                {
+                  "level": 4,
+                  "type": "compliance",
+                  "section_name": "Access Control",
+                  "parent_section": "AC-2",
+                  "sub_policy_id": "AC-2",
+                  "compliance_index": 1,
+                  "compliance_id": "compliance_1",
+                  "data": {
+                    "letter": "a",
+                    "name": "Identify and select account type",
+                    "description": "Identify and select account type",
+                    "status": "pending",
+                    "assignee": "33333333333",
+                    "dueDate": ""
+                  }
+                },
+                {
+                  "level": 4,
+                  "type": "compliance",
+                  "section_name": "Access Control",
+                  "parent_section": "AC-2",
+                  "sub_policy_id": "AC-2",
+                  "compliance_index": 2,
+                  "compliance_id": "compliance_3",
+                  "data": {
+                    "letter": "b",
+                    "name": "Assign account manager",
+                    "description": "Assign account manager",
+                    "status": "pending",
+                    "assignee": "33333333333",
+                    "dueDate": ""
+                  }
+                },
+                {
+                  "level": 4,
+                  "type": "compliance",
+                  "section_name": "Access Control",
+                  "parent_section": "AC-2",
+                  "sub_policy_id": "AC-2",
+                  "compliance_index": 3,
+                  "compliance_id": "compliance_5",
+                  "data": {
+                    "letter": "c",
+                    "name": "Establish conditions for group membershi",
+                    "description": "Establish conditions for group membershi",
+                    "status": "pending",
+                    "assignee": "",
+                    "dueDate": ""
+                  }
+                },
+                {
+                  "level": 4,
+                  "type": "compliance",
+                  "section_name": "Access Control",
+                  "parent_section": "AC-2",
+                  "sub_policy_id": "AC-2",
+                  "compliance_index": 4,
+                  "compliance_id": "compliance_7",
+                  "data": {
+                    "letter": "d",
+                    "name": "Monitor the use of account",
+                    "description": "Monitor the use of account",
+                    "status": "pending",
+                    "assignee": "",
+                    "dueDate": ""
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "type": "policy",
+          "section_name": "Audit and Accountability",
+          "section_index": 2,
+          "data": {
+            "documentUrl": "333",
+            "identifier": "333333333333333333",
+            "createdBy": "33333333333333333333",
+            "reviewer": "333333333333333333333333333333333",
+            "policyName": "33333333333333",
+            "department": "333333333333333333",
+            "scope": "333333333333333333333",
+            "applicability": "33333333333",
+            "objective": "33333333333333333333333333333",
+            "coverageRate": 44
+          },
+          "children": [
+            {
+              "level": 3,
+              "type": "sub_policy",
+              "section_name": "Audit and Accountability",
+              "sub_policy_index": 1,
+              "parent_policy_section": "Audit and Accountability",
+              "data": {
+                "section_name": "Audit and Accountability",
+                "Sub_policy_id": "AU-1",
+                "sub_policy_name": "Audit and Accountability Policy",
+                "control": "a. Develop, document, and disseminate audit policy. b. Review and update the current audit policy. c. Designate an official to manage the audit policy.",
+                "scope": "Organization-wide",
+                "department": "Compliance",
+                "objective": "Establish audit framework",
+                "applicability": "All systems and processes",
+                "coverage_rate": 100,
+                "related_controls": "AU-2, AU-3",
+                "start_date": "2024-01-01",
+                "end_date": "2024-12-31"
+              },
+              "children": [
+                {
+                  "level": 4,
+                  "type": "compliance",
+                  "section_name": "Audit and Accountability",
+                  "parent_section": "AU-1",
+                  "sub_policy_id": "AU-1",
+                  "compliance_index": 1,
+                  "compliance_id": "compliance_1",
+                  "data": {
+                    "letter": "a",
+                    "name": "Develop, document, and disseminate audit polic",
+                    "description": "Develop, document, and disseminate audit polic",
+                    "status": "pending",
+                    "assignee": "",
+                    "dueDate": ""
+                  }
+                },
+                {
+                  "level": 4,
+                  "type": "compliance",
+                  "section_name": "Audit and Accountability",
+                  "parent_section": "AU-1",
+                  "sub_policy_id": "AU-1",
+                  "compliance_index": 2,
+                  "compliance_id": "compliance_3",
+                  "data": {
+                    "letter": "b",
+                    "name": "Review and update the current audit polic",
+                    "description": "Review and update the current audit polic",
+                    "status": "pending",
+                    "assignee": "",
+                    "dueDate": ""
+                  }
+                },
+                {
+                  "level": 4,
+                  "type": "compliance",
+                  "section_name": "Audit and Accountability",
+                  "parent_section": "AU-1",
+                  "sub_policy_id": "AU-1",
+                  "compliance_index": 3,
+                  "compliance_id": "compliance_5",
+                  "data": {
+                    "letter": "c",
+                    "name": "Designate an official to manage the audit polic",
+                    "description": "Designate an official to manage the audit polic",
+                    "status": "pending",
+                    "assignee": "",
+                    "dueDate": ""
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
