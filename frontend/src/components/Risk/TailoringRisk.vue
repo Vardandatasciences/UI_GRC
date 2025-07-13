@@ -371,6 +371,25 @@ export default {
     });
 
     // Methods
+    const sendPushNotification = async (notificationData) => {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    };
+
     const onRiskSelected = () => {
       if (selectedRiskId.value) {
         const selectedRisk = allRisks.value.find(r => r.RiskId == selectedRiskId.value);
@@ -455,6 +474,15 @@ export default {
         // Use popup service instead of alert
         // Note: In Composition API, we need to access popup service through getCurrentInstance
         popupService.error('Failed to load risks. Please try again.');
+        
+        // Send push notification for risk loading failure
+        sendPushNotification({
+          title: 'Risk Loading Failed',
+          message: 'Failed to load risks from the database. Please check your connection and try again.',
+          category: 'risk',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       } finally {
         isLoading.value = false;
       }
@@ -514,6 +542,15 @@ export default {
       } catch (error) {
         console.error('Error adding new business impact:', error);
         popupService.error('Failed to add new business impact: ' + (error.response?.data?.message || error.message));
+        
+        // Send push notification for business impact addition failure
+        sendPushNotification({
+          title: 'Business Impact Addition Failed',
+          message: `Failed to add new business impact: ${error.response?.data?.message || error.message}`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
       }
     };
 
@@ -573,6 +610,15 @@ export default {
       } catch (error) {
         console.error('Error adding new category:', error);
         popupService.error('Failed to add new category: ' + (error.response?.data?.message || error.message));
+        
+        // Send push notification for category addition failure
+        sendPushNotification({
+          title: 'Category Addition Failed',
+          message: `Failed to add new category: ${error.response?.data?.message || error.message}`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
       }
     };
 
@@ -656,6 +702,15 @@ export default {
             .map(([field, error]) => `${field}: ${error}`)
             .join('\n');
           popupService.error('Please fix the following validation errors:\n\n' + errorMessages);
+          
+          // Send push notification for validation errors
+          sendPushNotification({
+            title: 'Risk Validation Errors',
+            message: `Please fix the following validation errors: ${Object.keys(validationErrors).join(', ')}`,
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
           return;
         }
 
@@ -672,14 +727,41 @@ export default {
         await axios.post('http://localhost:8000/api/risks/', riskData);
         popupService.success('Risk created successfully!');
         
+        // Send push notification for successful risk creation
+        sendPushNotification({
+          title: 'New Risk Instance Created',
+          message: `A new risk instance "${riskData.RiskTitle || 'Untitled Risk'}" has been created in the Risk module.`,
+          category: 'risk',
+          priority: 'high',
+          user_id: 'default_user'
+        });
+        
         // Reset the form after successful save
         resetForm();
       } catch (error) {
         console.error('Error saving risk:', error);
         if (error.response?.data?.detail) {
           popupService.error('Server validation error: ' + error.response.data.detail);
+          
+          // Send push notification for server validation error
+          sendPushNotification({
+            title: 'Risk Creation Failed - Server Error',
+            message: `Server validation error: ${error.response.data.detail}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         } else {
           popupService.error('Failed to save risk: ' + error.message);
+          
+          // Send push notification for general save error
+          sendPushNotification({
+            title: 'Risk Creation Failed',
+            message: `Failed to save risk: ${error.message}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         }
       } finally {
         isLoading.value = false;
@@ -739,7 +821,8 @@ export default {
       selectCategory,
       addNewCategory,
       resetForm,
-      saveRisk
+      saveRisk,
+      sendPushNotification
     };
   }
 };

@@ -25,8 +25,6 @@
         :showSearchBar="true"
         style="min-width: 300px; max-width: 360px; width: 340px;"
       />
-      <div v-if="error" class="TT-error">{{ error }}</div>
-      <div v-if="loading" class="TT-loading">Loading...</div>
       </div>
     <div v-else class="TT-top-dropdowns">
       <CustomDropdown
@@ -55,8 +53,7 @@
         :showSearchBar="true"
         style="min-width: 300px; max-width: 360px; width: 360px;"
       />
-      <div v-if="error" class="TT-error">{{ error }}</div>
-      <div v-if="loading" class="TT-loading">Loading...</div>
+
       </div>
     <div v-if="selectedTab === 'framework' && selectedFramework">
       <div class="TT-container">
@@ -656,10 +653,16 @@ const API_BASE_URL = 'http://localhost:8000/api'
   },
   watch: {
     selectedFramework(newVal) {
-      this.handleFrameworkSelection(newVal)
+      if (this.selectedTab === 'framework') {
+        this.handleFrameworkSelection(newVal)
+      } else if (this.selectedTab === 'policy' && newVal) {
+        console.log('Framework selected in policy tab:', newVal)
+        this.fetchPoliciesByFramework(newVal)
+      }
     },
     selectedPolicy(newVal) {
       if (this.selectedTab === 'policy' && this.selectedFramework && newVal) {
+        console.log('Policy selected:', newVal)
         this.fetchPolicyDetails(newVal)
       }
     },
@@ -711,6 +714,24 @@ const API_BASE_URL = 'http://localhost:8000/api'
     },
     handleFileUpload(e) {
       this.frameworkForm.file = e.target.files[0]
+    },
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
     },
     async fetchFrameworks() {
       try {
@@ -781,6 +802,8 @@ const API_BASE_URL = 'http://localhost:8000/api'
     async fetchPolicyDetails(policyId) {
       try {
         this.loading = true
+        console.log('Fetching policy details for ID:', policyId)
+        
         const [policyResponse, subpoliciesResponse] = await Promise.all([
           axios.get(`${API_BASE_URL}/policies/${policyId}/`),
           axios.get(`${API_BASE_URL}/policies/${policyId}/get-subpolicies/`)
@@ -823,11 +846,17 @@ const API_BASE_URL = 'http://localhost:8000/api'
           activeSubPolicyTab: 0
         }
 
+        console.log('Created policy tab:', policyTab)
         this.policyTabs = [policyTab]
         this.activePolicyTab = 0
+        console.log('Updated policyTabs:', this.policyTabs)
+        console.log('Active policy tab index:', this.activePolicyTab)
       } catch (error) {
         console.error('Error fetching policy details:', error)
         this.error = 'Failed to fetch policy details'
+        // Reset policy tabs on error
+        this.policyTabs = []
+        this.activePolicyTab = 0
       } finally {
         this.loading = false
       }
@@ -914,6 +943,15 @@ const API_BASE_URL = 'http://localhost:8000/api'
           'Success'
         );
 
+        // Send push notification for framework creation
+        this.sendPushNotification({
+          title: 'New Framework Created',
+          message: `A new framework "${this.frameworkForm.name}" has been created in the Tailoring & Templating module.`,
+          category: 'framework',
+          priority: 'high',
+          user_id: this.loggedInUsername || 'default_user'
+        });
+
       } catch (error) {
         console.error('Error submitting framework:', error);
         this.error = error.response?.data?.error || 'Failed to submit framework';
@@ -923,6 +961,15 @@ const API_BASE_URL = 'http://localhost:8000/api'
           this.error,
           'Error Creating Framework'
         );
+
+        // Send push notification for framework creation error
+        this.sendPushNotification({
+          title: 'Framework Creation Failed',
+          message: `Failed to create framework "${this.frameworkForm.name}": ${this.error}`,
+          category: 'framework',
+          priority: 'high',
+          user_id: this.loggedInUsername || 'default_user'
+        });
       } finally {
         this.loading = false;
       }
@@ -968,7 +1015,9 @@ const API_BASE_URL = 'http://localhost:8000/api'
       }
     },
     async handleFrameworkSelection(newVal) {
+      console.log('handleFrameworkSelection called with:', newVal)
       if (!newVal) {
+        console.log('No framework selected, resetting form')
         this.resetForm()
         return
       }
@@ -1114,10 +1163,26 @@ const API_BASE_URL = 'http://localhost:8000/api'
     },
     excludePolicyTab(idx) {
       if (this.policyTabs.length > 1) {
-        this.policyTabs.splice(idx, 1)
-        if (this.activePolicyTab >= this.policyTabs.length) {
-          this.activePolicyTab = this.policyTabs.length - 1
+        // Store the current active tab before removing
+        const currentActiveTab = this.activePolicyTab;
+        
+        // Remove the policy at the specified index
+        this.policyTabs.splice(idx, 1);
+        
+        // Adjust the active tab index
+        if (currentActiveTab >= this.policyTabs.length) {
+          // If the active tab was at the end or beyond, go to the last remaining tab
+          this.activePolicyTab = this.policyTabs.length - 1;
+        } else if (currentActiveTab > idx) {
+          // If the active tab was after the removed tab, decrement by 1
+          this.activePolicyTab = currentActiveTab - 1;
         }
+        // If the active tab was before the removed tab, it stays the same
+        
+        console.log(`Policy ${idx} excluded. Active tab adjusted to: ${this.activePolicyTab}`);
+      } else {
+        // If only one policy remains, just reset the form
+        this.resetForm();
       }
     },
     addSubPolicyTab(policyIdx) {
@@ -1133,15 +1198,33 @@ const API_BASE_URL = 'http://localhost:8000/api'
       this.policyTabs[policyIdx].activeSubPolicyTab = this.policyTabs[policyIdx].subPolicies.length - 1
     },
     excludeSubPolicyTab(policyIdx, subIdx) {
-      const subPolicies = this.policyTabs[policyIdx].subPolicies
+      const subPolicies = this.policyTabs[policyIdx].subPolicies;
       if (subPolicies.length > 1) {
-        subPolicies.splice(subIdx, 1)
-        if (this.policyTabs[policyIdx].activeSubPolicyTab >= subPolicies.length) {
-          this.policyTabs[policyIdx].activeSubPolicyTab = subPolicies.length - 1
+        // Store the current active subpolicy tab before removing
+        const currentActiveSubTab = this.policyTabs[policyIdx].activeSubPolicyTab;
+        
+        // Remove the subpolicy at the specified index
+        subPolicies.splice(subIdx, 1);
+        
+        // Adjust the active subpolicy tab index
+        if (currentActiveSubTab >= subPolicies.length) {
+          // If the active tab was at the end or beyond, go to the last remaining tab
+          this.policyTabs[policyIdx].activeSubPolicyTab = subPolicies.length - 1;
+        } else if (currentActiveSubTab > subIdx) {
+          // If the active tab was after the removed tab, decrement by 1
+          this.policyTabs[policyIdx].activeSubPolicyTab = currentActiveSubTab - 1;
         }
+        // If the active tab was before the removed tab, it stays the same
+        
+        console.log(`Subpolicy ${subIdx} excluded from policy ${policyIdx}. Active subpolicy tab adjusted to: ${this.policyTabs[policyIdx].activeSubPolicyTab}`);
+      } else {
+        // If only one subpolicy remains, remove the entire subpolicy section
+        this.policyTabs[policyIdx].subPolicies = [];
+        this.policyTabs[policyIdx].activeSubPolicyTab = 0;
       }
     },
     resetForm() {
+        console.log('resetForm called')
         this.frameworkForm = {
         name: '',
         description: '',
@@ -1154,6 +1237,8 @@ const API_BASE_URL = 'http://localhost:8000/api'
       }
           this.policyTabs = []
           this.activePolicyTab = 0
+          console.log('Policy tabs reset:', this.policyTabs)
+          console.log('Active policy tab reset:', this.activePolicyTab)
       this.selectedFramework = ''
         this.selectedPolicy = ''
     },
@@ -1424,14 +1509,43 @@ const API_BASE_URL = 'http://localhost:8000/api'
       }
     },
     async submitTailoredPolicy() {
+      console.log('submitTailoredPolicy called')
+      console.log('policyTabs:', this.policyTabs)
+      console.log('activePolicyTab:', this.activePolicyTab)
+      console.log('selectedFramework:', this.selectedFramework)
+      console.log('selectedPolicy:', this.selectedPolicy)
+      
+      // Validate that we have a valid active policy tab
+      if (!this.policyTabs || this.policyTabs.length === 0) {
+        console.error('No policy tabs available')
+        PopupService.error('No policy data available. Please select a policy first.', 'Validation Error');
+        return;
+      }
+
+      if (this.activePolicyTab < 0 || this.activePolicyTab >= this.policyTabs.length) {
+        console.error('Invalid active policy tab index:', this.activePolicyTab, 'length:', this.policyTabs.length)
+        PopupService.error('Invalid policy tab selected. Please select a valid policy.', 'Validation Error');
+        return;
+      }
+
+      const currentPolicy = this.policyTabs[this.activePolicyTab];
+      console.log('Current policy:', currentPolicy)
+      
+      if (!currentPolicy) {
+        console.error('Current policy is undefined')
+        PopupService.error('Selected policy is invalid. Please try again.', 'Validation Error');
+        return;
+      }
+
       if (!this.validateForm('policy')) {
         return;
       }
+
       try {
         this.loading = true;
         
         // Validate coverage rate
-        const coverageRate = parseFloat(this.policyTabs[this.activePolicyTab].coverageRate);
+        const coverageRate = parseFloat(currentPolicy.coverageRate);
         if (isNaN(coverageRate) || coverageRate < 0 || coverageRate > 100) {
           throw new Error('Coverage Rate must be a number between 0 and 100');
         }
@@ -1439,29 +1553,29 @@ const API_BASE_URL = 'http://localhost:8000/api'
         // Format policy data
         const policyData = {
           TargetFrameworkId: this.selectedFramework,
-          PolicyName: this.policyTabs[this.activePolicyTab].name,
-          PolicyDescription: this.policyTabs[this.activePolicyTab].description,
-          Department: this.policyTabs[this.activePolicyTab].department,
-          Scope: this.policyTabs[this.activePolicyTab].scope,
-          Objective: this.policyTabs[this.activePolicyTab].objective,
+          PolicyName: currentPolicy.name,
+          PolicyDescription: currentPolicy.description,
+          Department: currentPolicy.department,
+          Scope: currentPolicy.scope,
+          Objective: currentPolicy.objective,
           CoverageRate: coverageRate,
-          Applicability: this.policyTabs[this.activePolicyTab].applicability,
-          PolicyType: this.policyTabs[this.activePolicyTab].type,
-          PolicyCategory: this.policyTabs[this.activePolicyTab].category,
-          PolicySubCategory: this.policyTabs[this.activePolicyTab].subCategory,
-          Entities: this.policyTabs[this.activePolicyTab].entities,
-          StartDate: this.policyTabs[this.activePolicyTab].startDate,
-          EndDate: this.policyTabs[this.activePolicyTab].endDate,
+          Applicability: currentPolicy.applicability,
+          PolicyType: currentPolicy.type,
+          PolicyCategory: currentPolicy.category,
+          PolicySubCategory: currentPolicy.subCategory,
+          Entities: currentPolicy.entities,
+          StartDate: currentPolicy.startDate,
+          EndDate: currentPolicy.endDate,
           CreatedByName: this.loggedInUsername,
-          Reviewer: this.policyTabs[this.activePolicyTab].reviewer,
-          Identifier: this.policyTabs[this.activePolicyTab].identifier,
-          subpolicies: this.policyTabs[this.activePolicyTab].subPolicies.map(sub => ({
+          Reviewer: currentPolicy.reviewer,
+          Identifier: currentPolicy.identifier,
+          subpolicies: currentPolicy.subPolicies ? currentPolicy.subPolicies.map(sub => ({
             SubPolicyName: sub.name,
             Identifier: sub.identifier,
             Description: sub.description,
             Control: sub.control,
             exclude: false
-          }))
+          })) : []
         };
 
         console.log('Submitting policy data:', policyData);
@@ -1487,6 +1601,15 @@ const API_BASE_URL = 'http://localhost:8000/api'
           'Success'
         );
 
+        // Send push notification for policy creation
+        this.sendPushNotification({
+          title: 'New Policy Created',
+          message: `A new policy "${currentPolicy.name}" has been created in the Tailoring & Templating module.`,
+          category: 'policy',
+          priority: 'high',
+          user_id: this.loggedInUsername || 'default_user'
+        });
+
       } catch (error) {
         console.error('Error submitting policy:', error);
         this.error = error.response?.data?.error || 'Failed to submit policy';
@@ -1496,6 +1619,15 @@ const API_BASE_URL = 'http://localhost:8000/api'
           this.error,
           'Error Creating Policy'
         );
+
+        // Send push notification for policy creation error
+        this.sendPushNotification({
+          title: 'Policy Creation Failed',
+          message: `Failed to create policy "${currentPolicy.name}": ${this.error}`,
+          category: 'policy',
+          priority: 'high',
+          user_id: this.loggedInUsername || 'default_user'
+        });
       } finally {
         this.loading = false;
       }
@@ -1505,100 +1637,277 @@ const API_BASE_URL = 'http://localhost:8000/api'
       if (type === 'framework') {
         if (!this.frameworkForm.name) {
           PopupService.warning('Framework name is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Framework Validation Error',
+            message: 'Framework name is required for framework creation',
+            category: 'framework',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!this.frameworkForm.description) {
           PopupService.warning('Framework description is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Framework Validation Error',
+            message: 'Framework description is required for framework creation',
+            category: 'framework',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!this.frameworkForm.identifier) {
           PopupService.warning('Framework identifier is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Framework Validation Error',
+            message: 'Framework identifier is required for framework creation',
+            category: 'framework',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!this.frameworkForm.category) {
           PopupService.warning('Framework category is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Framework Validation Error',
+            message: 'Framework category is required for framework creation',
+            category: 'framework',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!this.frameworkForm.internalExternal) {
           PopupService.warning('Internal/External selection is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Framework Validation Error',
+            message: 'Internal/External selection is required for framework creation',
+            category: 'framework',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!this.frameworkForm.startDate) {
           PopupService.warning('Start date is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Framework Validation Error',
+            message: 'Start date is required for framework creation',
+            category: 'framework',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!this.loggedInUsername) {
           PopupService.warning('You must be logged in to create a framework', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Authentication Error',
+            message: 'You must be logged in to create a framework',
+            category: 'framework',
+            priority: 'high',
+            user_id: 'default_user'
+          });
           return false;
         }
         if (!this.frameworkForm.reviewer) {
           PopupService.warning('Reviewer is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Framework Validation Error',
+            message: 'Reviewer is required for framework creation',
+            category: 'framework',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         return true;
       }
 
       if (type === 'policy') {
+        // Validate that we have a valid active policy tab
+        if (!this.policyTabs || this.policyTabs.length === 0) {
+          PopupService.warning('No policy data available. Please select a policy first.', 'Validation Error');
+          return false;
+        }
+
+        if (this.activePolicyTab < 0 || this.activePolicyTab >= this.policyTabs.length) {
+          PopupService.warning('Invalid policy tab selected. Please select a valid policy.', 'Validation Error');
+          return false;
+        }
+
         const policy = this.policyTabs[this.activePolicyTab];
+        if (!policy) {
+          PopupService.warning('Selected policy is invalid. Please try again.', 'Validation Error');
+          return false;
+        }
+
         if (!policy.name) {
           PopupService.warning('Policy name is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Policy name is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.description) {
           PopupService.warning('Policy description is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Policy description is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.identifier) {
           PopupService.warning('Policy identifier is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Policy identifier is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.department) {
           PopupService.warning('Department is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Department is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.scope) {
           PopupService.warning('Scope is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Scope is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.objective) {
           PopupService.warning('Objective is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Objective is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.coverageRate) {
           PopupService.warning('Coverage Rate is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Coverage Rate is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.applicability) {
           PopupService.warning('Applicability is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Applicability is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.type) {
           PopupService.warning('Policy Type is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Policy Type is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.category) {
           PopupService.warning('Policy Category is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Policy Category is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.subCategory) {
           PopupService.warning('Policy Sub Category is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Policy Sub Category is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!policy.startDate) {
           PopupService.warning('Start Date is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Start Date is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         if (!this.loggedInUsername) {
           PopupService.warning('You must be logged in to create a policy', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Authentication Error',
+            message: 'You must be logged in to create a policy',
+            category: 'policy',
+            priority: 'high',
+            user_id: 'default_user'
+          });
           return false;
         }
         if (!policy.reviewer) {
           PopupService.warning('Reviewer is required', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'Reviewer is required for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         // Check entities validation - must be "all" or non-empty array
         if (!policy.entities || (Array.isArray(policy.entities) && policy.entities.length === 0)) {
           PopupService.warning('At least one entity must be selected', 'Validation Error');
+          this.sendPushNotification({
+            title: 'Policy Validation Error',
+            message: 'At least one entity must be selected for policy creation',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.loggedInUsername || 'default_user'
+          });
           return false;
         }
         return true;

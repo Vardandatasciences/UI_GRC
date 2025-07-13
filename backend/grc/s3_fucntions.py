@@ -652,7 +652,7 @@ class RenderS3Client:
         
         try:
             # Validate format
-            supported_formats = ['json', 'csv', 'xml', 'txt']
+            supported_formats = ['json', 'pdf','csv', 'xml', 'txt']
             if export_format.lower() not in supported_formats:
                 raise ValueError(f"Unsupported format: {export_format}. Supported: {supported_formats}")
             
@@ -744,7 +744,6 @@ class RenderS3Client:
                 'error': error_msg
             }
 
-# Helper functions for easy usage
 def create_render_mysql_client(mysql_config: Optional[Dict] = None) -> RenderS3Client:
     """Create RenderS3Client with your Render URL and local MySQL - Enhanced with error handling"""
     try:

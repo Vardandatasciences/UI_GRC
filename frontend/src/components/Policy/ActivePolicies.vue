@@ -223,6 +223,13 @@
           expandedPolicies.value = expandedPolicies.value.filter(id => id !== policyId);
         } else {
           expandedPolicies.value.push(policyId);
+          sendPushNotification({
+            title: 'Policy Expanded',
+            message: `Subpolicies for policy ${policyId} are now visible`,
+            category: 'policy',
+            priority: 'low',
+            user_id: 'default_user'
+          });
         }
       }
       
@@ -231,6 +238,16 @@
           expandedDocuments.value = expandedDocuments.value.filter(id => id !== policyId);
         } else {
           expandedDocuments.value.push(policyId);
+          const policy = policies.find(p => p.id === policyId);
+          if (policy) {
+            sendPushNotification({
+              title: 'Policy Document Opened',
+              message: `Details for policy "${policy.name}" are now visible`,
+              category: 'policy',
+              priority: 'low',
+              user_id: 'default_user'
+            });
+          }
         }
       }
       
@@ -239,6 +256,36 @@
           expandedDocuments.value = expandedDocuments.value.filter(id => id !== subpolicyId);
         } else {
           expandedDocuments.value.push(subpolicyId);
+          const [policyId, , index] = subpolicyId.split('-');
+          const policy = policies.find(p => p.id === policyId);
+          if (policy && policy.subpolicies && policy.subpolicies[index]) {
+            sendPushNotification({
+              title: 'Subpolicy Document Opened',
+              message: `Details for subpolicy "${policy.subpolicies[index].name}" are now visible`,
+              category: 'policy',
+              priority: 'low',
+              user_id: 'default_user'
+            });
+          }
+        }
+      }
+      
+      const sendPushNotification = async (notificationData) => {
+        try {
+          const response = await fetch('http://localhost:8000/api/push-notification/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(notificationData)
+          });
+          if (response.ok) {
+            console.log('Push notification sent successfully');
+          } else {
+            console.error('Failed to send push notification');
+          }
+        } catch (error) {
+          console.error('Error sending push notification:', error);
         }
       }
       
@@ -251,7 +298,8 @@
         toggleSubpolicies,
         togglePolicyDocument,
         toggleSubpolicyDocument,
-        getActiveSubpolicies
+        getActiveSubpolicies,
+        sendPushNotification
       }
     }
   }

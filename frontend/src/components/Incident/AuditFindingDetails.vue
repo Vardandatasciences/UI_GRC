@@ -180,6 +180,24 @@ export default {
         () => {}
       );
     },
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
     confirmSolve() {
       axios.put(`http://localhost:8000/api/incidents/${this.auditFinding.IncidentId}/status/`, {
         status: 'Scheduled'
@@ -187,6 +205,14 @@ export default {
       .then(() => {
         this.auditFinding.Status = 'Scheduled';
         PopupService.success(`Incident ${this.auditFinding.IncidentId} escalated to Risk successfully!`);
+        // Send push notification for successful escalation
+        this.sendPushNotification({
+          title: 'Audit Finding Escalated to Risk',
+          message: `Audit finding "${this.auditFinding.IncidentTitle || 'Untitled Finding'}" (ID: ${this.auditFinding.IncidentId}) has been successfully escalated to the Risk module.`,
+          category: 'audit_finding',
+          priority: 'high',
+          user_id: 'default_user'
+        });
         setTimeout(() => {
           this.$router.push('/incident/incident');
         }, 2000);
@@ -194,6 +220,13 @@ export default {
       .catch(error => {
         console.error('Error updating audit finding status:', error);
         PopupService.error('Failed to escalate audit finding. Please try again.');
+        this.sendPushNotification({
+          title: 'Audit Finding Escalation Failed',
+          message: `Failed to escalate audit finding "${this.auditFinding.IncidentTitle || 'Untitled Finding'}" (ID: ${this.auditFinding.IncidentId}) to Risk module.`,
+          category: 'audit_finding',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       });
     },
     confirmReject() {
@@ -203,6 +236,13 @@ export default {
       .then(() => {
         this.auditFinding.Status = 'Rejected';
         PopupService.success(`Incident ${this.auditFinding.IncidentId} rejected successfully!`);
+        this.sendPushNotification({
+          title: 'Audit Finding Rejected',
+          message: `Audit finding "${this.auditFinding.IncidentTitle || 'Untitled Finding'}" (ID: ${this.auditFinding.IncidentId}) has been rejected successfully.`,
+          category: 'audit_finding',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         setTimeout(() => {
           this.$router.push('/incident/incident');
         }, 2000);
@@ -210,6 +250,13 @@ export default {
       .catch(error => {
         console.error('Error updating audit finding status:', error);
         PopupService.error('Failed to reject audit finding. Please try again.');
+        this.sendPushNotification({
+          title: 'Audit Finding Rejection Failed',
+          message: `Failed to reject audit finding "${this.auditFinding.IncidentTitle || 'Untitled Finding'}" (ID: ${this.auditFinding.IncidentId}).`,
+          category: 'audit_finding',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       });
     }
   }

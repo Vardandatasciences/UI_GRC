@@ -1190,6 +1190,24 @@ export default {
     this.initializeFromQuery();
   },
   methods: {
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
     fetchUsers() {
       axios.get('http://localhost:8000/api/custom-users/')
         .then(response => {
@@ -1333,6 +1351,13 @@ export default {
       if (!task) {
         console.error('Task not found for ID:', id);
         PopupService.error(`Error: Task not found for ID ${id}`);
+        this.sendPushNotification({
+          title: 'Task Not Found',
+          message: `Error: Task not found for ID ${id}`,
+          category: 'incident',
+          priority: 'high',
+          user_id: this.selectedUserId || 'default_user'
+        });
         return;
       }
       
@@ -1408,6 +1433,13 @@ export default {
             console.error('Response status:', error.response.status);
           }
           PopupService.error(`Error loading data: ${error.message}`);
+          this.sendPushNotification({
+            title: 'Data Loading Error',
+            message: `Error loading ${isAuditFinding ? 'audit finding' : 'incident'} data: ${error.message}`,
+            category: 'incident',
+            priority: 'high',
+            user_id: this.selectedUserId || 'default_user'
+          });
           this.mitigationSteps = [];
           this.assessmentFeedbackForUser = null;
           this.loadingMitigations = false;
@@ -1536,6 +1568,13 @@ export default {
       // Prevent editing of approved steps
       if (this.mitigationSteps[index].approved === true) {
         PopupService.warning('This mitigation step has been approved by the reviewer and cannot be modified.');
+        this.sendPushNotification({
+          title: 'Mitigation Step Locked',
+          message: 'This mitigation step has been approved by the reviewer and cannot be modified.',
+          category: 'incident',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         return;
       }
       
@@ -1611,6 +1650,13 @@ export default {
         this.loading = false;
         this.closeMitigationModal();
         PopupService.success(`${isAuditFinding ? 'Audit finding' : 'Incident'} assessment submitted for review successfully!`);
+        this.sendPushNotification({
+          title: `${isAuditFinding ? 'Audit Finding' : 'Incident'} Assessment Submitted`,
+          message: `${isAuditFinding ? 'Audit finding' : 'Incident'} assessment submitted for review successfully!`,
+          category: 'incident',
+          priority: 'high',
+          user_id: this.selectedUserId || 'default_user'
+        });
         
         // Refresh the tasks list
         this.fetchData();
@@ -1619,6 +1665,13 @@ export default {
         console.error(`Error submitting ${isAuditFinding ? 'audit finding' : 'incident'} assessment:`, error);
         this.loading = false;
         PopupService.error('Failed to submit assessment. Please try again.');
+        this.sendPushNotification({
+          title: 'Assessment Submission Failed',
+          message: `Failed to submit ${isAuditFinding ? 'audit finding' : 'incident'} assessment. Please try again.`,
+          category: 'incident',
+          priority: 'high',
+          user_id: this.selectedUserId || 'default_user'
+        });
       });
     },
     closeReviewerModal() {
@@ -1656,6 +1709,13 @@ export default {
     submitReview(approved) {
       if (!this.canSubmitReview) {
         PopupService.warning('Please complete the review of all mitigations');
+        this.sendPushNotification({
+          title: 'Review Incomplete',
+          message: 'Please complete the review of all mitigations before submitting.',
+          category: 'incident',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         return;
       }
       
@@ -1707,6 +1767,13 @@ export default {
           this.reviewApproved = approved;
           
           PopupService.success(`${isAuditFinding ? 'Audit finding' : 'Incident'} ${approved ? 'approved' : 'rejected'} successfully!`);
+          this.sendPushNotification({
+            title: `${isAuditFinding ? 'Audit Finding' : 'Incident'} Review Completed`,
+            message: `${isAuditFinding ? 'Audit finding' : 'Incident'} ${approved ? 'approved' : 'rejected'} successfully!`,
+            category: 'incident',
+            priority: 'high',
+            user_id: this.selectedUserId || 'default_user'
+          });
           
           setTimeout(() => {
             this.closeReviewerModal();
@@ -1716,11 +1783,25 @@ export default {
           console.error(`Error completing ${isAuditFinding ? 'audit finding' : 'incident'} review:`, error);
           this.loading = false;
           PopupService.error('Failed to submit review. Please try again.');
+          this.sendPushNotification({
+            title: 'Review Submission Failed',
+            message: `Failed to submit ${isAuditFinding ? 'audit finding' : 'incident'} review. Please try again.`,
+            category: 'incident',
+            priority: 'high',
+            user_id: this.selectedUserId || 'default_user'
+          });
         });
     },
     updateRemarks(id) {
       if (!this.mitigationReviewData[id].remarks.trim()) {
         PopupService.warning('Please provide remarks for rejection');
+        this.sendPushNotification({
+          title: 'Remarks Required',
+          message: 'Please provide remarks for rejection',
+          category: 'incident',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         return;
       }
       
@@ -1736,6 +1817,13 @@ export default {
       
       if (file.size > 5 * 1024 * 1024) {
         PopupService.error('File size exceeds 5MB limit');
+        this.sendPushNotification({
+          title: 'File Upload Error',
+          message: 'File size exceeds 5MB limit',
+          category: 'incident',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         event.target.value = '';
         return;
       }
@@ -1762,16 +1850,44 @@ export default {
           this.mitigationSteps[index].fileName = file.name;
           
           PopupService.success('File uploaded successfully');
+          this.sendPushNotification({
+            title: 'File Upload Success',
+            message: 'File uploaded successfully',
+            category: 'incident',
+            priority: 'medium',
+            user_id: this.selectedUserId || 'default_user'
+          });
         } else {
           PopupService.error('Error uploading file: ' + response.data.error);
+          this.sendPushNotification({
+            title: 'File Upload Error',
+            message: 'Error uploading file: ' + response.data.error,
+            category: 'incident',
+            priority: 'high',
+            user_id: this.selectedUserId || 'default_user'
+          });
         }
       })
       .catch(error => {
         console.error('Error processing file:', error);
         if (error.response && error.response.data && error.response.data.error) {
           PopupService.error('Error uploading file: ' + error.response.data.error);
+          this.sendPushNotification({
+            title: 'File Upload Error',
+            message: 'Error uploading file: ' + error.response.data.error,
+            category: 'incident',
+            priority: 'high',
+            user_id: this.selectedUserId || 'default_user'
+          });
         } else {
           PopupService.error('Error uploading file. Please try again.');
+          this.sendPushNotification({
+            title: 'File Upload Error',
+            message: 'Error uploading file. Please try again.',
+            category: 'incident',
+            priority: 'high',
+            user_id: this.selectedUserId || 'default_user'
+          });
         }
       })
       .finally(() => {
@@ -1979,6 +2095,13 @@ export default {
       // Get the first incident ID for testing
       if (this.userIncidents.length === 0) {
         PopupService.error('No incidents available for testing');
+        this.sendPushNotification({
+          title: 'Testing Error',
+          message: 'No incidents available for testing',
+          category: 'incident',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         return;
       }
       
@@ -2001,10 +2124,24 @@ export default {
         .then(response => {
           console.log('Mitigations endpoint test successful:', response.data);
           PopupService.success('Mitigations endpoint test successful');
+          this.sendPushNotification({
+            title: 'API Test Success',
+            message: 'Mitigations endpoint test successful',
+            category: 'incident',
+            priority: 'low',
+            user_id: this.selectedUserId || 'default_user'
+          });
         })
         .catch(error => {
           console.error('Mitigations endpoint test failed:', error);
           PopupService.error(`Mitigations endpoint test failed: ${error.message}`);
+          this.sendPushNotification({
+            title: 'API Test Failed',
+            message: `Mitigations endpoint test failed: ${error.message}`,
+            category: 'incident',
+            priority: 'medium',
+            user_id: this.selectedUserId || 'default_user'
+          });
         });
       
       // Test the review endpoint
@@ -2012,10 +2149,24 @@ export default {
         .then(response => {
           console.log('Review endpoint test successful:', response.data);
           PopupService.success('Review endpoint test successful');
+          this.sendPushNotification({
+            title: 'API Test Success',
+            message: 'Review endpoint test successful',
+            category: 'incident',
+            priority: 'low',
+            user_id: this.selectedUserId || 'default_user'
+          });
         })
         .catch(error => {
           console.error('Review endpoint test failed:', error);
           PopupService.error(`Review endpoint test failed: ${error.message}`);
+          this.sendPushNotification({
+            title: 'API Test Failed',
+            message: `Review endpoint test failed: ${error.message}`,
+            category: 'incident',
+            priority: 'medium',
+            user_id: this.selectedUserId || 'default_user'
+          });
         });
     }
   }

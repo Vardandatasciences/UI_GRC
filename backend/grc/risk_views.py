@@ -1,3 +1,29 @@
+from .s3_fucntions import RenderS3Client
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from django.http import JsonResponse
+import json
+# Export Risk Register API
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def export_risk_register(request):
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else request.data
+        export_format = data.get('export_format', 'json')
+        risk_data = data.get('risk_data', [])
+        user_id = data.get('user_id', 'default_user')
+        file_name = data.get('file_name', 'risk_register_export')
+        # You could fetch/validate risk_data here if needed
+        client = RenderS3Client()
+        result = client.export(risk_data, export_format, file_name, user_id)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes

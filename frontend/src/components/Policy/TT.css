@@ -87,8 +87,21 @@
   margin-bottom: 4px;
   display: block;
 }
-.TT-input, .TT-textarea {
+.TT-input {
   width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #bfcfff !important;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+  margin-bottom: 4px;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.TT-textarea {
+  width: 100%;
+  height: 140px !important;
   padding: 10px 12px;
   border: 1px solid #bfcfff !important;
   border-radius: 8px;
@@ -160,11 +173,34 @@ input:required:invalid, textarea:required:invalid, select:required:invalid {
   align-items: center;
   justify-content: flex-start;
   gap: 0;
+  overflow: hidden;
 }
 .TT-policy-tabs {
   display: flex;
   align-items: center;
   gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #bfcfff transparent;
+  padding-bottom: 4px;
+  max-width: 100%;
+}
+
+.TT-policy-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.TT-policy-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.TT-policy-tabs::-webkit-scrollbar-thumb {
+  background: #bfcfff;
+  border-radius: 3px;
+}
+
+.TT-policy-tabs::-webkit-scrollbar-thumb:hover {
+  background: #3d5afe;
 }
 .TT-policy-tab {
   background: #f5f7ff;
@@ -179,6 +215,8 @@ input:required:invalid, textarea:required:invalid, select:required:invalid {
   transition: background 0.2s, color 0.2s;
   margin-right: 8px;
   position: relative;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .TT-policy-tab-active {
   background: #3d5afe;
@@ -196,6 +234,8 @@ input:required:invalid, textarea:required:invalid, select:required:invalid {
   cursor: pointer;
   margin-left: 16px;
   transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .TT-add-policy-tab:hover {
   background: #3d5afe;
@@ -216,7 +256,7 @@ input:required:invalid, textarea:required:invalid, select:required:invalid {
   position: absolute;
   top: 18px;
   right: 18px;
-  background: #ef6d6d;
+  background: #ffb3b3;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -251,11 +291,34 @@ input:required:invalid, textarea:required:invalid, select:required:invalid {
   align-items: center;
   justify-content: flex-start;
   gap: 0;
+  overflow: hidden;
 }
 .TT-subpolicy-tabs {
   display: flex;
   align-items: center;
   gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #bfcfff transparent;
+  padding-bottom: 4px;
+  max-width: 100%;
+}
+
+.TT-subpolicy-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.TT-subpolicy-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.TT-subpolicy-tabs::-webkit-scrollbar-thumb {
+  background: #bfcfff;
+  border-radius: 3px;
+}
+
+.TT-subpolicy-tabs::-webkit-scrollbar-thumb:hover {
+  background: #3d5afe;
 }
 .TT-subpolicy-tab {
   background: #f5f7ff;
@@ -270,6 +333,8 @@ input:required:invalid, textarea:required:invalid, select:required:invalid {
   transition: background 0.2s, color 0.2s;
   margin-right: 8px;
   position: relative;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .TT-subpolicy-tab-active {
   background: #3d5afe;
@@ -287,6 +352,8 @@ input:required:invalid, textarea:required:invalid, select:required:invalid {
   cursor: pointer;
   margin-left: 16px;
   transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .TT-add-subpolicy-tab:hover {
   background: #3d5afe;
@@ -323,23 +390,27 @@ input:required:invalid, textarea:required:invalid, select:required:invalid {
   background: #ff6666;
 }
 .TT-universal-submit-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 40px;
-  margin-bottom: 32px;
-  margin-left: 280px;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin-top: 40px !important;
+  margin-bottom: 32px !important;
+  margin-left: 0 !important;
+  width: 100% !important;
 }
 .TT-universal-submit-btn {
-  background: #3d5afe;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 14px 48px;
-  font-size: 1.25rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s;
-  box-shadow: 0 2px 8px rgba(61,90,254,0.08);
+  background: #3d5afe !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 32px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+  box-shadow: 0 2px 8px rgba(61,90,254,0.08) !important;
+  max-width: 200px !important;
+  width: auto !important;
 }
 .TT-universal-submit-btn:hover {
   background: #2540a9;

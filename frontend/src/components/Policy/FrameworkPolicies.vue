@@ -183,11 +183,31 @@ const isLoading = ref(false)
  
 // Add export format state for each policy
 const selectedExportFormat = reactive({}) // { [policyId]: format }
- 
+
 // Modal and details states
 const showModal = ref(false)
 const isLoadingDetails = ref(false)
 const policyDetails = ref(null)
+
+// Push notification method
+const sendPushNotification = async (notificationData) => {
+  try {
+    const response = await fetch('http://localhost:8000/api/push-notification/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(notificationData)
+    });
+    if (response.ok) {
+      console.log('Push notification sent successfully');
+    } else {
+      console.error('Failed to send push notification');
+    }
+  } catch (error) {
+    console.error('Error sending push notification:', error);
+  }
+}
  
 // Format date for display
 const formatDate = (dateString) => {
@@ -215,6 +235,13 @@ const fetchPolicies = async () => {
     }
   } catch (error) {
     console.error('Error fetching policies:', error)
+    sendPushNotification({
+      title: 'Policy List Loading Failed',
+      message: `Failed to load policies for framework "${frameworkName.value || 'Unknown Framework'}": ${error.response?.data?.error || error.message}`,
+      category: 'policy',
+      priority: 'high',
+      user_id: 'default_user'
+    });
   } finally {
     isLoading.value = false
   }
@@ -227,6 +254,13 @@ const fetchEntities = async () => {
     entities.value = response.data.entities || []
   } catch (error) {
     console.error('Error fetching entities:', error)
+    sendPushNotification({
+      title: 'Entity List Loading Failed',
+      message: `Failed to load entities for policy filtering: ${error.response?.data?.error || error.message}`,
+      category: 'policy',
+      priority: 'medium',
+      user_id: 'default_user'
+    });
   }
 }
 
@@ -292,6 +326,13 @@ const showPolicyDetails = async (policyId) => {
     policyDetails.value = response.data
   } catch (error) {
     console.error('Error fetching policy details:', error)
+    sendPushNotification({
+      title: 'Policy Details Loading Failed',
+      message: `Failed to load details for policy ID ${policyId}: ${error.response?.data?.error || error.message}`,
+      category: 'policy',
+      priority: 'medium',
+      user_id: 'default_user'
+    });
   } finally {
     isLoadingDetails.value = false
   }
@@ -314,6 +355,13 @@ const toggleStatus = async (policy) => {
         
         if (reviewers.length === 0) {
           PopupService.warning('No reviewers available. Please contact administrator.', 'No Reviewers');
+          sendPushNotification({
+            title: 'No Reviewers Available',
+            message: 'No reviewers are available for policy deactivation requests. Please contact administrator.',
+            category: 'policy',
+            priority: 'high',
+            user_id: 'default_user'
+          });
           return;
         }
         
@@ -337,6 +385,13 @@ const toggleStatus = async (policy) => {
               async (reason) => {
                 if (!reason || reason.trim() === '') {
                   PopupService.warning('Deactivation reason is required.', 'Missing Information');
+                  sendPushNotification({
+                    title: 'Missing Deactivation Reason',
+                    message: 'Policy deactivation request cancelled: Reason is required.',
+                    category: 'policy',
+                    priority: 'medium',
+                    user_id: 'default_user'
+                  });
                   return;
                 }
                 
@@ -351,11 +406,26 @@ const toggleStatus = async (policy) => {
                   // Show success message
                   PopupService.success('Policy deactivation request submitted. Awaiting approval.', 'Request Submitted');
                   
+                  sendPushNotification({
+                    title: 'Policy Deactivation Request Submitted',
+                    message: `Policy "${policy.name}" deactivation request has been submitted and is awaiting approval.`,
+                    category: 'policy',
+                    priority: 'high',
+                    user_id: 'default_user'
+                  });
+                  
                   // Refresh data to reflect the new 'Under Review' status
                   await fetchPolicies();
                 } catch (error) {
                   console.error('Error submitting deactivation request:', error);
                   PopupService.error('Failed to submit deactivation request. Please try again.', 'Request Failed');
+                  sendPushNotification({
+                    title: 'Policy Deactivation Request Failed',
+                    message: `Failed to submit deactivation request for policy "${policy.name}": ${error.response?.data?.error || error.message}`,
+                    category: 'policy',
+                    priority: 'high',
+                    user_id: 'default_user'
+                  });
                 }
               }
             );
@@ -364,6 +434,13 @@ const toggleStatus = async (policy) => {
       } catch (error) {
         console.error('Error fetching reviewers:', error);
         PopupService.error('Failed to load reviewers. Please try again.', 'Load Error');
+        sendPushNotification({
+          title: 'Reviewers Loading Failed',
+          message: `Failed to load reviewers for policy deactivation: ${error.response?.data?.error || error.message}`,
+          category: 'policy',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       }
     } else {
       // For activation (Inactive -> Active), use the direct toggle endpoint
@@ -386,6 +463,14 @@ const toggleStatus = async (policy) => {
       }
      
       PopupService.success(message, 'Status Update');
+      
+      sendPushNotification({
+        title: 'Policy Activation Successful',
+        message: `Policy "${policy.name}" has been successfully activated.`,
+        category: 'policy',
+        priority: 'high',
+        user_id: 'default_user'
+      });
      
       // Refresh summary counts
       await fetchPolicies();
@@ -393,6 +478,13 @@ const toggleStatus = async (policy) => {
   } catch (error) {
     console.error('Error toggling policy status:', error);
     PopupService.error('Failed to update policy status. Please try again.', 'Update Failed');
+    sendPushNotification({
+      title: 'Policy Status Update Failed',
+      message: `Failed to update status for policy "${policy.name}": ${error.response?.data?.error || error.message}`,
+      category: 'policy',
+      priority: 'high',
+      user_id: 'default_user'
+    });
   }
 }
  
@@ -402,9 +494,23 @@ const acknowledgePolicy = async (policy) => {
     const response = await axios.post(`/api/acknowledge-policy/${policy.id}/`)
     policy.isAcknowledged = true
     PopupService.success(response.data.message, 'Policy Acknowledged');
+    sendPushNotification({
+      title: 'Policy Acknowledged',
+      message: `Policy "${policy.name}" has been successfully acknowledged.`,
+      category: 'policy',
+      priority: 'medium',
+      user_id: 'default_user'
+    });
   } catch (error) {
     console.error('Error acknowledging policy:', error)
     PopupService.error('Failed to acknowledge policy. Please try again.', 'Acknowledgment Failed');
+    sendPushNotification({
+      title: 'Policy Acknowledgment Failed',
+      message: `Failed to acknowledge policy "${policy.name}": ${error.response?.data?.error || error.message}`,
+      category: 'policy',
+      priority: 'medium',
+      user_id: 'default_user'
+    });
   }
 }
  

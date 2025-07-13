@@ -30,6 +30,13 @@
       <!-- Framework Creation Form -->
       <div v-if="showFrameworkForm" class="framework-form-container">
         <div class="framework-form">
+          <div class="framework-header">
+            <h3>Create New Framework</h3>
+            <div class="framework-note">
+              <i class="fas fa-info-circle"></i>
+              <span>After creating the framework, you can add policies and subpolicies. You can also return to this form later to make corrections.</span>
+            </div>
+          </div>
           
               <div class="form-group policy-name">
               <label>Framework Name <span class="required-star">*</span></label>
@@ -45,12 +52,18 @@
           <div class="form-row single-column">
             <div class="form-group description">
               <label>Description <span class="required-star">*</span></label>
-              <textarea
-                placeholder="Enter framework description"
-                v-model="newFramework.FrameworkDescription"
-                rows="3"
-                title="Describe the purpose, scope, and objectives of this framework"
-              ></textarea>
+              <div class="textarea-container">
+                <textarea
+                  placeholder="Enter framework description"
+                  v-model="newFramework.FrameworkDescription"
+                  rows="3"
+                  title="Describe the purpose, scope, and objectives of this framework"
+                  maxlength="1000"
+                ></textarea>
+                <div class="character-counter" :class="getCharacterCounterClass(newFramework.FrameworkDescription, 1000)">
+                  {{ (newFramework.FrameworkDescription || '').length }}/1000
+                </div>
+              </div>
               <div class="helper-text">Describe the purpose, scope, and objectives of this framework</div>
             </div>
           </div>
@@ -123,7 +136,10 @@
             </div>
           </div>
           <div class="form-actions">
-            <button class="submitt-btn" @click="handleCreateFramework">Submit</button>
+            <button class="submitt-btn" @click="handleCreateFramework">
+              <i class="fas fa-arrow-right"></i>
+              Continue to Policies
+            </button>
           </div>
         </div>
       </div>
@@ -133,7 +149,17 @@
 
       <!-- Policy Stepper and Policy Form: Only show after framework is selected -->
       <div v-if="selectedFramework && !showFrameworkForm">
-        <h3 style="margin: 0;">Policy Creation</h3>
+        <div class="policy-header-section">
+          <h3 style="margin: 0;">Policy Creation</h3>
+          <button 
+            v-if="selectedFramework === '__new__'" 
+            class="back-to-framework-btn" 
+            @click="goBackToFramework"
+            title="Return to framework form to make corrections"
+          >
+            <i class="fas fa-arrow-left"></i> Back to Framework
+          </button>
+        </div>
         <div class="subpolicy-stepper">
           
           <div
@@ -197,14 +223,18 @@
             </div>
             <div class="form-group description">
               <label>Description <span class="required-star">*</span></label>
-              <div class="input-with-icon">
+              <div class="textarea-container">
                 <textarea
                   placeholder="Enter policy description"
                   v-model="policiesForm[selectedPolicyIdx].PolicyDescription"
                   @input="handlePolicyChange(selectedPolicyIdx, 'PolicyDescription', $event.target.value)"
                   rows="3"
                   title="Describe the policy's purpose, requirements, and key provisions"
+                  maxlength="1000"
                 ></textarea>
+                <div class="character-counter" :class="getCharacterCounterClass(policiesForm[selectedPolicyIdx].PolicyDescription, 1000)">
+                  {{ (policiesForm[selectedPolicyIdx].PolicyDescription || '').length }}/1000
+                </div>
               </div>
               <div class="helper-text">Describe the policy's purpose, requirements, and key provisions</div>
             </div>
@@ -239,14 +269,18 @@
             <div class="policy-form-row objective-applicability-row">
               <div class="form-group description">
                 <label>Objective <span class="required-star">*</span></label>
-                <div class="input-with-icon">
+                <div class="textarea-container">
                   <textarea
                     placeholder="Enter policy objective"
                     v-model="policiesForm[selectedPolicyIdx].Objective"
                     @input="handlePolicyChange(selectedPolicyIdx, 'Objective', $event.target.value)"
                     rows="3"
                     title="Explain what this policy is designed to accomplish and its expected outcomes"
+                    maxlength="1000"
                   ></textarea>
+                  <div class="character-counter" :class="getCharacterCounterClass(policiesForm[selectedPolicyIdx].Objective, 1000)">
+                    {{ (policiesForm[selectedPolicyIdx].Objective || '').length }}/1000
+                  </div>
                 </div>
                 <div class="helper-text">Explain what this policy is designed to accomplish and its expected outcomes</div>
               </div>
@@ -355,7 +389,7 @@
                 <label>Applicable Entities <span class="required-star">*</span></label>
                 <div class="entities-multi-select" @click.stop>
                   <div class="entities-dropdown">
-                    <div 
+                    <div   
                       class="selected-entities" 
                       :class="{ active: policiesForm[selectedPolicyIdx].showEntitiesDropdown }"
                       @click="toggleEntitiesDropdown(selectedPolicyIdx)"
@@ -485,7 +519,7 @@
               </div>
               <div class="form-group">
                 <label>Control <span class="required-star">*</span></label>
-                <div class="input-with-icon">
+                <div class="textarea-container">
                   <textarea
                     type="text"
                     placeholder="Enter control"
@@ -493,20 +527,28 @@
                     @input="handleSubPolicyChange(selectedPolicyIdx, selectedSubPolicyIdx[selectedPolicyIdx], 'Control', $event.target.value)"
                     rows="3"
                     title="Specify the control mechanisms, procedures, or safeguards to be implemented"
+                    maxlength="1000"
                   ></textarea>
+                  <div class="character-counter" :class="getCharacterCounterClass(policiesForm[selectedPolicyIdx].subpolicies[selectedSubPolicyIdx[selectedPolicyIdx]].Control, 1000)">
+                    {{ (policiesForm[selectedPolicyIdx].subpolicies[selectedSubPolicyIdx[selectedPolicyIdx]].Control || '').length }}/1000
+                  </div>
                 </div>
                 <div class="helper-text">Specify the control mechanisms, procedures, or safeguards to be implemented</div>
               </div>
               <div class="form-group">
                 <label>Description <span class="required-star">*</span></label>
-                <div class="input-with-icon">
+                <div class="textarea-container">
                   <textarea
                     placeholder="Enter description"
                     v-model="policiesForm[selectedPolicyIdx].subpolicies[selectedSubPolicyIdx[selectedPolicyIdx]].Description"
                     @input="handleSubPolicyChange(selectedPolicyIdx, selectedSubPolicyIdx[selectedPolicyIdx], 'Description', $event.target.value)"
                     rows="3"
                     title="Explain the purpose, scope, and specific requirements of this sub-policy"
+                    maxlength="1000"
                   ></textarea>
+                  <div class="character-counter" :class="getCharacterCounterClass(policiesForm[selectedPolicyIdx].subpolicies[selectedSubPolicyIdx[selectedPolicyIdx]].Description, 1000)">
+                    {{ (policiesForm[selectedPolicyIdx].subpolicies[selectedSubPolicyIdx[selectedPolicyIdx]].Description || '').length }}/1000
+                  </div>
                 </div>
                 <div class="helper-text">Explain the purpose, scope, and specific requirements of this sub-policy</div>
               </div>
@@ -539,9 +581,11 @@
           <div class="form-group">
             <label>Created By <span class="required-star">*</span></label>
             <div class="created-by-field">
-              <div class="user-icon">
+            <div class="user-icon">
                 <i class="fas fa-user"></i>
               </div>
+            
+
             <input
               type="text"
               v-model="approvalForm.createdByName"
@@ -769,6 +813,13 @@ export default {
       } catch (err) {
         console.error('Error fetching frameworks:', err)
         PopupService.error('Failed to fetch frameworks', 'Loading Error')
+        sendPushNotification({
+          title: 'Framework Loading Failed',
+          message: 'Failed to fetch frameworks. Please try again.',
+          category: 'framework',
+          priority: 'medium',
+          user_id: currentUser.value?.UserId || 'default_user'
+        });
       } finally {
         loading.value = false
       }
@@ -810,6 +861,19 @@ export default {
       }
       // Refresh existing identifiers after framework creation
       fetchExistingFrameworkIdentifiers()
+    }
+
+    const goBackToFramework = () => {
+      // Restore the framework data to the form
+      newFramework.value = { ...frameworkFormData.value }
+      // Show the framework form again
+      showFrameworkForm.value = true
+      // Clear the selected framework to hide policy form
+      selectedFramework.value = ''
+      // Clear any existing policies
+      policiesForm.value = []
+      selectedPolicyIdx.value = null
+      selectedSubPolicyIdx.value = []
     }
 
     // Policy form handlers
@@ -939,6 +1003,13 @@ export default {
       } catch (err) {
         console.error('Error fetching users:', err)
         PopupService.error('Failed to fetch users', 'Loading Error')
+        sendPushNotification({
+          title: 'Users Loading Failed',
+          message: 'Failed to fetch users. Please try again.',
+          category: 'policy',
+          priority: 'medium',
+          user_id: currentUser.value?.UserId || 'default_user'
+        });
       } finally {
         loading.value = false
       }
@@ -955,6 +1026,13 @@ export default {
       } catch (err) {
         console.error('Error fetching policy categories:', err)
         PopupService.error('Failed to fetch policy categories', 'Loading Error')
+        sendPushNotification({
+          title: 'Policy Categories Loading Failed',
+          message: 'Failed to fetch policy categories. Please try again.',
+          category: 'policy',
+          priority: 'medium',
+          user_id: currentUser.value?.UserId || 'default_user'
+        });
       } finally {
         loading.value = false
       }
@@ -968,6 +1046,13 @@ export default {
       } catch (err) {
         console.error('Error fetching entities:', err)
         PopupService.error('Failed to fetch entities', 'Loading Error')
+        sendPushNotification({
+          title: 'Entities Loading Failed',
+          message: 'Failed to fetch entities. Please try again.',
+          category: 'policy',
+          priority: 'medium',
+          user_id: currentUser.value?.UserId || 'default_user'
+        });
       }
     }
 
@@ -1176,6 +1261,26 @@ export default {
       }
     };
 
+    // Add push notification method
+    const sendPushNotification = async (notificationData) => {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    };
+
     const handleFinalSubmit = async () => {
       try {
         loading.value = true
@@ -1189,6 +1294,13 @@ export default {
         if (isCreatingNewFramework) {
                   if (!frameworkFormData.value || !frameworkFormData.value.FrameworkName) {
           PopupService.error('Please fill in all required framework fields.', 'Validation Error')
+          sendPushNotification({
+            title: 'Framework Creation Failed',
+            message: 'Please fill in all required framework fields.',
+            category: 'framework',
+            priority: 'high',
+            user_id: currentUser.value?.UserId || 'default_user'
+          });
           loading.value = false
           return
         }
@@ -1201,6 +1313,13 @@ export default {
 
         if (!approvalForm.value.createdByName) {
           PopupService.error('Creator name not found. Please try logging in again.', 'Validation Error')
+          sendPushNotification({
+            title: 'Policy Creation Failed',
+            message: 'Creator name not found. Please try logging in again.',
+            category: 'policy',
+            priority: 'high',
+            user_id: currentUser.value?.UserId || 'default_user'
+          });
           loading.value = false
           return
         }
@@ -1209,6 +1328,13 @@ export default {
         for (const policy of policiesForm.value) {
           if (!policy.PolicyName || !policy.Identifier || !policy.StartDate) {
             PopupService.error('Please fill in all required fields (Policy Name, Identifier, and Start Date) for all policies', 'Validation Error')
+            sendPushNotification({
+              title: 'Policy Creation Failed',
+              message: 'Please fill in all required fields (Policy Name, Identifier, and Start Date) for all policies',
+              category: 'policy',
+              priority: 'high',
+              user_id: creatorUser?.UserId || 'default_user'
+            });
             loading.value = false
             return
           }
@@ -1216,6 +1342,13 @@ export default {
           // New validation: must have at least one subpolicy
           if (!policy.subpolicies || policy.subpolicies.length === 0) {
             PopupService.error('Each policy must have at least one subpolicy.', 'Validation Error');
+            sendPushNotification({
+              title: 'Policy Creation Failed',
+              message: 'Each policy must have at least one subpolicy.',
+              category: 'policy',
+              priority: 'high',
+              user_id: creatorUser?.UserId || 'default_user'
+            });
             loading.value = false;
             return;
           }
@@ -1230,6 +1363,13 @@ export default {
           for (const sub of policy.subpolicies) {
             if (!sub.SubPolicyName || !sub.Identifier) {
               PopupService.error('Please fill in all required fields (Name and Identifier) for all subpolicies', 'Validation Error')
+              sendPushNotification({
+                title: 'Policy Creation Failed',
+                message: 'Please fill in all required fields (Name and Identifier) for all subpolicies',
+                category: 'policy',
+                priority: 'high',
+                user_id: creatorUser?.UserId || 'default_user'
+              });
               loading.value = false
               return
             }
@@ -1253,10 +1393,11 @@ export default {
             formData.append('frameworkName', frameworkFormData.value.FrameworkName)
 
             try {
-              const uploadResponse = await axios.post('http://localhost:8000/api/upload-policy-document/', formData, {
+             const uploadResponse = await axios.post('http://localhost:8000/api/upload-policy-document/', formData, {
                 headers: {
                   'Content-Type': 'multipart/form-data'
-                }
+                },
+                timeout: 1000000 // Increase timeout for large files
               })
               if (uploadResponse.data.success) {
                 frameworkFormData.value.DocURL = uploadResponse.data.file.url
@@ -1266,6 +1407,13 @@ export default {
             } catch (uploadError) {
               console.error('Error uploading framework document:', uploadError)
               PopupService.error('Failed to upload framework document: ' + (uploadError.response?.data?.error || uploadError.message), 'Upload Error')
+              sendPushNotification({
+                title: 'Framework Document Upload Failed',
+                message: `Failed to upload framework document: ${uploadError.response?.data?.error || uploadError.message}`,
+                category: 'framework',
+                priority: 'high',
+                user_id: creatorUser?.UserId || 'default_user'
+              });
               loading.value = false
               return
             }
@@ -1285,7 +1433,8 @@ export default {
                 const uploadResponse = await axios.post('http://localhost:8000/api/upload-policy-document/', formData, {
                   headers: {
                     'Content-Type': 'multipart/form-data'
-                  }
+                  },
+                timeout: 1000000
                 })
                 if (uploadResponse.data.success) {
                   policy.DocURL = uploadResponse.data.file.url
@@ -1295,6 +1444,13 @@ export default {
               } catch (uploadError) {
                 console.error('Error uploading policy document:', uploadError)
                 PopupService.error('Failed to upload policy document: ' + (uploadError.response?.data?.error || uploadError.message), 'Upload Error')
+                sendPushNotification({
+                  title: 'Policy Document Upload Failed',
+                  message: `Failed to upload policy document: ${uploadError.response?.data?.error || uploadError.message}`,
+                  category: 'policy',
+                  priority: 'high',
+                  user_id: creatorUser?.UserId || 'default_user'
+                });
                 loading.value = false
                 return
               }
@@ -1346,6 +1502,13 @@ export default {
             'Successfully created new framework and policies! Redirecting to All Policies page...',
             'Framework Created'
           );
+          sendPushNotification({
+            title: 'Framework and Policies Created Successfully',
+            message: `New framework "${frameworkFormData.value.FrameworkName}" with ${policiesForm.value.length} policies has been created successfully.`,
+            category: 'framework',
+            priority: 'medium',
+            user_id: creatorUser?.UserId || 'default_user'
+          });
         } else {
           // Add policies to existing framework (batch mode)
           const frameworkId = selectedFramework.value;
@@ -1364,7 +1527,8 @@ export default {
                 const uploadResponse = await axios.post('http://localhost:8000/api/upload-policy-document/', formData, {
                   headers: {
                     'Content-Type': 'multipart/form-data'
-                  }
+                  },
+                timeout: 1000000
                 })
                 if (uploadResponse.data.success) {
                   policy.DocURL = uploadResponse.data.file.url
@@ -1374,6 +1538,13 @@ export default {
               } catch (uploadError) {
                 console.error('Error uploading policy document:', uploadError)
                 PopupService.error('Failed to upload policy document: ' + (uploadError.response?.data?.error || uploadError.message), 'Upload Error')
+                sendPushNotification({
+                  title: 'Policy Document Upload Failed',
+                  message: `Failed to upload policy document: ${uploadError.response?.data?.error || uploadError.message}`,
+                  category: 'policy',
+                  priority: 'high',
+                  user_id: creatorUser?.UserId || 'default_user'
+                });
                 loading.value = false
                 return
               }
@@ -1405,10 +1576,24 @@ export default {
               'Successfully added policies! Redirecting to All Policies page...',
               'Policies Added'
             );
+            sendPushNotification({
+              title: 'Policies Added Successfully',
+              message: `Successfully added ${policiesForm.value.length} policies to the existing framework.`,
+              category: 'policy',
+              priority: 'medium',
+              user_id: creatorUser?.UserId || 'default_user'
+            });
           } catch (err) {
             console.error('Error submitting policies:', err);
             const errorMessage = err.response?.data?.details || err.response?.data?.error || 'Failed to submit policies';
             PopupService.error(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage, 'Submission Error');
+            sendPushNotification({
+              title: 'Policy Submission Failed',
+              message: typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage,
+              category: 'policy',
+              priority: 'high',
+              user_id: creatorUser?.UserId || 'default_user'
+            });
             loading.value = false;
             return;
           }
@@ -1434,6 +1619,13 @@ export default {
         console.error('Error submitting policies:', err)
         const errorMessage = err.response?.data?.details || err.response?.data?.error || 'Failed to submit policies';
         PopupService.error(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage, 'Submission Error');
+        sendPushNotification({
+          title: 'Policy Submission Failed',
+          message: typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage,
+          category: 'policy',
+          priority: 'high',
+          user_id: currentUser.value?.UserId || 'default_user'
+        });
       } finally {
         loading.value = false
       }
@@ -1475,7 +1667,6 @@ export default {
       const file = e.target.files[0]
       if (file) newFramework.value.DocURL = file
     }
-    
     const onPolicyFileChange = (e, idx) => {
       const file = e.target.files[0]
       if (file) policiesForm.value[idx].DocURL = file
@@ -1519,6 +1710,17 @@ export default {
       ]
     }))
 
+    // Character counter function
+    const getCharacterCounterClass = (text, maxLength) => {
+      if (!text) return ''
+      const length = text.length
+      const percentage = (length / maxLength) * 100
+      
+      if (percentage >= 90) return 'error'
+      if (percentage >= 75) return 'warning'
+      return ''
+    }
+
     return {
       selectedFramework,
       policiesForm,
@@ -1544,6 +1746,7 @@ export default {
       handleSubmitPolicy,
       handleFinalSubmit,
       handleCreateFramework,
+      goBackToFramework,
       getSelectedFrameworkName,
       handleChangeFramework,
       frameworkFormData,
@@ -1579,6 +1782,8 @@ export default {
       addNewSubPolicy,
       selectedSubPolicyIdx,
       frameworkDropdownConfig,
+      sendPushNotification,
+      getCharacterCounterClass,
     }
   }
 }

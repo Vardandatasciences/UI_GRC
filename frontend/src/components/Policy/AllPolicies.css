@@ -22,7 +22,7 @@
   background: transparent;
   border: none;
   outline: none;
-  color: #c7c7f7;
+  color: #000000;
   font-size: 0.95rem;
   font-weight: 500;
   border-radius: 22px;
@@ -38,14 +38,14 @@
 }
 .pill-tab.active {
   background:  #6f8fed;
-  color: #fff;
+  color: #000000;
   font-weight: 700;
   box-shadow: 0 4px 12px rgba(79,86,183,0.2);
 }
 .pill-dot {
   width: 10px;
   height: 10px;
-  background: #ffffff;
+  background: #000000;
   border-radius: 50%;
   display: inline-block;
   margin-right: 4px;
@@ -406,14 +406,23 @@
 /* Framework Dropdown for Policies/Subpolicies */
 .framework-select-container {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   max-width: 400px !important;
-  margin: 0 auto 8px auto !important;
+  margin: 0 auto 24px auto !important;
   padding: 0 !important;
+  margin-bottom: 24px;
 }
  
 .framework-select-wrapper {
+  width: 100%;
   max-width: 340px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
  
 .framework-select-wrapper label {

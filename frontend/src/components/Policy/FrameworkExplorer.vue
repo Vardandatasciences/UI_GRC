@@ -249,6 +249,27 @@ const frameworkDetails = ref(null)
  
 // Add export controls above the framework grid
 const selectedExportFormat = ref('');
+
+// Add push notification function
+const sendPushNotification = async (notificationData) => {
+  try {
+    const response = await fetch('http://localhost:8000/api/push-notification/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(notificationData)
+    });
+    if (response.ok) {
+      console.log('Push notification sent successfully');
+    } else {
+      console.error('Failed to send push notification');
+    }
+  } catch (error) {
+    console.error('Error sending push notification:', error);
+  }
+};
+
 const exportFrameworkPolicies = async () => {
   if (!selectedFrameworkId.value || !selectedExportFormat.value) {
     PopupService.warning('Please select a framework and format.', 'Missing Selection');
@@ -262,6 +283,14 @@ const exportFrameworkPolicies = async () => {
     const { file_url, file_name } = res.data;
     if (!file_url || !file_name) {
       PopupService.error('Export failed: No file URL or name returned.', 'Export Error');
+      // Send push notification for export failure
+      sendPushNotification({
+        title: 'Framework Export Failed',
+        message: 'Export failed: No file URL or name returned.',
+        category: 'framework',
+        priority: 'high',
+        user_id: 'default_user'
+      });
       return;
     }
  
@@ -277,12 +306,36 @@ const exportFrameworkPolicies = async () => {
       link.remove();
       window.URL.revokeObjectURL(url);
       PopupService.success('Export completed successfully!', 'Export Success');
+      // Send push notification for export success
+      sendPushNotification({
+        title: 'Framework Export Completed',
+        message: `Framework export completed successfully in ${selectedExportFormat.value.toUpperCase()} format.`,
+        category: 'framework',
+        priority: 'medium',
+        user_id: 'default_user'
+      });
     } catch (downloadErr) {
       PopupService.success('Export completed successfully!', 'Export Success');
+      // Send push notification for export success (even if download fails)
+      sendPushNotification({
+        title: 'Framework Export Completed',
+        message: `Framework export completed successfully in ${selectedExportFormat.value.toUpperCase()} format.`,
+        category: 'framework',
+        priority: 'medium',
+        user_id: 'default_user'
+      });
       console.error(downloadErr);
     }
   } catch (err) {
     PopupService.error('Export failed. Please try again.', 'Export Error');
+    // Send push notification for export failure
+    sendPushNotification({
+      title: 'Framework Export Failed',
+      message: `Failed to export framework: ${err.response?.data?.error || err.message}`,
+      category: 'framework',
+      priority: 'high',
+      user_id: 'default_user'
+    });
     console.error(err);
   }
 };
@@ -381,6 +434,14 @@ const toggleStatus = async (fw) => {
         
         if (reviewers.length === 0) {
           PopupService.warning('No reviewers available. Please contact an administrator.', 'No Reviewers');
+          // Send push notification for no reviewers available
+          sendPushNotification({
+            title: 'No Reviewers Available',
+            message: 'No reviewers available for framework deactivation. Please contact an administrator.',
+            category: 'framework',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
           return;
         }
         
@@ -399,6 +460,14 @@ const toggleStatus = async (fw) => {
             console.log('DEBUG: Selected reviewer ID:', selectedReviewerId, 'Type:', typeof selectedReviewerId);
             if (!selectedReviewerId) {
               PopupService.warning('Reviewer selection is required.', 'Missing Information');
+              // Send push notification for missing reviewer selection
+              sendPushNotification({
+                title: 'Reviewer Selection Required',
+                message: 'Reviewer selection is required for framework deactivation.',
+                category: 'framework',
+                priority: 'medium',
+                user_id: 'default_user'
+              });
               return;
             }
             
@@ -410,6 +479,14 @@ const toggleStatus = async (fw) => {
                 console.log('DEBUG: Reason provided:', reason);
                 if (!reason || reason.trim() === '') {
                   PopupService.warning('Deactivation reason is required.', 'Missing Information');
+                  // Send push notification for missing reason
+                  sendPushNotification({
+                    title: 'Deactivation Reason Required',
+                    message: 'Deactivation reason is required for framework deactivation.',
+                    category: 'framework',
+                    priority: 'medium',
+                    user_id: 'default_user'
+                  });
                   return;
                 }
                 
@@ -434,12 +511,30 @@ const toggleStatus = async (fw) => {
                   // Show success message
                   PopupService.success('Framework deactivation request submitted. Awaiting approval.', 'Request Submitted');
                   
+                  // Send push notification for successful deactivation request
+                  sendPushNotification({
+                    title: 'Framework Deactivation Request Submitted',
+                    message: `Framework "${fw.name}" deactivation request submitted successfully. Awaiting approval.`,
+                    category: 'framework',
+                    priority: 'high',
+                    user_id: 'default_user'
+                  });
+                  
                   // Refresh data to reflect the new 'Under Review' status
                   await fetchFrameworks();
                 } catch (error) {
                   console.error('Error submitting deactivation request:', error);
                   console.error('Error response:', error.response?.data);
                   PopupService.error('Failed to submit deactivation request. Please try again.', 'Request Failed');
+                  
+                  // Send push notification for deactivation request failure
+                  sendPushNotification({
+                    title: 'Framework Deactivation Request Failed',
+                    message: `Failed to submit deactivation request for framework "${fw.name}": ${error.response?.data?.error || error.message}`,
+                    category: 'framework',
+                    priority: 'high',
+                    user_id: 'default_user'
+                  });
                 }
               }
             );
@@ -449,6 +544,15 @@ const toggleStatus = async (fw) => {
       } catch (error) {
         console.error('Error fetching reviewers:', error);
         PopupService.error('Failed to fetch reviewers. Please try again.', 'Error');
+        
+        // Send push notification for reviewer fetch failure
+        sendPushNotification({
+          title: 'Failed to Fetch Reviewers',
+          message: `Failed to fetch reviewers for framework deactivation: ${error.response?.data?.error || error.message}`,
+          category: 'framework',
+          priority: 'high',
+          user_id: 'default_user'
+        });
         return;
       }
     } else {
@@ -465,6 +569,15 @@ const toggleStatus = async (fw) => {
       let message = `Framework status change request submitted.`;
      
       PopupService.success(message, 'Status Update');
+      
+      // Send push notification for successful activation
+      sendPushNotification({
+        title: 'Framework Activation Successful',
+        message: `Framework "${fw.name}" has been successfully activated.`,
+        category: 'framework',
+        priority: 'high',
+        user_id: 'default_user'
+      });
      
       // Refresh summary counts
       await fetchFrameworks();
@@ -472,6 +585,15 @@ const toggleStatus = async (fw) => {
   } catch (error) {
     console.error('Error toggling framework status:', error);
     PopupService.error('Failed to update framework status. Please try again.', 'Update Failed');
+    
+    // Send push notification for status toggle failure
+    sendPushNotification({
+      title: 'Framework Status Update Failed',
+      message: `Failed to update framework "${fw.name}" status: ${error.response?.data?.error || error.message}`,
+      category: 'framework',
+      priority: 'high',
+      user_id: 'default_user'
+    });
   }
 }
  
@@ -568,11 +690,10 @@ const entityDropdownConfig = computed(() => ({
 .framework-explorer-container {
   padding: 24px 32px;
   margin-left: 280px;
-  max-width: calc(100vw - 280px);
-  width: 95%;
+  width: calc(100vw - 280px - 64px);
   box-sizing: border-box;
   position: relative;
-  padding-top: 70px; /* Add space for export controls */
+  padding-top: 10px; /* Add space for export controls */
 }
 .page-header {
   margin-bottom: 18px;
@@ -641,7 +762,6 @@ const entityDropdownConfig = computed(() => ({
   margin-bottom: 24px;
   flex-wrap: nowrap; /* prevent wrapping */
   width: 100%;
-  max-width: 100%;
 }
 .summary-card {
   display: flex;
@@ -753,6 +873,7 @@ const entityDropdownConfig = computed(() => ({
   margin-bottom: 5px;
   width: 100%;
   flex-wrap: wrap;
+  max-width: 100%;
 }
 .framework-dropdown-section,
 .internal-external-dropdown-section,
@@ -816,6 +937,7 @@ const entityDropdownConfig = computed(() => ({
   gap: 20px;
   width: 100%;
   margin-top: 20px;
+  max-width: 100%;
 }
 .framework-card {
   background: #f7f7fa !important;

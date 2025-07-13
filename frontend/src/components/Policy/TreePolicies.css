@@ -1,11 +1,11 @@
 .tree-policies-container {
     position: absolute;
     top: 0;
-    left: 280px;
-    width: calc(100% - 260px);
+    margin-left: 280px !important;
+    width: 100%;
     height: 100vh;
     overflow: auto;
-    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    background: #ffffff;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 20px;
     max-height: 100vh;
@@ -35,7 +35,6 @@
     width: 95%;
     height: 95vh;
     position: relative;
-    border: 1px solid #e0e0e0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -56,7 +55,7 @@
     justify-content: space-between;
     padding: 14px 20px;
     background: #fff;
-    border-bottom: 1px solid #e0e0e0;
+
     min-height: 60px;
   }
   
@@ -66,6 +65,22 @@
     margin-bottom: 30px;
     padding: 14px 20px;
     gap: 24px;
+  }
+  
+  .dropdown-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .helper-text {
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-align: center;
+    max-width: 300px;
+    line-height: 1.4;
+    margin-top: 4px;
   }
   
   /* Custom dropdown width override for TreePolicies */
@@ -87,7 +102,7 @@
     font-size: 0.95rem;
     padding: 12px 26px;
     border: none;
-    background:  #4f7cff;
+    background:  #1473df;
     color: white;
     border-radius: 8px;
     cursor: pointer;
@@ -100,7 +115,7 @@
   }
   
   .tree-expand-btn:hover {
-    background: linear-gradient(145deg, #4f46e5, #4338ca);
+    background:  #1473df;
     transform: translateY(-1px);
     box-shadow: 0 6px 8px rgba(79, 70, 229, 0.3);
   }
@@ -131,8 +146,8 @@
   }
   
   .org-tree-framework-node {
-    background: linear-gradient(145deg, #ffffff, #f8f9fa);
-    border: 1px solid rgba(224, 224, 224, 0.5);
+    background:  #ffffff;
+    
     border-radius: 12px;
     min-width: 240px;
     min-height: 60px;
@@ -179,8 +194,8 @@
   }
   
   .org-tree-policy-node {
-    background: linear-gradient(145deg, #ffffff, #f8f9fa);
-    border: 1px solid rgba(224, 224, 224, 0.5);
+    background:  #ffffff;
+    
     border-radius: 10px;
     min-width: 200px;
     min-height: 50px;
@@ -216,8 +231,7 @@
   }
   
   .org-tree-subpolicy-node {
-    background: linear-gradient(145deg, #ffffff, #f8f9fa);
-    border: 1px solid rgba(224, 224, 224, 0.5);
+    background:  #ffffff;
     border-radius: 8px;
     min-width: 160px;
     min-height: 40px;
@@ -248,7 +262,7 @@
     justify-content: center;
     margin-top: 4px;
     font-size: 1.1rem;
-    color: #4f46e5;
+    color: #1473df;
     transition: all 0.2s;
     width: 24px;
     height: 24px;
@@ -256,7 +270,7 @@
   }
   
   .org-tree-arrow-down.clickable:hover {
-    color: #4338ca;
+    color: #1473df;
     background: rgba(79, 70, 229, 0.1);
   }
   
@@ -314,7 +328,7 @@
     width: 50px;
     height: 50px;
     border: 3px solid rgba(79, 70, 229, 0.1);
-    border-top: 3px solid #4f46e5;
+    border-top: 3px solid #1473df;
     border-radius: 50%;
     animation: tree-spin 0.8s linear infinite;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -634,7 +648,7 @@
   }
 
   .tree-container {
-    width: 100vw;
+    width: 100%;
     height: 100vh;
     min-height: 100vh;
     max-width: none;
@@ -643,7 +657,7 @@
     border-radius: 0;
     box-shadow: none;
     padding: 0;
-    overflow-x: auto;
+    overflow-x: visible;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -656,7 +670,6 @@
     justify-content: space-between;
     margin-bottom: 40px;
     padding-bottom: 20px;
-    border-bottom: 2px solid #e5e7eb;
   }
 
   .tree-title {
@@ -672,30 +685,32 @@
   }
 
   .expand-btn {
-    background: linear-gradient(145deg, #4f7cff, #4f46e5);
+    background: #3d65de;
     color: white;
     border: none;
-    padding: 14px 28px;
-    border-radius: 8px;
-    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 12px rgba(79, 124, 255, 0.3);
+    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 4px rgba(79, 124, 255, 0.2);
   }
 
   .expand-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(79, 124, 255, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(79, 124, 255, 0.3);
   }
 
   .tree-svg {
-    width: 100vw;
+    width: 100%;
     height: 100vh;
     min-height: 700px;
     display: block;
     margin: 0 auto;
+    min-width: 0;
   }
 
   .framework-node {

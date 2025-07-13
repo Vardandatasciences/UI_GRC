@@ -326,6 +326,24 @@ import { permissionMixin } from '@/mixins/permissionMixin.js';
     await this.fetchIncidentDetails();
   },
   methods: {
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
     async fetchIncidentDetails() {
       try {
         this.loading = true;
@@ -372,6 +390,16 @@ import { permissionMixin } from '@/mixins/permissionMixin.js';
         if (!this.canEscalateIncident()) {
           console.warn('❌ Permission denied for escalating incident');
           PopupService.error("You don't have permission to escalate incidents");
+          
+          // Send push notification for permission denied
+          this.sendPushNotification({
+            title: 'Permission Denied - Incident Escalation',
+            message: `Permission denied for escalating incident #${this.incident?.IncidentId || 'Unknown'}. User does not have required permissions.`,
+            category: 'incident',
+            priority: 'high',
+            user_id: 'default_user'
+          });
+          
           return;
         }
         
@@ -392,6 +420,16 @@ import { permissionMixin } from '@/mixins/permissionMixin.js';
         if (!this.canEditIncident()) {
           console.warn('❌ Permission denied for rejecting incident');
           PopupService.error("You don't have permission to reject incidents");
+          
+          // Send push notification for permission denied
+          this.sendPushNotification({
+            title: 'Permission Denied - Incident Rejection',
+            message: `Permission denied for rejecting incident #${this.incident?.IncidentId || 'Unknown'}. User does not have required permissions.`,
+            category: 'incident',
+            priority: 'high',
+            user_id: 'default_user'
+          });
+          
           return;
         }
         
@@ -415,16 +453,34 @@ import { permissionMixin } from '@/mixins/permissionMixin.js';
         // Update local incident status
         this.incident.Status = 'Scheduled';
         
-                  // Show success message and redirect to Risk module
-          PopupService.success('Incident forwarded to Risk module successfully!');
-          
-          // Redirect to Risk module after 2 seconds
-          setTimeout(() => {
-            // this.$router.push('/risk');
-          }, 2000);
+        // Show success message and redirect to Risk module
+        PopupService.success('Incident forwarded to Risk module successfully!');
+        
+        // Send push notification for successful escalation
+        this.sendPushNotification({
+          title: 'Incident Escalated to Risk',
+          message: `Incident #${this.incident?.IncidentId || 'Unknown'} "${this.incident?.IncidentTitle || 'Untitled Incident'}" has been successfully escalated to the Risk module.`,
+          category: 'incident',
+          priority: 'high',
+          user_id: 'default_user'
+        });
+        
+        // Redirect to Risk module after 2 seconds
+        setTimeout(() => {
+          // this.$router.push('/risk');
+        }, 2000);
       })
       .catch(error => {
         console.error('Error updating incident status:', error);
+        
+        // Send push notification for error
+        this.sendPushNotification({
+          title: 'Error - Incident Escalation Failed',
+          message: `Failed to escalate incident #${this.incident?.IncidentId || 'Unknown'} to Risk module. Error: ${error.message || 'Unknown error'}`,
+          category: 'incident',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       });
     },
     confirmReject() {
@@ -436,13 +492,31 @@ import { permissionMixin } from '@/mixins/permissionMixin.js';
         console.log('Incident rejected:', response.data);
         
                   // Update local incident status
-          this.incident.Status = 'Rejected';
-          
-          // Show success message
-          PopupService.success('Incident rejected successfully!');
+        this.incident.Status = 'Rejected';
+        
+        // Show success message
+        PopupService.success('Incident rejected successfully!');
+        
+        // Send push notification for successful rejection
+        this.sendPushNotification({
+          title: 'Incident Rejected',
+          message: `Incident #${this.incident?.IncidentId || 'Unknown'} "${this.incident?.IncidentTitle || 'Untitled Incident'}" has been rejected successfully.`,
+          category: 'incident',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
       })
       .catch(error => {
         console.error('Error updating incident status:', error);
+        
+        // Send push notification for error
+        this.sendPushNotification({
+          title: 'Error - Incident Rejection Failed',
+          message: `Failed to reject incident #${this.incident?.IncidentId || 'Unknown'}. Error: ${error.message || 'Unknown error'}`,
+          category: 'incident',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       });
     },
     getPriorityClass(priority) {

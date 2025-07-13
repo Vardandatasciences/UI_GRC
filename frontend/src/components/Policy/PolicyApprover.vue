@@ -938,6 +938,26 @@ export default {
     }
   },
   methods: {
+    // Push notification method
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
+
     // Initialize user and check role
     async initializeUser() {
       try {
@@ -981,12 +1001,26 @@ export default {
           console.error('User role API did not return success:', response.data);
           // Show error message instead of fallback
           alert('Error: Could not determine user role. Please contact administrator.');
+          this.sendPushNotification({
+            title: 'User Role Error',
+            message: 'Could not determine user role. Please contact administrator.',
+            category: 'policy',
+            priority: 'high',
+            user_id: this.currentUserId || 'default_user'
+          });
         }
       } catch (error) {
         console.error('Error initializing user:', error);
         
         // Show error message instead of fallback
         alert('Error: Could not initialize user. Please refresh the page and try again.');
+        this.sendPushNotification({
+          title: 'User Initialization Error',
+          message: 'Could not initialize user. Please refresh the page and try again.',
+          category: 'policy',
+          priority: 'high',
+          user_id: this.currentUserId || 'default_user'
+        });
       }
     },
 
@@ -1012,11 +1046,25 @@ export default {
         if (this.availableUsers.length === 0) {
           console.error('No users found in RBAC table');
           alert('Error: No users found. Please contact administrator.');
+          this.sendPushNotification({
+            title: 'No Users Found',
+            message: 'No users found in RBAC table. Please contact administrator.',
+            category: 'policy',
+            priority: 'high',
+            user_id: this.currentUserId || 'default_user'
+          });
         }
       } catch (error) {
         console.error('Error fetching users:', error);
         this.availableUsers = [];
         alert('Error: Could not load users list. Please contact administrator.');
+        this.sendPushNotification({
+          title: 'Users List Error',
+          message: 'Could not load users list. Please contact administrator.',
+          category: 'policy',
+          priority: 'high',
+          user_id: this.currentUserId || 'default_user'
+        });
       }
     },
 
@@ -1862,6 +1910,13 @@ export default {
                 // Continue with submission after warning
                 this.submitPolicyReview(policyId, reviewData, currentVersion);
               });
+              this.sendPushNotification({
+                title: 'Policy Review Warning',
+                message: 'One or more subpolicies are rejected. The policy will still be marked as rejected regardless of approval.',
+                category: 'policy',
+                priority: 'medium',
+                user_id: this.currentUserId || 'default_user'
+              });
             } else {
               // No rejected subpolicies, proceed normally
               this.submitPolicyReview(policyId, reviewData, currentVersion);
@@ -1870,6 +1925,13 @@ export default {
           .catch(error => {
             console.error('Error getting policy version:', error);
             PopupService.error('Error getting policy version: ' + (error.response?.data?.error || error.message), 'Policy Version Error');
+            this.sendPushNotification({
+              title: 'Policy Version Error',
+              message: `Failed to get policy version: ${error.response?.data?.error || error.message}`,
+              category: 'policy',
+              priority: 'high',
+              user_id: this.currentUserId || 'default_user'
+            });
           });
         
         return;
@@ -1895,6 +1957,13 @@ export default {
             this.selectedApproval.ApprovedDate = response.data.ApprovedDate;
           }
           PopupService.success('Compliance review submitted successfully!', 'Review Submitted');
+          this.sendPushNotification({
+            title: 'Compliance Review Submitted',
+            message: 'Compliance review has been submitted successfully for approval.',
+            category: 'compliance',
+            priority: 'medium',
+            user_id: this.currentUserId || 'default_user'
+          });
           
           // First close the details view
           this.closeApprovalDetails();
@@ -1905,7 +1974,14 @@ export default {
       })
       .catch(error => {
         console.error('Error submitting compliance review:', error);
-        PopupService.error('Error submitting review: ' + (error.response?.data?.error || error.message), 'Review Error');
+                  PopupService.error('Error submitting review: ' + (error.response?.data?.error || error.message), 'Review Error');
+          this.sendPushNotification({
+            title: 'Compliance Review Error',
+            message: `Failed to submit compliance review: ${error.response?.data?.error || error.message}`,
+            category: 'compliance',
+            priority: 'high',
+            user_id: this.currentUserId || 'default_user'
+          });
       });
     },
     // Add this helper method to handle the actual submission
@@ -1927,6 +2003,13 @@ export default {
         }
         
         PopupService.success(`Policy review submitted successfully! New version: ${response.data.Version}`, 'Review Submitted');
+        this.sendPushNotification({
+          title: 'Policy Review Submitted',
+          message: `Policy review has been submitted successfully with version ${response.data.Version}.`,
+          category: 'policy',
+          priority: 'medium',
+          user_id: this.currentUserId || 'default_user'
+        });
         
         // Close the details view
         this.closeApprovalDetails();
@@ -1937,6 +2020,13 @@ export default {
       .catch(error => {
         console.error('Error submitting review:', error);
         PopupService.error('Error submitting review: ' + (error.response?.data?.error || error.message), 'Submission Error');
+        this.sendPushNotification({
+          title: 'Policy Review Error',
+          message: `Failed to submit policy review: ${error.response?.data?.error || error.message}`,
+          category: 'policy',
+          priority: 'high',
+          user_id: this.currentUserId || 'default_user'
+        });
       });
     },
     // Update resubmitPolicy to change status back to "Under Review"
@@ -1964,6 +2054,13 @@ export default {
           const validationErrors = this.validatePolicyData(actualPolicy);
       if (validationErrors.length > 0) {
         PopupService.warning(`Please fix the following errors before resubmitting:\n${validationErrors.join('\n')}`, 'Validation Errors');
+        this.sendPushNotification({
+          title: 'Policy Validation Errors',
+          message: `Policy validation failed: ${validationErrors.join(', ')}`,
+          category: 'policy',
+          priority: 'medium',
+          user_id: this.currentUserId || 'default_user'
+        });
         return;
       }
       
@@ -1973,11 +2070,25 @@ export default {
         .catch(debugError => {
           console.error('Error checking policy status:', debugError);
           PopupService.warning('Error checking policy status. Proceeding with resubmission attempt.', 'Warning');
+          this.sendPushNotification({
+            title: 'Policy Status Check Warning',
+            message: 'Error checking policy status. Proceeding with resubmission attempt.',
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.currentUserId || 'default_user'
+          });
           
           // Still try to proceed with resubmission
           const validationErrors = this.validatePolicyData(actualPolicy);
           if (validationErrors.length > 0) {
             PopupService.warning(`Please fix the following errors before resubmitting:\n${validationErrors.join('\n')}`, 'Validation Errors');
+          this.sendPushNotification({
+            title: 'Policy Validation Errors',
+            message: `Policy validation failed: ${validationErrors.join(', ')}`,
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.currentUserId || 'default_user'
+          });
             return;
           }
           
@@ -2040,6 +2151,13 @@ export default {
           }
           
           PopupService.success(successMessage, 'Policy Resubmitted');
+          this.sendPushNotification({
+            title: 'Policy Resubmitted',
+            message: successMessage,
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.currentUserId || 'default_user'
+          });
           
           this.closeEditModal();
           this.fetchRejectedPolicies();
@@ -2107,6 +2225,13 @@ export default {
       }
       
       PopupService.error(`Error ${context}: ${errorMessage}`, 'Error');
+      this.sendPushNotification({
+        title: 'Policy Error',
+        message: `Error ${context}: ${errorMessage}`,
+        category: 'policy',
+        priority: 'high',
+        user_id: this.currentUserId || 'default_user'
+      });
       return errorMessage;
     },
     // Update approveSubpolicy to handle subpolicy approval
@@ -2152,6 +2277,13 @@ export default {
       .catch(error => {
         console.error('Error approving subpolicy:', error);
         PopupService.error('Error approving subpolicy. Please try again.', 'Approval Error');
+        this.sendPushNotification({
+          title: 'Subpolicy Approval Error',
+          message: 'Error approving subpolicy. Please try again.',
+          category: 'policy',
+          priority: 'high',
+          user_id: this.currentUserId || 'default_user'
+        });
       });
     },
     
@@ -2179,6 +2311,13 @@ export default {
         
         // Show notification to user
         PopupService.success('All subpolicies are approved! The policy has been automatically approved.', 'Auto-Approval');
+        this.sendPushNotification({
+          title: 'All Subpolicies Approved',
+          message: 'All subpolicies are approved! The policy has been automatically approved.',
+          category: 'policy',
+          priority: 'medium',
+          user_id: this.currentUserId || 'default_user'
+        });
       }
     },
     // Add the missing rejectSubpolicy method
@@ -2225,12 +2364,26 @@ export default {
         .catch(error => {
           console.error('Error rejecting policy:', error);
           PopupService.error('Error rejecting policy: ' + (error.response?.data?.error || error.message), 'Rejection Error');
+          this.sendPushNotification({
+            title: 'Policy Rejection Error',
+            message: `Error rejecting policy: ${error.response?.data?.error || error.message}`,
+            category: 'policy',
+            priority: 'high',
+            user_id: this.currentUserId || 'default_user'
+          });
         });
       } 
       else if (this.rejectingType === 'subpolicy' && this.rejectingSubpolicy) {
         if (!this.rejectingSubpolicy.SubPolicyId) {
           console.error('Missing SubPolicyId, cannot reject subpolicy', this.rejectingSubpolicy);
           PopupService.error('Error: Cannot reject subpolicy - missing SubPolicyId', 'Missing ID Error');
+          this.sendPushNotification({
+            title: 'Subpolicy Rejection Error',
+            message: 'Cannot reject subpolicy - missing SubPolicyId',
+            category: 'policy',
+            priority: 'high',
+            user_id: this.currentUserId || 'default_user'
+          });
           this.showRejectModal = false;
           this.rejectingSubpolicy = null;
           this.rejectingType = '';
@@ -2267,6 +2420,13 @@ export default {
               response.data.popup_message || `Policy '${response.data.parent_policy_name}' and all its ${response.data.total_subpolicies_rejected} subpolicies have been rejected and saved as ${response.data.new_version}. This has been sent back to the user for revision.`,
               'Cascading Rejection Complete'
             );
+            this.sendPushNotification({
+              title: 'Cascading Rejection Complete',
+              message: response.data.popup_message || `Policy '${response.data.parent_policy_name}' and all its ${response.data.total_subpolicies_rejected} subpolicies have been rejected and saved as ${response.data.new_version}. This has been sent back to the user for revision.`,
+              category: 'policy',
+              priority: 'high',
+              user_id: this.currentUserId || 'default_user'
+            });
             
             // Update local state for all affected subpolicies
             if (this.approvals && this.approvals.length > 0) {
@@ -2306,6 +2466,13 @@ export default {
             
             // Show success message
             PopupService.success('Subpolicy rejected successfully!', 'Rejection Complete');
+            this.sendPushNotification({
+              title: 'Subpolicy Rejected',
+              message: 'Subpolicy has been rejected successfully.',
+              category: 'policy',
+              priority: 'medium',
+              user_id: this.currentUserId || 'default_user'
+            });
           }
           
           // Close modal
@@ -2337,6 +2504,13 @@ export default {
           }
           
           PopupService.error(errorMessage, 'Rejection Error');
+          this.sendPushNotification({
+            title: 'Subpolicy Rejection Error',
+            message: errorMessage,
+            category: 'policy',
+            priority: 'high',
+            user_id: this.currentUserId || 'default_user'
+          });
         });
       }
     },
@@ -2415,10 +2589,24 @@ export default {
         setTimeout(() => {
           window.location.reload();
         }, 500);
+        this.sendPushNotification({
+          title: 'Compliance Resubmitted',
+          message: 'Compliance has been resubmitted for review.',
+          category: 'compliance',
+          priority: 'medium',
+          user_id: this.currentUserId || 'default_user'
+        });
       })
       .catch(error => {
         PopupService.error('Error resubmitting compliance', 'Resubmission Error');
         console.error(error);
+        this.sendPushNotification({
+          title: 'Compliance Resubmission Error',
+          message: 'Error resubmitting compliance. Please try again.',
+          category: 'compliance',
+          priority: 'high',
+          user_id: this.currentUserId || 'default_user'
+        });
       });
     },
     showEditFormInline(subpolicy) {
@@ -2490,12 +2678,26 @@ export default {
       if (!this.editingSubpolicy || !this.editingSubpolicy.SubPolicyId) {
         console.error('Missing SubPolicyId, cannot resubmit subpolicy', this.editingSubpolicy);
         PopupService.error('Error: Cannot resubmit subpolicy - missing SubPolicyId', 'Missing ID Error');
+        this.sendPushNotification({
+          title: 'Subpolicy Resubmission Error',
+          message: 'Cannot resubmit subpolicy - missing SubPolicyId',
+          category: 'policy',
+          priority: 'high',
+          user_id: this.currentUserId || 'default_user'
+        });
         return;
       }
       
       // Check if any changes were made
       if (!this.hasChanges) {
         PopupService.warning('No changes detected. Please modify the subpolicy before resubmitting.', 'No Changes');
+        this.sendPushNotification({
+          title: 'No Changes Detected',
+          message: 'No changes detected. Please modify the subpolicy before resubmitting.',
+          category: 'policy',
+          priority: 'medium',
+          user_id: this.currentUserId || 'default_user'
+        });
         return;
       }
       
@@ -2523,6 +2725,13 @@ export default {
               
               // Show success message with new version
               PopupService.success(`Subpolicy "${this.editingSubpolicy.SubPolicyName}" resubmitted successfully with version ${newVersion}!`, 'Subpolicy Resubmitted');
+              this.sendPushNotification({
+                title: 'Subpolicy Resubmitted',
+                message: `Subpolicy "${this.editingSubpolicy.SubPolicyName}" resubmitted successfully with version ${newVersion}!`,
+                category: 'policy',
+                priority: 'medium',
+                user_id: this.currentUserId || 'default_user'
+              });
               
               // Close the edit modal
               this.closeEditSubpolicyModal();
@@ -2534,6 +2743,13 @@ export default {
           .catch(error => {
               console.error('Error resubmitting subpolicy:', error.response || error);
               PopupService.error(`Error resubmitting subpolicy: ${error.response?.data?.error || error.message}`, 'Resubmission Error');
+              this.sendPushNotification({
+                title: 'Subpolicy Resubmission Error',
+                message: `Error resubmitting subpolicy: ${error.response?.data?.error || error.message}`,
+                category: 'policy',
+                priority: 'high',
+                user_id: this.currentUserId || 'default_user'
+              });
           });
     },
     
@@ -2571,6 +2787,13 @@ export default {
       if (!subpolicy.SubPolicyId) {
         console.error('Missing SubPolicyId, cannot resubmit subpolicy', subpolicy);
         PopupService.error('Error: Cannot resubmit subpolicy - missing SubPolicyId', 'Missing ID Error');
+        this.sendPushNotification({
+          title: 'Subpolicy Resubmission Error',
+          message: 'Cannot resubmit subpolicy - missing SubPolicyId',
+          category: 'policy',
+          priority: 'high',
+          user_id: this.currentUserId || 'default_user'
+        });
         return;
       }
       
@@ -2582,6 +2805,13 @@ export default {
       
       if (!hasChanges) {
         PopupService.warning('No changes detected. Please modify the subpolicy before resubmitting.', 'No Changes');
+        this.sendPushNotification({
+          title: 'No Changes Detected',
+          message: 'No changes detected. Please modify the subpolicy before resubmitting.',
+          category: 'policy',
+          priority: 'medium',
+          user_id: this.currentUserId || 'default_user'
+        });
         return;
       }
       
@@ -2624,6 +2854,13 @@ export default {
           
           // Show success message
           PopupService.success(`Subpolicy "${subpolicy.SubPolicyName}" resubmitted successfully with version ${response.data.Version || 'u1'}!`, 'Subpolicy Resubmitted');
+          this.sendPushNotification({
+            title: 'Subpolicy Resubmitted',
+            message: `Subpolicy "${subpolicy.SubPolicyName}" resubmitted successfully with version ${response.data.Version || 'u1'}!`,
+            category: 'policy',
+            priority: 'medium',
+            user_id: this.currentUserId || 'default_user'
+          });
           
           // Hide the edit form
         this.hideEditFormInline(subpolicy);
@@ -2638,6 +2875,13 @@ export default {
       .catch(error => {
           console.error('Error resubmitting subpolicy:', error.response || error);
           PopupService.error(`Error resubmitting subpolicy: ${error.response?.data?.error || error.message}`, 'Resubmission Error');
+          this.sendPushNotification({
+            title: 'Subpolicy Resubmission Error',
+            message: `Error resubmitting subpolicy: ${error.response?.data?.error || error.message}`,
+            category: 'policy',
+            priority: 'high',
+            user_id: this.currentUserId || 'default_user'
+          });
       });
     },
     getSubpolicyVersion(subpolicy) {
@@ -2844,6 +3088,13 @@ export default {
       .catch(error => {
         console.error('Error approving subpolicy:', error);
         PopupService.error('Error approving subpolicy. Please try again.', 'Approval Error');
+        this.sendPushNotification({
+          title: 'Subpolicy Approval Error',
+          message: 'Error approving subpolicy. Please try again.',
+          category: 'policy',
+          priority: 'high',
+          user_id: this.currentUserId || 'default_user'
+        });
       });
     },
     
@@ -2871,6 +3122,13 @@ export default {
         
         // Show notification to user
         PopupService.success('All subpolicies are approved! The policy has been automatically approved.', 'Auto-Approval');
+        this.sendPushNotification({
+          title: 'All Subpolicies Approved',
+          message: 'All subpolicies are approved! The policy has been automatically approved.',
+          category: 'policy',
+          priority: 'medium',
+          user_id: this.currentUserId || 'default_user'
+        });
       }
     },
     rejectSubpolicyFromModal(subpolicy) {
@@ -3327,6 +3585,13 @@ export default {
       } else {
         console.error('No original policy found in row:', row);
         PopupService.error('Error: Could not find policy data to edit', 'Data Error');
+        this.sendPushNotification({
+          title: 'Policy Data Error',
+          message: 'Could not find policy data to edit',
+          category: 'policy',
+          priority: 'high',
+          user_id: this.currentUserId || 'default_user'
+        });
       }
     },
   },

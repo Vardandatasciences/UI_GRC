@@ -127,11 +127,31 @@
   
         <!-- Step 2: Processing Progress Section -->
         <div v-if="currentStep === 2" class="processing-section">
-          <ProcessingStatus 
-            :currentStatus="processingStatus.status"
-            :processingSteps="processingSteps"
-            :currentOperation="currentOperation"
-          />
+          <div class="processing-header">
+            <div class="processing-icon-container">
+              <i class="fas fa-cog fa-spin processing-icon"></i>
+            </div>
+            <h3>Processing Framework Document</h3>
+            <p>{{ processingStatus.message || 'Extracting document sections...' }}</p>
+          </div>
+          
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" :style="{ width: processingStatus.progress + '%' }"></div>
+            </div>
+            <div class="progress-text">{{ processingStatus.progress || 0 }}%</div>
+          </div>
+          
+          <div class="processing-details">
+            <div class="detail-item">
+              <i class="fas fa-file-pdf"></i>
+              <span>File: {{ uploadedFileName }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-clock"></i>
+              <span>Started: {{ processingStartTime }}</span>
+            </div>
+          </div>
         </div>
   
         <!-- Step 3: Content Selection Complete -->
@@ -777,14 +797,30 @@
   <script>
   import { ref, computed, onUnmounted, watch } from 'vue'
   import axios from 'axios'
-  import ProcessingStatus from './ProcessingStatus.vue'
   
   export default {
     name: 'UploadFramework',
-    components: {
-      ProcessingStatus
-    },
     setup() {
+      // Add sendPushNotification method
+      const sendPushNotification = async (notificationData) => {
+        try {
+          const response = await fetch('http://localhost:8000/api/push-notification/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(notificationData)
+          });
+          if (response.ok) {
+            console.log('Push notification sent successfully');
+          } else {
+            console.error('Failed to send push notification');
+          }
+        } catch (error) {
+          console.error('Error sending push notification:', error);
+        }
+      }
+
       const selectedFile = ref(null)
       const isDragOver = ref(false)
       const isUploading = ref(false)
@@ -1025,6 +1061,15 @@
               message: `File "${response.data.filename}" uploaded successfully!`
             }
             
+            // Send push notification for successful upload
+            sendPushNotification({
+              title: 'Framework Document Uploaded Successfully',
+              message: `Framework document "${response.data.filename}" has been uploaded successfully.`,
+              category: 'framework',
+              priority: 'medium',
+              user_id: 'default_user'
+            });
+            
             setTimeout(() => {
               removeFile()
               uploadStatus.value = null
@@ -1036,6 +1081,15 @@
             type: 'error',
             message: error.response?.data?.error || 'Upload failed. Please try again.'
           }
+          
+          // Send push notification for upload failure
+          sendPushNotification({
+            title: 'Framework Document Upload Failed',
+            message: `Failed to upload framework document: ${error.response?.data?.error || error.message}`,
+            category: 'framework',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         } finally {
           isUploading.value = false
         }
@@ -1096,6 +1150,15 @@
             type: 'error',
             message: error.response?.data?.error || 'Failed to load default data. Please try again.'
           }
+          
+          // Send push notification for default data loading failure
+          sendPushNotification({
+            title: 'Default Framework Data Loading Failed',
+            message: `Failed to load default framework data: ${error.response?.data?.error || error.message}`,
+            category: 'framework',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         } finally {
           isLoadingDefault.value = false
         }
@@ -1103,7 +1166,7 @@
       
       const fetchExtractedContent = async (id) => {
         try {
-          const response = await axios.get(`/api/get-upload-sections/${id}/`)
+          const response = await axios.get(`/api/get-sections/${id}/`)
           
           // Transform data for UI - only include txt_chunks files
           sections.value = response.data.map((section, index) => {
@@ -1251,6 +1314,15 @@
         } catch (error) {
           console.error('Error saving selected sections:', error)
           alert('Error saving selected sections: ' + error.message)
+          
+          // Send push notification for section saving failure
+          sendPushNotification({
+            title: 'Framework Section Selection Failed',
+            message: `Failed to save selected framework sections: ${error.message}`,
+            category: 'framework',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         }
       }
   
@@ -1358,6 +1430,15 @@
             type: 'error',
             message: 'Failed to load extracted policies. Please try again.'
           }
+          
+          // Send push notification for policy loading failure
+          sendPushNotification({
+            title: 'Extracted Policies Loading Failed',
+            message: `Failed to load extracted policies: ${error.message}`,
+            category: 'framework',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         }
       }
   
@@ -1435,6 +1516,15 @@
             type: 'error',
             message: error.response?.data?.error || 'Failed to save policy. Please try again.'
           }
+          
+          // Send push notification for policy saving failure
+          sendPushNotification({
+            title: 'Policy Save Failed',
+            message: `Failed to save policy "${currentPolicy.value.Sub_policy_id || 'Unknown'}": ${error.response?.data?.error || error.message}`,
+            category: 'framework',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         }
       }
       
@@ -1463,6 +1553,15 @@
             type: 'error',
             message: error.response?.data?.error || 'Failed to save policies. Please try again.'
           }
+          
+          // Send push notification for all policies saving failure
+          sendPushNotification({
+            title: 'All Policies Save Failed',
+            message: `Failed to save all policies (${policies.value.length} policies): ${error.response?.data?.error || error.message}`,
+            category: 'framework',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         }
       }
   
@@ -1519,6 +1618,15 @@
             type: 'error',
             message: error.response?.data?.error || 'Failed to save details. Please try again.'
           }
+          
+          // Send push notification for basic details saving failure
+          sendPushNotification({
+            title: 'Framework Basic Details Save Failed',
+            message: `Failed to save framework basic details: ${error.response?.data?.error || error.message}`,
+            category: 'framework',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         }
       }
       
@@ -1561,6 +1669,15 @@
             type: 'error',
             message: error.response?.data?.error || 'Failed to save details. Please try again.'
           }
+          
+          // Send push notification for additional details saving failure
+          sendPushNotification({
+            title: 'Framework Additional Details Save Failed',
+            message: `Failed to save framework additional details: ${error.response?.data?.error || error.message}`,
+            category: 'framework',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         }
       }
       
@@ -1610,6 +1727,15 @@
                            Flat Excel: ${saveResponse.flat_excel_file}`
                 }
                 
+                // Send push notification for successful framework creation
+                sendPushNotification({
+                  title: 'Framework Created Successfully',
+                  message: `Framework "${policyDetails.value.title}" has been created successfully with ID: ${dbResponse.data.framework_id}. Created ${dbResponse.data.total_policies} policies, ${dbResponse.data.total_sub_policies} sub-policies, and ${dbResponse.data.total_compliance_items} compliance items.`,
+                  category: 'framework',
+                  priority: 'high',
+                  user_id: 'default_user'
+                });
+                
                 // Show congratulations modal
                 showCongratulationsModal.value = true
                 
@@ -1643,6 +1769,15 @@
             type: 'error',
             message: error.response?.data?.error || 'Failed to save package. Please try again.'
           }
+          
+          // Send push notification for complete package saving failure
+          sendPushNotification({
+            title: 'Framework Complete Package Save Failed',
+            message: `Failed to save complete framework package: ${error.response?.data?.error || error.message}`,
+            category: 'framework',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         }
       }
       
@@ -2032,272 +2167,98 @@
         addComplianceItem,
         removeComplianceItem,
         showCongratulationsModal,
-        goToPolicyDashboard
+        goToPolicyDashboard,
+        sendPushNotification
       }
     }
   }
   </script>
   
   <style scoped>
-  /* Base Styles */
   .upload-framework-container {
+    padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
-    background: #ffffff;
+    font-family: 'Inter', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    margin-left: 280px !important;
   }
   
-  /* Step Indicator Styles */
+  /* Step Indicator */
   .step-indicator {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
+    justify-content: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
   }
   
   .step-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;
-    flex: 1;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
   }
   
   .step-number {
-    width: 32px;
-    height: 32px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    background: #e0e0e0;
-    color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: #e2e8f0;
+    color: #64748b;
+    transition: all 0.3s ease;
   }
   
   .step-item.active .step-number {
-    background: #1976d2;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
   }
   
   .step-item.completed .step-number {
-    background: #2e7d32;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     color: white;
   }
   
   .step-label {
-    font-size: 0.9rem;
-    color: #666;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
     text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .step-item.active .step-label {
+    color: #1e293b;
+    font-weight: 600;
+  }
+  
+  .step-item.completed .step-label {
+    color: #0f766e;
   }
   
   .step-divider {
-    flex: 1;
+    width: 80px;
     height: 2px;
-    background: #e0e0e0;
+    background: #e2e8f0;
     margin: 0 1rem;
-    max-width: 50px;
+    transition: all 0.3s ease;
   }
   
-  /* Table Styles for Steps 5 and 6 */
-  .policy-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin: 1rem 0;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  
-  .policy-table th {
-    background: #f8f9fa;
-    padding: 1rem;
-    text-align: left;
-    font-weight: 500;
-    color: #2c3e50;
-    border-bottom: 2px solid #e0e0e0;
-    white-space: nowrap;
-  }
-  
-  .policy-table td {
-    padding: 1rem;
-    border-bottom: 1px solid #e0e0e0;
-    color: #2c3e50;
-  }
-  
-  .policy-table tr:last-child td {
-    border-bottom: none;
-  }
-  
-  .policy-table tr:hover {
-    background: #f5f5f5;
-  }
-  
-  /* Form Layout Improvements */
-  .dynamic-forms-layout {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 2rem;
-    margin: 2rem 0;
-  }
-  
-  .form-section {
-    background: #ffffff;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  }
-  
-  .form-container {
-    display: grid;
-    gap: 1rem;
-  }
-  
-  .form-group {
-    margin-bottom: 1rem;
-  }
-  
-  .form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #2c3e50;
-    font-weight: 500;
-  }
-  
-  .form-group input,
-  .form-group textarea,
-  .form-group select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 1rem;
-    color: #2c3e50;
-    background: #ffffff;
-  }
-  
-  .form-group input:focus,
-  .form-group textarea:focus,
-  .form-group select:focus {
-    border-color: #1976d2;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
-  }
-  
-  /* Responsive Adjustments */
-  @media (max-width: 768px) {
-    .dynamic-forms-layout {
-      grid-template-columns: 1fr;
-    }
-    
-    .step-indicator {
-      flex-direction: column;
-      gap: 1rem;
-    }
-    
-    .step-divider {
-      display: none;
-    }
-    
-    .policy-table {
-      display: block;
-      overflow-x: auto;
-    }
-  }
-  
-  /* Scrollable Tables */
-  .table-container {
-    overflow-x: auto;
-    margin: 1rem 0;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  }
-  
-  .table-container table {
-    min-width: 800px;
-  }
-  
-  /* Compliance Section Improvements */
-  .compliance-form {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-top: 1rem;
-  }
-  
-  .compliance-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-  }
-  
-  .compliance-item {
-    background: #ffffff;
-    border-radius: 6px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  }
-  
-  /* Button Styles */
-  .btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .btn-primary {
-    background: #1976d2;
-    color: white;
-  }
-  
-  .btn-primary:hover {
-    background: #1565c0;
-  }
-  
-  .btn-secondary {
-    background: #f5f5f5;
-    color: #2c3e50;
-  }
-  
-  .btn-secondary:hover {
-    background: #e0e0e0;
-  }
-  
-  /* Processing Status Integration */
-  .processing-section {
-    max-width: 800px;
-    margin: 2rem auto;
-  }
-  
-  /* Fix for long content */
-  .form-group textarea {
-    resize: vertical;
-    min-height: 100px;
-  }
-  
-  .table-cell-content {
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .table-cell-content:hover {
-    white-space: normal;
-    word-break: break-word;
+  .step-item.completed + .step-divider {
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
   }
   
   /* Back Button */

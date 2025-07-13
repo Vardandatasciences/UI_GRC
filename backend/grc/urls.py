@@ -105,7 +105,6 @@ from .routes.upload_framework import (
     save_framework_to_database,
     load_default_data
 )
-from .routes.policy import get_policy_extraction_progress
 from .routes.frameworks import (
     create_framework_approval,
     get_framework_approvals,
@@ -142,7 +141,7 @@ from .routes.policy_version import (
     approve_policy_version
 )
 from . import risk_views
-from .risk_views import RiskViewSet, IncidentViewSet, ComplianceViewSet, RiskInstanceViewSet
+from .risk_views import RiskViewSet, IncidentViewSet, ComplianceViewSet, RiskInstanceViewSet, export_risk_register
 from .routes import previous_version
 from .routes import compliance
 from .routes import user_profile
@@ -193,6 +192,13 @@ rbac_urlpatterns = [
 # ============================================================================
 # POLICY MODULE URLs
 # ============================================================================
+# EXPORT ENDPOINT FOR FRAMEWORK/POLICY
+# from .s3_fucntions import export_framework_policies
+
+# urlpatterns += [
+#     path('api/export-framework-policies/', export_framework_policies, name='export-framework-policies'),
+#     path('api/export-risk-register/', export_risk_register, name='export-risk-register'),
+# ]
 policy_urlpatterns = [
     # Framework Management
     path('frameworks/', framework_list, name='framework-list'),
@@ -326,35 +332,24 @@ policy_urlpatterns = [
     path('policies/<int:policy_id>/compliance-stats/', get_policy_compliance_stats, name='get-policy-compliance-stats'),
     
     # Upload Framework Management
+ # Upload Framework Management
     path('upload-framework/', upload_framework_file, name='upload-framework'),
-    path('api/upload-framework/', upload_framework_file, name='api-upload-framework'),
     path('load-default-data/', load_default_data, name='load-default-data'),
-    path('api/load-default-data/', load_default_data, name='api-load-default-data'),
     path('processing-status/<str:task_id>/', get_processing_status, name='processing-status'),
-    path('api/processing-status/<str:task_id>/', get_processing_status, name='api-processing-status'),
-    path('get-upload-sections/<str:task_id>/', get_sections, name='get-upload-sections'),
-    path('api/get-upload-sections/<str:task_id>/', get_sections, name='api-get-upload-sections'),
+    path('get-sections/<str:task_id>/', get_sections, name='get-sections'),
     path('update-section/', update_section, name='update-section'),
-    path('api/update-section/', update_section, name='api-update-section'),
     path('create-checked-structure/', create_checked_structure, name='create-checked-structure'),
-    path('api/create-checked-structure/', create_checked_structure, name='api-create-checked-structure'),
     path('extracted-policies/<str:task_id>/', get_extracted_policies, name='get-extracted-policies'),
-    path('api/get-extracted-policies/<str:task_id>/', get_extracted_policies, name='api-get-extracted-policies'),
     path('direct-process-checked-sections/', direct_process_checked_sections, name='direct-process-checked-sections'),
     path('save-updated-policies/', save_updated_policies, name='save-updated-policies'),
     path('save-policies/', save_policies, name='save-policies'),
-    path('api/save-policies/', save_policies, name='api-save-policies'),
     path('save-single-policy/', save_single_policy, name='save-single-policy'),
-    path('api/save-single-policy/', save_single_policy, name='api-save-single-policy'),
     path('saved-excel-files/<str:task_id>/', get_saved_excel_files, name='get-saved-excel-files'),
     path('policy-extraction-progress/<str:task_id>/', get_policy_extraction_progress, name='get-policy-extraction-progress'),
-    path('api/policy-extraction-progress/<str:task_id>/', get_policy_extraction_progress, name='api-get-policy-extraction-progress'),
     path('save-policy-details/', save_policy_details, name='save-policy-details'),
-    path('api/save-policy-details/', save_policy_details, name='api-save-policy-details'),
     path('save-complete-policy-package/', save_complete_policy_package, name='save-complete-policy-package'),
-    path('api/save-complete-policy-package/', save_complete_policy_package, name='api-save-complete-policy-package'),
     path('save-framework-to-database/', save_framework_to_database, name='save-framework-to-database'),
-    path('api/save-framework-to-database/', save_framework_to_database, name='api-save-framework-to-database'),
+
 ]
 
 # ============================================================================
@@ -756,7 +751,11 @@ risk_urlpatterns = [
     path('risk/<int:risk_id>/versions/', previous_version.get_all_versions, name='get-all-versions'),
     path('risk/<int:risk_id>/version/<str:version>/', previous_version.get_previous_version, name='get-previous-version'),
     path('risk/<int:risk_id>/compare/<str:version1>/<str:version2>/', previous_version.get_version_comparison, name='get-version-comparison'),
-    
+
+
+    # Risk Export and Reporting
+    path('export-risk-register/', export_risk_register, name='export-risk-register'),
+ 
     # Mitigation Management
     path('update-mitigation-status/', risk_views.update_mitigation_status, name='update-mitigation-status'),
     
@@ -802,6 +801,8 @@ risk_urlpatterns = [
     path('compliance/frameworks/<int:framework_id>/policies/', compliance.get_policies, name='get-policies'),
     path('compliance/policies/<int:policy_id>/subpolicies/', compliance.get_subpolicies, name='get-subpolicies'),
     path('compliance/view/<str:type>/<int:id>/', compliance.get_compliances_by_type, name='get-compliances-by-type'),
+
+
 ]
 
 # ============================================================================

@@ -694,7 +694,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
         policyData: [], // Store all policy category data
         users: [], // Add users array
         entities: [], // Initialize as empty array
-        loggedInUsername: localStorage.getItem('username') || '', // Add loggedInUsername
+        loggedInUsername: localStorage.getItem('user_name') || '', // Update to use user_name instead of username
         frameworkForm: {
           name: '',
           description: '',
@@ -704,7 +704,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
           file: null,
           startDate: '',
           endDate: '',
-          createdByName: localStorage.getItem('username') || '', // Initialize with logged in username
+          createdByName: localStorage.getItem('user_name') || '', // Update to use user_name
           reviewer: ''
         },
         policyTabs: [],
@@ -760,14 +760,15 @@ const API_BASE_URL = 'http://localhost:8000/api'
       },
       // Add the missing addSubPolicyTab method
       addSubPolicyTab(policyIdx) {
-        const currentPolicy = this.policyTabs[policyIdx];
+        const currentUsername = localStorage.getItem('user_name') || ''; // Update to use user_name
+        
         this.policyTabs[policyIdx].subPolicies.push({
           id: `new-subpolicy-${Date.now()}`, // Add 'new-' prefix to identify new subpolicies
           name: '',
           identifier: '',
           control: '',
           description: '',
-          createdByName: currentPolicy.createdByName, // Use policy's createdByName
+          createdByName: currentUsername, // Use current username
           exclude: false
         })
         this.policyTabs[policyIdx].activeSubPolicyTab = this.policyTabs[policyIdx].subPolicies.length - 1
@@ -778,6 +779,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
         console.log('Creating new policy with ID:', newPolicyId);
         
         const reviewer = this.selectedTab === 'framework' ? this.frameworkForm.reviewer : '';
+        const currentUsername = localStorage.getItem('user_name') || ''; // Update to use user_name
         
         this.policyTabs.push({
           id: newPolicyId,
@@ -796,7 +798,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
           startDate: '',
           endDate: '',
           file: null,
-          createdByName: this.loggedInUsername, // Use loggedInUsername
+          createdByName: currentUsername, // Use current username
           reviewer: reviewer,
           exclude: false,
           subPolicies: [
@@ -806,7 +808,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
               identifier: '',
               control: '',
               description: '',
-              createdByName: this.loggedInUsername, // Use loggedInUsername
+              createdByName: currentUsername, // Use current username
               exclude: false
             }
           ],
@@ -1089,6 +1091,9 @@ const API_BASE_URL = 'http://localhost:8000/api'
           // Get the reviewer name from the framework
           const frameworkReviewer = framework.ReviewerName || framework.Reviewer || ''
           
+          // Get current username from localStorage
+          const currentUsername = localStorage.getItem('user_name') || '' // Update to use user_name
+          
           this.frameworkForm = {
             name: framework.FrameworkName,
             description: framework.FrameworkDescription,
@@ -1098,7 +1103,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
             file: null,
             startDate: framework.StartDate,
             endDate: framework.EndDate,
-            createdByName: framework.CreatedByName,
+            createdByName: currentUsername, // Use current username instead of framework.CreatedByName
             reviewer: frameworkReviewer
           }
           
@@ -1380,7 +1385,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
           file: null,
           startDate: '',
           endDate: '',
-          createdByName: localStorage.getItem('username') || '', // Initialize with logged in username
+          createdByName: localStorage.getItem('user_name') || '', // Update to use user_name
           reviewer: ''
         }
           this.policyTabs = []
@@ -1521,6 +1526,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
           console.log('Raw subpolicies:', subpoliciesResponse.data);
 
           const policy = policyResponse.data;
+          const currentUsername = localStorage.getItem('user_name') || ''; // Update to use user_name
           
           // Create a single policy tab with the fetched details
           this.policyTabs = [{
@@ -1541,7 +1547,7 @@ const API_BASE_URL = 'http://localhost:8000/api'
             startDate: policy.StartDate,
             endDate: policy.EndDate,
             file: null,
-            createdByName: policy.CreatedByName,
+            createdByName: currentUsername, // Use current username instead of policy.CreatedByName
             reviewer: policy.Reviewer,
             activeSubPolicyTab: 0,
             subPolicies: subpoliciesResponse.data.map(sp => ({
@@ -1550,7 +1556,8 @@ const API_BASE_URL = 'http://localhost:8000/api'
               identifier: sp.Identifier,
               control: sp.Control,
               description: sp.Description,
-              status: sp.Status
+              status: sp.Status,
+              createdByName: currentUsername // Use current username for subpolicies as well
             }))
           }];
 

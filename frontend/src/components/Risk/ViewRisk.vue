@@ -121,10 +121,42 @@ export default {
       axios.get(`http://localhost:8000/api/risks/${riskId}/`)
         .then(response => {
           this.risk = response.data
+          // Send push notification when risk details are viewed
+          this.sendPushNotification(this.risk)
         })
         .catch(error => {
           console.error('Error fetching risk details:', error)
+          // Send push notification for error case
+          this.sendPushNotification({
+            RiskTitle: 'Error Loading Risk',
+            message: `Failed to load risk details: ${error.message}`
+          })
         })
+    },
+    async sendPushNotification(riskData) {
+      try {
+        const notificationData = {
+          title: 'Risk Details Viewed',
+          message: `Risk "${riskData.RiskTitle || 'Untitled Risk'}" details have been viewed in the Risk module.`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user' // You can replace this with actual user ID
+        };
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
     },
     getCriticalityClass(criticality) {
       if (!criticality) return ''

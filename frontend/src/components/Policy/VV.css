@@ -151,21 +151,34 @@
     margin-right: auto;
     position: relative;
   }
-  .VV-policy-tabs-row {
-    background: #fff;
-    border-radius: 12px 12px 0 0;
-    box-shadow: 0 2px 8px rgba(61,90,254,0.04);
-    padding: 24px 32px 12px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0;
-  }
   .VV-policy-tabs {
     display: flex;
     align-items: center;
     gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #bfcfff transparent;
+    padding-bottom: 4px;
+    max-width: 100%;
   }
+
+  .VV-policy-tabs::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .VV-policy-tabs::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .VV-policy-tabs::-webkit-scrollbar-thumb {
+    background: #bfcfff;
+    border-radius: 3px;
+  }
+
+  .VV-policy-tabs::-webkit-scrollbar-thumb:hover {
+    background: #3d5afe;
+  }
+
   .VV-policy-tab {
     background: #f5f7ff;
     border: 1px solid #bfcfff;
@@ -179,6 +192,8 @@
     transition: background 0.2s, color 0.2s;
     margin-right: 8px;
     position: relative;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
   .VV-policy-tab-active {
     background: #3d5afe;
@@ -196,6 +211,8 @@
     cursor: pointer;
     margin-left: 16px;
     transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
   .VV-add-policy-tab:hover {
     background: #3d5afe;
@@ -242,21 +259,34 @@
     margin-right: auto;
     position: relative;
   }
-  .VV-subpolicy-tabs-row {
-    background: #fff;
-    border-radius: 12px 12px 0 0;
-    box-shadow: 0 2px 8px rgba(61,90,254,0.04);
-    padding: 18px 24px 8px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0;
-  }
   .VV-subpolicy-tabs {
     display: flex;
     align-items: center;
     gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #bfcfff transparent;
+    padding-bottom: 4px;
+    max-width: 100%;
   }
+
+  .VV-subpolicy-tabs::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .VV-subpolicy-tabs::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .VV-subpolicy-tabs::-webkit-scrollbar-thumb {
+    background: #bfcfff;
+    border-radius: 3px;
+  }
+
+  .VV-subpolicy-tabs::-webkit-scrollbar-thumb:hover {
+    background: #3d5afe;
+  }
+
   .VV-subpolicy-tab {
     background: #f5f7ff;
     border: 1px solid #bfcfff;
@@ -270,6 +300,8 @@
     transition: background 0.2s, color 0.2s;
     margin-right: 8px;
     position: relative;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
   .VV-subpolicy-tab-active {
     background: #3d5afe;
@@ -287,6 +319,8 @@
     cursor: pointer;
     margin-left: 16px;
     transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
   .VV-add-subpolicy-tab:hover {
     background: #3d5afe;

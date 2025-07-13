@@ -10,7 +10,7 @@ from django.db import transaction, models
 import traceback
 import sys
 from datetime import datetime, date, timedelta
-from ..export_service import export_data, save_export_record, update_export_status, update_export_url, update_export_metadata
+# from ..export_service import export_data, save_export_record, update_export_status, update_export_url, update_export_metadata
 import re
 from django.utils import timezone
 from datetime import timedelta
@@ -25,6 +25,7 @@ from django.utils.dateparse import parse_date
 from ..utils import parse_date, safe_isoformat
 from ..notification_service import NotificationService  # Add this import
 from django.utils.html import escape
+from ..s3_fucntions import RenderS3Client
 
 # Import statements for user interaction logging
 from ..utils import send_log, get_client_ip

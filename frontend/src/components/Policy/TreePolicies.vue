@@ -1,11 +1,14 @@
 <template>
   <div class="tree-container">
       <div class="tree-header" style="justify-content: center;">
-        <CustomDropdown 
-          :config="frameworkDropdownConfig" 
-          v-model="treeSelectedFramework"
-          :disabled="loading"
-        />
+        <div class="dropdown-container">
+          <CustomDropdown 
+            :config="frameworkDropdownConfig" 
+            v-model="treeSelectedFramework"
+            :disabled="loading"
+          />
+          <div class="helper-text">{{ frameworkDropdownConfig.helperText }}</div>
+        </div>
       </div>
       <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 24px;">
         <button class="expand-btn" @click="expandAll">EXPAND ALL</button>
@@ -237,7 +240,8 @@ const subpolicyNodes = computed(() => {
         values: frameworks.value.map(fw => ({
           value: fw.title,
           label: fw.title
-        }))
+        })),
+        helperText: 'Select a framework to view its policies and subpolicies.'
       }))
       
 function expandAll() {
@@ -264,18 +268,19 @@ const junction = computed(() => {
 @import './TreePolicies.css';
 
 .tree-container {
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  background:  #ffffff;
   padding: 0;
   margin: 0;
-  overflow-x: auto;
+  overflow-x: visible;
 }
 .tree-svg {
-  width: 100vw;
+  width: 100%;
   height: 700px;
   display: block;
   margin: 0 auto;
+  min-width: 0;
 }
 .framework-node, .policy-node, .subpolicy-node {
   filter: drop-shadow(0 8px 24px rgba(79, 124, 255, 0.10));

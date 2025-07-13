@@ -561,6 +561,24 @@ export default {
     this.filteredRisks = this.risks;
   },
   methods: {
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
     fetchRisks() {
       axios.get('http://localhost:8000/api/risk-instances/')
         .then(response => {
@@ -868,6 +886,13 @@ export default {
       // Handle null or undefined values
       if (!userId) {
         this.$popup.warning('No user selected. Please select a user to assign this risk to.');
+        this.sendPushNotification({
+          title: 'Risk Assignment Warning',
+          message: 'No user selected for risk assignment. Please select a user to assign this risk to.',
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         this.loading = false;
         return;
       }
@@ -891,18 +916,46 @@ export default {
         // Show validation error
         if (!userIdNum) {
           this.$popup.warning('Please select a valid user to assign this risk to.');
+          this.sendPushNotification({
+            title: 'Risk Assignment Validation Error',
+            message: 'Please select a valid user to assign this risk to.',
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
           return;
         }
         if (!reviewerIdNum) {
           this.$popup.warning('Please select a valid reviewer for this risk.');
+          this.sendPushNotification({
+            title: 'Risk Assignment Validation Error',
+            message: 'Please select a valid reviewer for this risk.',
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
           return;
         }
         if (this.mitigationSteps.length === 0) {
           this.$popup.warning('Please add at least one mitigation step.');
+          this.sendPushNotification({
+            title: 'Risk Assignment Validation Error',
+            message: 'Please add at least one mitigation step for risk assignment.',
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
           return;
         }
         if (!this.mitigationDueDate) {
           this.$popup.warning('Please select a due date for mitigation completion.');
+          this.sendPushNotification({
+            title: 'Risk Assignment Validation Error',
+            message: 'Please select a due date for mitigation completion.',
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
           return;
         }
         return;
@@ -993,6 +1046,13 @@ export default {
         
         // Show success message
         this.$popup.success('Risk assigned successfully with mitigation steps and reviewer!');
+        this.sendPushNotification({
+          title: 'Risk Assignment Successful',
+          message: `Risk "${this.selectedRisk.RiskTitle || 'Risk #' + this.selectedRisk.RiskInstanceId}" has been successfully assigned with mitigation steps and reviewer.`,
+          category: 'risk',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       })
       .catch(error => {
         console.error('Error assigning risk:', error);
@@ -1015,6 +1075,13 @@ export default {
         }
         
         this.$popup.error(errorMessage);
+        this.sendPushNotification({
+          title: 'Risk Assignment Failed',
+          message: `Failed to assign risk "${this.selectedRisk.RiskTitle || 'Risk #' + this.selectedRisk.RiskInstanceId}": ${errorMessage}`,
+          category: 'risk',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       });
     },
     getCriticalityClass(criticality) {
@@ -1140,6 +1207,13 @@ export default {
         .catch(error => {
           console.error("Error fetching risk details:", error);
           this.$popup.error('Failed to fetch risk details');
+          this.sendPushNotification({
+            title: 'Risk Details Fetch Failed',
+            message: 'Failed to fetch risk details for viewing questionnaire.',
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         });
     },
     closeQuestionnaireModal() {

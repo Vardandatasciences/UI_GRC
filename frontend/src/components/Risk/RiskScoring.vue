@@ -235,6 +235,26 @@ export default {
     window.removeEventListener('resize', this.handleResize);
   },
   methods: {
+    // Add push notification method
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
+    
     applyFilters() {
       this.filterRiskInstances();
     },
@@ -323,6 +343,15 @@ export default {
       console.log(`Risk details: Status=${risk.RiskStatus}, Appetite=${risk.Appetite}`);
       console.log(`Display logic: isScoringCompleted=${this.isScoringCompleted(risk)}, isRiskRejected=${this.isRiskRejected(risk)}`);
       
+      // Send push notification for viewing scoring details
+      this.sendPushNotification({
+        title: 'Risk Scoring Details Viewed',
+        message: `Risk scoring details for "${risk.RiskTitle || 'Untitled Risk'}" (ID: ${riskId}) have been viewed.`,
+        category: 'risk',
+        priority: 'medium',
+        user_id: 'default_user'
+      });
+      
       // Navigate to the scoring details page with the risk ID and action=view
       this.$router.push({
         path: `/risk/scoring-details/${riskId}`,
@@ -351,11 +380,33 @@ export default {
             // Initialize showActionButtons for each risk instance
             this.showActionButtons[risk.RiskInstanceId] = false;
           });
+          
+          // Send push notification for successful data load
+          if (this.riskInstances.length > 0) {
+            this.sendPushNotification({
+              title: 'Risk Instances Loaded Successfully',
+              message: `${this.riskInstances.length} risk instances have been loaded for scoring.`,
+              category: 'risk',
+              priority: 'medium',
+              user_id: 'default_user'
+            });
+          }
+          
           this.loading = false;
         })
         .catch(error => {
           console.error('Error fetching risk instances:', error);
           this.error = `Failed to fetch risk instances: ${error.message}`;
+          
+          // Send push notification for error
+          this.sendPushNotification({
+            title: 'Risk Instances Load Failed',
+            message: `Failed to load risk instances: ${error.message}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: 'default_user'
+          });
+          
           this.loading = false;
         });
     },
@@ -390,6 +441,18 @@ export default {
       this.showActionButtons[riskId] = !this.showActionButtons[riskId];
     },
     rejectRisk(riskId) {
+      // Find the risk instance
+      const risk = this.riskInstances.find(r => r.RiskInstanceId === riskId);
+      
+      // Send push notification for risk rejection
+      this.sendPushNotification({
+        title: 'Risk Instance Rejection Initiated',
+        message: `Risk "${risk.RiskTitle || 'Untitled Risk'}" (ID: ${riskId}) is being rejected for scoring.`,
+        category: 'risk',
+        priority: 'high',
+        user_id: 'default_user'
+      });
+      
       // Direct navigation without validation
       console.log(`Navigating to Scoring Details for Risk ${riskId} (rejected)`);
       // Navigate to the scoring details page with the risk ID and action=reject
@@ -399,6 +462,18 @@ export default {
       });
     },
     mapScoringRisk(riskId) {
+      // Find the risk instance
+      const risk = this.riskInstances.find(r => r.RiskInstanceId === riskId);
+      
+      // Send push notification for risk acceptance
+      this.sendPushNotification({
+        title: 'Risk Instance Acceptance Initiated',
+        message: `Risk "${risk.RiskTitle || 'Untitled Risk'}" (ID: ${riskId}) is being accepted for scoring.`,
+        category: 'risk',
+        priority: 'high',
+        user_id: 'default_user'
+      });
+      
       // Direct navigation without validation
       console.log(`Navigating to Scoring Details for Risk ${riskId} (accepted)`);
       // Navigate to the scoring details page with the risk ID and action=accept

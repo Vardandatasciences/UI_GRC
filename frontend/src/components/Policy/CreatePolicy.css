@@ -600,14 +600,19 @@
 .framework-policy-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 24px;
   margin-bottom: 18px;
   margin-left: 18px;
+  margin-right: 18px;
+  width: 100%;
 }
 .framework-policy-selects {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 28px;
+  width: 100%;
 }
 .add-policy-btn {
   background: #fff;
@@ -805,6 +810,72 @@ textarea {
   }
 }
 
+/* Policy Header Section */
+.policy-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border-radius: 8px;
+}
+
+.back-to-framework-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.back-to-framework-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.back-to-framework-btn i {
+  font-size: 12px;
+}
+
+/* Framework Header */
+.framework-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+}
+
+.framework-header h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+
+.framework-note {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #2b6cb0;
+  line-height: 1.4;
+}
+
+.framework-note i {
+  color: #4299e1;
+  font-size: 14px;
+  margin-top: 1px;
+}
+
 /* Framework Form Styles */
 .form-popup.framework-form {
   width: 420px;
@@ -930,7 +1001,7 @@ textarea {
 
 /* Submit Button Styling */
 .create-btn {
-  background-color: #007bff !important;
+  background: #007bff !important;
   color: #fff !important;
   padding: 6px 12px !important;
   border: none !important;
@@ -946,6 +1017,34 @@ textarea {
 
 .create-btn:hover {
   background-color: #0056b3 !important;
+}
+
+.submitt-btn {
+  background-color: #28a745 !important;
+  color: #fff !important;
+  padding: 12px 24px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 200px !important;
+  justify-content: center !important;
+}
+
+.submitt-btn:hover {
+  background-color: #218838 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3) !important;
+}
+
+.submitt-btn i {
+  font-size: 12px !important;
 }
 
 /* Date Input Styling */
@@ -2037,7 +2136,7 @@ input[readonly]:focus {
 
 .policy-card .form-group.description textarea {
   width: 100%;
-  min-height: 120px !important;
+  min-height: 140px !important;
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
@@ -2289,8 +2388,8 @@ input[readonly]:focus {
   border-radius: 12px;
   padding: 32px;
   margin-top: 20px;
-  max-width: 1100px;
-  width: 100%;
+  max-width: 1400px !important;
+  width: 95% !important;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
@@ -2389,8 +2488,40 @@ input[readonly]:focus {
 }
 
 .framework-form .form-group textarea {
-  min-height: 120px;
+  min-height: 140px !important;
   resize: vertical;
+}
+
+/* Character counter styling */
+.textarea-container {
+  position: relative;
+  width: 100%;
+}
+
+.character-counter {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 11px;
+  color: #6b7280;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.character-counter.warning {
+  color: #f59e0b;
+}
+
+.character-counter.error {
+  color: #ef4444;
+}
+
+/* Adjust textarea padding to accommodate counter */
+.textarea-container textarea {
+  padding-bottom: 28px !important;
 }
 
 @media (max-width: 1200px) {
@@ -2675,10 +2806,10 @@ input[readonly]:focus {
 }
 
 .approval-header h2 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #2d3748;
+  margin: 0 !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  color: #2d3748 !important;
 }
 
 .back-btn {

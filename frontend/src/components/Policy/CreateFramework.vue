@@ -152,7 +152,7 @@
               v-else
               class="create-btn"
               style="min-width: 100px"
-              @click="showExtractionScreens = false"
+              @click="handleExtractionComplete"
             >
               Done
             </button>
@@ -170,7 +170,13 @@ import './CreateFramework.css'
 
 export default {
   name: 'CreateFramework',
-  setup() {
+  props: {
+    sendPushNotification: {
+      type: Function,
+      required: true
+    }
+  },
+  setup(props) {
     const showExtractionScreens = ref(false)
     const extractionStep = ref(0)
     const extractionSlides = ref([])
@@ -188,33 +194,105 @@ export default {
       formData.value.document = event.target.files[0]
     }
 
-    const handleFrameworkFormSubmit = () => {
-      // Build slides dynamically based on JSON structure
-      const slides = []
-      if (frameworkSample.framework) {
-        slides.push({
-          type: 'framework',
-          data: frameworkSample.framework
-        })
-      }
-      if (frameworkSample.policies && Array.isArray(frameworkSample.policies)) {
-        frameworkSample.policies.forEach((policy, idx) => {
+    const handleFrameworkFormSubmit = async () => {
+      try {
+        // Validate form data
+        if (!formData.value.frameworkId || !formData.value.frameworkName || !formData.value.version) {
+          await props.sendPushNotification({
+            title: 'Framework Creation Failed',
+            message: 'Please fill in all required fields (Framework ID, Framework Name, and Version)',
+            category: 'framework',
+            priority: 'high',
+            user_id: formData.value.createdBy || 'default_user'
+          });
+          return;
+        }
+
+        if (!formData.value.document) {
+          await props.sendPushNotification({
+            title: 'Framework Creation Failed',
+            message: 'Please upload a framework document',
+            category: 'framework',
+            priority: 'high',
+            user_id: formData.value.createdBy || 'default_user'
+          });
+          return;
+        }
+
+        // Simulate framework creation process
+        // In a real application, you would make an API call here
+        console.log('Processing framework creation...', formData.value);
+
+        // Send success notification
+        await props.sendPushNotification({
+          title: 'Framework Created Successfully',
+          message: `Framework "${formData.value.frameworkName}" has been created successfully. Document processing initiated.`,
+          category: 'framework',
+          priority: 'medium',
+          user_id: formData.value.createdBy || 'default_user'
+        });
+
+        // Build slides dynamically based on JSON structure
+        const slides = []
+        if (frameworkSample.framework) {
           slides.push({
-            type: 'policy',
-            data: policy,
-            index: idx
+            type: 'framework',
+            data: frameworkSample.framework
           })
-        })
+        }
+        if (frameworkSample.policies && Array.isArray(frameworkSample.policies)) {
+          frameworkSample.policies.forEach((policy, idx) => {
+            slides.push({
+              type: 'policy',
+              data: policy,
+              index: idx
+            })
+          })
+        }
+        if (frameworkSample.authorizer) {
+          slides.push({
+            type: 'authorizer',
+            data: frameworkSample.authorizer
+          })
+        }
+        extractionSlides.value = slides
+        showExtractionScreens.value = true
+        extractionStep.value = 0
+
+      } catch (error) {
+        console.error('Error creating framework:', error);
+        await props.sendPushNotification({
+          title: 'Framework Creation Failed',
+          message: `Failed to create framework: ${error.message || 'Unknown error occurred'}`,
+          category: 'framework',
+          priority: 'high',
+          user_id: formData.value.createdBy || 'default_user'
+        });
       }
-      if (frameworkSample.authorizer) {
-        slides.push({
-          type: 'authorizer',
-          data: frameworkSample.authorizer
-        })
+    }
+
+    const handleExtractionComplete = async () => {
+      try {
+        // Send notification when extraction is completed
+        await props.sendPushNotification({
+          title: 'Framework Processing Complete',
+          message: `Framework "${formData.value.frameworkName}" has been processed and extracted successfully.`,
+          category: 'framework',
+          priority: 'medium',
+          user_id: formData.value.createdBy || 'default_user'
+        });
+        
+        showExtractionScreens.value = false;
+      } catch (error) {
+        console.error('Error completing extraction:', error);
+        await props.sendPushNotification({
+          title: 'Framework Processing Error',
+          message: `Error completing framework processing: ${error.message || 'Unknown error occurred'}`,
+          category: 'framework',
+          priority: 'high',
+          user_id: formData.value.createdBy || 'default_user'
+        });
       }
-      extractionSlides.value = slides
-      showExtractionScreens.value = true
-      extractionStep.value = 0
     }
 
     return {
@@ -223,7 +301,8 @@ export default {
       extractionSlides,
       formData,
       handleFileUpload,
-      handleFrameworkFormSubmit
+      handleFrameworkFormSubmit,
+      handleExtractionComplete
     }
   }
 }

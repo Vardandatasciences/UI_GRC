@@ -883,6 +883,25 @@ export default {
     }
 
     // Methods
+    const sendPushNotification = async (notificationData) => {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    }
+
     const fetchCompliances = async () => {
       if (compliances.value.length > 0) return // Already loaded
 
@@ -913,6 +932,15 @@ export default {
         if (!AccessUtils.handleApiError(error, 'view compliances')) {
           // Only show generic error if it's not an access denied error
           PopupService.error('Failed to load compliances. Please try again.')
+          
+          // Send push notification for compliance loading failure
+          sendPushNotification({
+            title: 'Compliance Loading Failed',
+            message: 'Failed to load compliances for incident creation. Please try again.',
+            category: 'incident',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         }
       } finally {
         loadingCompliances.value = false
@@ -983,6 +1011,15 @@ export default {
         console.log('Form validation failed')
         showValidationSummary()
         PopupService.error('Please correct the validation errors before submitting. Check the console for details.')
+        
+        // Send push notification for validation failure
+        sendPushNotification({
+          title: 'Incident Creation Validation Failed',
+          message: 'Please correct the validation errors before submitting the incident.',
+          category: 'incident',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         return
       }
       
@@ -1010,6 +1047,15 @@ export default {
           // Show success message and redirect
           PopupService.success('Incident created successfully! It has been saved to the incidents table and will be escalated to risk management when needed.')
           
+          // Send push notification for successful incident creation
+          sendPushNotification({
+            title: 'New Incident Created',
+            message: `A new incident "${submissionData.IncidentTitle || 'Untitled Incident'}" has been created in the Incident module.`,
+            category: 'incident',
+            priority: 'high',
+            user_id: 'default_user'
+          });
+          
           // Navigate to incidents list after a short delay to allow user to see success message
           setTimeout(() => {
             router.push('/incident/incident')
@@ -1030,8 +1076,26 @@ export default {
                 : serverErrors[field]
             })
             PopupService.error('Please correct the validation errors and try again.')
+            
+            // Send push notification for server validation errors
+            sendPushNotification({
+              title: 'Incident Creation Failed - Validation Errors',
+              message: 'Please correct the validation errors and try again.',
+              category: 'incident',
+              priority: 'medium',
+              user_id: 'default_user'
+            });
           } else {
             PopupService.error('Error creating incident. Please try again.')
+            
+            // Send push notification for general creation error
+            sendPushNotification({
+              title: 'Incident Creation Failed',
+              message: 'Error creating incident. Please try again.',
+              category: 'incident',
+              priority: 'high',
+              user_id: 'default_user'
+            });
           }
         }
       }
@@ -1046,16 +1110,43 @@ export default {
       // Validate that we have title and description
       if (!formData.value.IncidentTitle || !formData.value.Description) {
         PopupService.error('Please enter both incident title and description before generating analysis.')
+        
+        // Send push notification for missing required fields
+        sendPushNotification({
+          title: 'Analysis Generation Failed',
+          message: 'Please enter both incident title and description before generating analysis.',
+          category: 'incident',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         return
       }
 
       if (formData.value.IncidentTitle.trim().length < 3) {
         PopupService.error('Incident title must be at least 3 characters long.')
+        
+        // Send push notification for short title
+        sendPushNotification({
+          title: 'Analysis Generation Failed',
+          message: 'Incident title must be at least 3 characters long.',
+          category: 'incident',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         return
       }
 
       if (formData.value.Description.trim().length < 10) {
         PopupService.error('Incident description must be at least 10 characters long.')
+        
+        // Send push notification for short description
+        sendPushNotification({
+          title: 'Analysis Generation Failed',
+          message: 'Incident description must be at least 10 characters long.',
+          category: 'incident',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         return
       }
 
@@ -1163,6 +1254,15 @@ export default {
 
           PopupService.success('Analysis completed! Form fields have been populated with AI-generated insights. Please review and modify as needed before saving.')
           
+          // Send push notification for successful analysis
+          sendPushNotification({
+            title: 'Incident Analysis Completed',
+            message: `Analysis completed for incident "${formData.value.IncidentTitle}". Form fields have been populated with AI-generated insights.`,
+            category: 'incident',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
+          
         } else {
           throw new Error(response.data.error || 'Analysis failed')
         }
@@ -1186,6 +1286,15 @@ export default {
           }
           
           PopupService.error(errorMessage)
+          
+          // Send push notification for analysis failure
+          sendPushNotification({
+            title: 'Incident Analysis Failed',
+            message: errorMessage,
+            category: 'incident',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         }
       } finally {
         isGeneratingAnalysis.value = false
@@ -1204,6 +1313,15 @@ export default {
         if (!AccessUtils.handleApiError(error, 'view categories')) {
           // Only show generic error if it's not an access denied error
           PopupService.error('Failed to load categories. Please try again.')
+          
+          // Send push notification for category loading failure
+          sendPushNotification({
+            title: 'Category Loading Failed',
+            message: 'Failed to load categories for incident creation. Please try again.',
+            category: 'incident',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         }
       }
     }
@@ -1276,6 +1394,15 @@ export default {
           }, 100)
           
           PopupService.success(`Category "${addedCategory}" added successfully!`)
+          
+          // Send push notification for successful category addition
+          sendPushNotification({
+            title: 'Category Added Successfully',
+            message: `Category "${addedCategory}" has been added successfully to the incident form.`,
+            category: 'incident',
+            priority: 'low',
+            user_id: 'default_user'
+          });
         } catch (error) {
           console.error('Error adding category:', error)
           
@@ -1283,6 +1410,15 @@ export default {
           if (!AccessUtils.handleApiError(error, 'add categories')) {
             // Only show generic error if it's not an access denied error
             PopupService.error('Failed to add category. Please try again.')
+            
+            // Send push notification for category addition failure
+            sendPushNotification({
+              title: 'Category Addition Failed',
+              message: 'Failed to add category. Please try again.',
+              category: 'incident',
+              priority: 'medium',
+              user_id: 'default_user'
+            });
           }
         }
       } else if (newCategory && availableCategories.value.some(cat => cat.toLowerCase() === newCategory.toLowerCase())) {
@@ -1320,6 +1456,15 @@ export default {
         if (!AccessUtils.handleApiError(error, 'view business units')) {
           // Only show generic error if it's not an access denied error
           PopupService.error('Failed to load business units. Please try again.')
+          
+          // Send push notification for business unit loading failure
+          sendPushNotification({
+            title: 'Business Unit Loading Failed',
+            message: 'Failed to load business units for incident creation. Please try again.',
+            category: 'incident',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         }
       }
     }
@@ -1390,6 +1535,15 @@ export default {
           }, 100)
           
           PopupService.success(`Business unit "${addedUnit}" added successfully!`)
+          
+          // Send push notification for successful business unit addition
+          sendPushNotification({
+            title: 'Business Unit Added Successfully',
+            message: `Business unit "${addedUnit}" has been added successfully to the incident form.`,
+            category: 'incident',
+            priority: 'low',
+            user_id: 'default_user'
+          });
         } catch (error) {
           console.error('Error adding business unit:', error)
           
@@ -1397,6 +1551,15 @@ export default {
           if (!AccessUtils.handleApiError(error, 'add business units')) {
             // Only show generic error if it's not an access denied error
             PopupService.error('Failed to add business unit. Please try again.')
+            
+            // Send push notification for business unit addition failure
+            sendPushNotification({
+              title: 'Business Unit Addition Failed',
+              message: 'Failed to add business unit. Please try again.',
+              category: 'incident',
+              priority: 'medium',
+              user_id: 'default_user'
+            });
           }
         }
       } else if (newUnit && availableBusinessUnits.value.some(unit => unit.toLowerCase() === newUnit.toLowerCase())) {
@@ -1492,6 +1655,7 @@ export default {
       // Utility methods
       safeSubstring,
       // Methods
+      sendPushNotification,
       onClassificationChange,
       selectCompliance,
       clearCompliance,

@@ -665,21 +665,50 @@ export default {
       // Validate selections
       if (!selectedAssigner.value || !selectedReviewer.value) {
         PopupService.error('Please select both assigner and reviewer');
+        sendPushNotification({
+          title: 'Assignment Validation Error',
+          message: 'Please select both assigner and reviewer for incident assignment.',
+          category: 'incident_assignment',
+          priority: 'high',
+          user_id: 'audit_user'
+        });
         return;
       }
 
       if (selectedAssigner.value === selectedReviewer.value) {
         PopupService.error('Assigner and reviewer cannot be the same person');
+        sendPushNotification({
+          title: 'Assignment Validation Error',
+          message: 'Assigner and reviewer cannot be the same person for incident assignment.',
+          category: 'incident_assignment',
+          priority: 'high',
+          user_id: 'audit_user'
+        });
         return;
       }
 
       if (mitigationSteps.value.length === 0) {
         PopupService.error('Please add at least one mitigation step');
+        sendPushNotification({
+          title: 'Assignment Validation Error',
+          message: 'Please add at least one mitigation step before assigning the incident.',
+          category: 'incident_assignment',
+          priority: 'high',
+          user_id: 'audit_user'
+        });
         return;
       }
 
       if (!mitigationDueDate.value) {
         PopupService.error('Please select a due date');
+        sendPushNotification({
+          title: 'Assignment Validation Error',
+          message: 'Please select a due date for incident mitigation completion.',
+          category: 'incident_assignment',
+          priority: 'high',
+          user_id: 'audit_user'
+        });
+      
         return;
       }
 
@@ -712,6 +741,13 @@ export default {
         
         // Show success popup
         PopupService.success(`Incident ${selectedIncident.value.IncidentId} assigned successfully with mitigation steps!`);
+        sendPushNotification({
+          title: 'Incident Assignment Successful',
+          message: `Incident ${selectedIncident.value.IncidentId} "${selectedIncident.value.IncidentTitle || 'Untitled Incident'}" has been successfully assigned with ${mitigationSteps.value.length} mitigation step(s).`,
+          category: 'incident_assignment',
+          priority: 'high',
+          user_id: 'audit_user'
+        });
         
         // Refresh the audit findings data
         fetchData();
@@ -725,6 +761,13 @@ export default {
       .catch(err => {
         console.error('Error assigning incident:', err);
         PopupService.error('Failed to assign incident. Please try again.');
+        sendPushNotification({
+          title: 'Incident Assignment Failed',
+          message: `Failed to assign incident ${selectedIncident.value.IncidentId}: ${err.response?.data?.error || err.message}`,
+          category: 'incident_assignment',
+          priority: 'high',
+          user_id: 'audit_user'
+        });
       });
     };
     
@@ -740,6 +783,13 @@ export default {
         
         // Show success popup
         PopupService.success(`Incident ${selectedIncident.value.IncidentId} escalated to Risk successfully!`);
+        sendPushNotification({
+          title: 'Incident Escalated to Risk',
+          message: `Incident ${selectedIncident.value.IncidentId} "${selectedIncident.value.IncidentTitle || 'Untitled Incident'}" has been successfully escalated to the Risk module for further assessment.`,
+          category: 'incident_escalation',
+          priority: 'high',
+          user_id: 'audit_user'
+        });
         
         // Refresh the audit findings data
         fetchData();
@@ -753,6 +803,13 @@ export default {
       .catch(err => {
         console.error('Error updating incident status:', err);
         PopupService.error('Failed to escalate incident. Please try again.');
+        sendPushNotification({
+          title: 'Incident Escalation Failed',
+          message: `Failed to escalate incident ${selectedIncident.value.IncidentId} to Risk module: ${err.response?.data?.error || err.message}`,
+          category: 'incident_escalation',
+          priority: 'high',
+          user_id: 'audit_user'
+        });
       });
     };
     
@@ -769,6 +826,13 @@ export default {
         
         // Show success popup
         PopupService.success(`Incident ${selectedIncident.value.IncidentId} rejected successfully!`);
+        sendPushNotification({
+          title: 'Incident Rejected',
+          message: `Incident ${selectedIncident.value.IncidentId} "${selectedIncident.value.IncidentTitle || 'Untitled Incident'}" has been successfully rejected and will no longer be processed.`,
+          category: 'incident_rejection',
+          priority: 'medium',
+          user_id: 'audit_user'
+        });
         
         // Refresh the audit findings data
         fetchData();
@@ -782,6 +846,13 @@ export default {
       .catch(err => {
         console.error('Error updating incident status:', err);
         PopupService.error('Failed to reject incident. Please try again.');
+        sendPushNotification({
+          title: 'Incident Rejection Failed',
+          message: `Failed to reject incident ${selectedIncident.value.IncidentId}: ${err.response?.data?.error || err.message}`,
+          category: 'incident_rejection',
+          priority: 'high',
+          user_id: 'audit_user'
+        });
       });
     };
     
@@ -859,13 +930,47 @@ export default {
           
           // Show success popup
           PopupService.success('Export completed successfully');
+          sendPushNotification({
+            title: 'Audit Findings Export Completed',
+            message: `Audit findings have been successfully exported in ${exportFormat.value.toUpperCase()} format.`,
+            category: 'audit_findings',
+            priority: 'medium',
+            user_id: 'audit_user'
+          });
         }
         
       } catch (err) {
         console.error('Export failed:', err);
         PopupService.error('Export failed. Please try again.');
+        sendPushNotification({
+          title: 'Audit Findings Export Failed',
+          message: `Failed to export audit findings in ${exportFormat.value.toUpperCase()} format: ${err.message}`,
+          category: 'audit_findings',
+          priority: 'high',
+          user_id: 'audit_user'
+        });
+        
       } finally {
         isExporting.value = false;
+      }
+    };
+
+    const sendPushNotification = async (notificationData) => {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
       }
     };
     

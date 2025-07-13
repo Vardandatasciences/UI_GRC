@@ -149,6 +149,24 @@ export default {
     await this.fetchReviewHistory()
   },
   methods: {
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
     async fetchReviewHistory() {
       try {
         this.loading = true
@@ -156,12 +174,36 @@ export default {
         
         if (response.data.success) {
           this.reviewHistory = response.data.review_history
+          // Send success push notification
+          this.sendPushNotification({
+            title: 'Review History Loaded Successfully',
+            message: `Review history for policy "${this.policyName}" has been loaded successfully.`,
+            category: 'policy',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         } else {
           this.error = response.data.error || 'Failed to load review history'
+          // Send error push notification
+          this.sendPushNotification({
+            title: 'Review History Load Failed',
+            message: `Failed to load review history for policy "${this.policyName}": ${this.error}`,
+            category: 'policy',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         }
       } catch (error) {
         console.error('Error fetching review history:', error)
         this.error = 'Failed to load review history'
+        // Send error push notification
+        this.sendPushNotification({
+          title: 'Review History Load Failed',
+          message: `Failed to load review history for policy "${this.policyName}": ${error.message || 'Network error'}`,
+          category: 'policy',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       } finally {
         this.loading = false
       }

@@ -1129,6 +1129,26 @@ export default {
     }, 500);
   },
   methods: {
+
+        // Add the sendPushNotification method at the beginning of methods
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
     async fetchLoggedInUser() {
     this.isLoadingUser = true;
     try {
@@ -1158,6 +1178,7 @@ export default {
       
     } catch (error) {
       console.error('Error fetching logged-in user:', error);
+      console.error('Error sending push notification:', error);
       this.error = `Failed to fetch user details: ${error.message}`;
     } finally {
       this.isLoadingUser = false;
@@ -1315,10 +1336,26 @@ export default {
           this.userRisks[index].RiskStatus = 'Approved'; // Also update risk status
         }
         this.loading = false;
+        // Send push notification for mitigation completion
+        this.sendPushNotification({
+          title: 'Mitigation Completed',
+          message: `Mitigation for risk ${riskId} has been marked as completed successfully.`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         alert('Mitigation marked as completed!');
       })
       .catch(error => {
         console.error('Error updating status:', error);
+        // Send push notification for mitigation completion error
+        this.sendPushNotification({
+          title: 'Mitigation Completion Failed',
+          message: `Failed to mark mitigation for risk ${riskId} as completed: ${error.message}`,
+          category: 'risk',
+          priority: 'high',
+          user_id: this.selectedUserId || 'default_user'
+        });
         this.error = `Failed to update status: ${error.message}`;
         this.loading = false;
       });
@@ -1423,6 +1460,14 @@ export default {
                         }
                       } else {
                         // If no reviewer is assigned yet, show a message
+                                                // If no reviewer is assigned yet, show a message and send notification
+                        this.sendPushNotification({
+                          title: 'No Reviewer Assigned',
+                          message: `No reviewer has been assigned to risk ${this.selectedRiskId}. Please contact your administrator.`,
+                          category: 'risk',
+                          priority: 'high',
+                          user_id: this.selectedUserId || 'default_user'
+                        });
                         alert('No reviewer has been assigned to this risk yet. Please contact your administrator.');
                         this.selectedReviewer = '';
                       }
@@ -1433,6 +1478,14 @@ export default {
                     })
                     .catch(error => {
                       console.error('Error fetching assigned reviewer:', error);
+                      // Send push notification for reviewer fetch error
+                      this.sendPushNotification({
+                        title: 'Reviewer Information Error',
+                        message: `Could not fetch reviewer information for risk ${this.selectedRiskId}. Please try again later.`,
+                        category: 'risk',
+                        priority: 'medium',
+                        user_id: this.selectedUserId || 'default_user'
+                      });
                       alert('Could not fetch reviewer information. Please try again later.');
                       this.selectedReviewer = '';
                       this.loadingMitigations = false;
@@ -1584,6 +1637,14 @@ export default {
       
       // Validate questionnaire is complete
       if (!this.isQuestionnaireComplete()) {
+         // Send push notification for incomplete questionnaire
+        this.sendPushNotification({
+          title: 'Incomplete Questionnaire',
+          message: `Please complete all questionnaire fields for risk ${this.selectedRiskId} before submitting.`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         alert('Please complete all questionnaire fields before submitting');
         return;
       }
@@ -1656,12 +1717,28 @@ export default {
         this.loading = false;
         // Close the workflow view
         this.closeMitigationModal();
+        // Send push notification for successful submission
+        this.sendPushNotification({
+          title: 'Risk Submitted for Review',
+          message: `Risk ${this.selectedRiskId} has been submitted for review successfully.`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         // Show success message
         alert('Risk submitted for review successfully!');
       })
       .catch(error => {
         console.error('Error submitting for review:', error);
         this.loading = false;
+        // Send push notification for failed submission
+        this.sendPushNotification({
+          title: 'Risk Submission Failed',
+          message: `Failed to submit risk ${this.selectedRiskId} for review: ${error.message}`,
+          category: 'risk',
+          priority: 'high',
+          user_id: this.selectedUserId || 'default_user'
+        });
         alert('Failed to submit for review. Please try again.');
       });
     },
@@ -1756,6 +1833,14 @@ export default {
             this.currentReviewTask.RiskStatus = newStatus;
             this.currentReviewTask.MitigationStatus = approved ? 'Completed' : 'Revision Required';
           }
+          // Send push notification for review completion
+          this.sendPushNotification({
+            title: `Risk ${approved ? 'Approved' : 'Rejected'}`,
+            message: `Risk ${this.currentReviewTask.RiskInstanceId} has been ${approved ? 'approved' : 'rejected'} by reviewer.`,
+            category: 'risk',
+            priority: 'high',
+            user_id: this.currentReviewTask.UserId || 'default_user'
+          });
           
           // Show success message
           alert(`Risk ${approved ? 'approved' : 'rejected'} successfully!`);
@@ -1768,11 +1853,27 @@ export default {
         .catch(error => {
           console.error('Error completing review:', error);
           this.loading = false;
+          // Send push notification for review failure
+          this.sendPushNotification({
+            title: 'Review Submission Failed',
+            message: `Failed to submit review for risk ${this.currentReviewTask.RiskInstanceId}: ${error.message}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: this.currentReviewTask.UserId || 'default_user'
+          });
           alert('Failed to submit review. Please try again.');
         });
     },
     updateRemarks(id) {
       if (!this.mitigationReviewData[id].remarks.trim()) {
+        // Send push notification for missing remarks
+        this.sendPushNotification({
+          title: 'Missing Remarks',
+          message: `Please provide remarks for rejection of mitigation ${id} in risk ${this.currentReviewTask?.RiskInstanceId || this.selectedRiskId}.`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         alert('Please provide remarks for rejection');
         return;
       }
@@ -1791,6 +1892,14 @@ export default {
       
       // Check file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
+        // Send push notification for file size limit
+        this.sendPushNotification({
+          title: 'File Size Limit Exceeded',
+          message: `File "${file.name}" exceeds the 5MB size limit for risk ${this.selectedRiskId}.`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         alert('File size exceeds 5MB limit');
         event.target.value = '';
         return;
@@ -1825,16 +1934,40 @@ export default {
             this.mitigationSteps[index].savedFileName = response.data.file.fileName;
             this.mitigationSteps[index].s3FileInfo = response.data.file;
             this.mitigationSteps[index].s3Url = response.data.file.url;
+            // Send push notification for successful file upload
+            this.sendPushNotification({
+              title: 'File Upload Successful',
+              message: `File "${file.name}" has been uploaded successfully for risk ${this.selectedRiskId}.`,
+              category: 'risk',
+              priority: 'medium',
+              user_id: this.selectedUserId || 'default_user'
+            });
             
             // Optional: Add alert or notification
             alert('File uploaded successfully');
           } else {
             console.error('S3 upload returned error:', response.data);
+            // Send push notification for file upload error
+            this.sendPushNotification({
+              title: 'File Upload Failed',
+              message: `Failed to upload file "${file.name}" for risk ${this.selectedRiskId}.`,
+              category: 'risk',
+              priority: 'high',
+              user_id: this.selectedUserId || 'default_user'
+            });
             alert('Error uploading file. Please try again.');
           }
         })
         .catch(error => {
           console.error('Error uploading file to S3:', error);
+           // Send push notification for file upload error
+          this.sendPushNotification({
+            title: 'File Upload Failed',
+            message: `Failed to upload file "${file.name}" for risk ${this.selectedRiskId}: ${error.message}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: this.selectedUserId || 'default_user'
+          });
           alert('Error uploading file. Please try again.');
         });
       };
@@ -1849,6 +1982,14 @@ export default {
         axios.delete(`http://localhost:5000/api/file/${fileId}`)
           .then(response => {
             console.log('File deleted from S3:', response.data);
+            // Send push notification for successful file deletion
+            this.sendPushNotification({
+              title: 'File Removed Successfully',
+              message: `File has been removed successfully from risk ${this.selectedRiskId}.`,
+              category: 'risk',
+              priority: 'low',
+              user_id: this.selectedUserId || 'default_user'
+            });
             
             // Clear file data from the step
             this.mitigationSteps[index].fileData = null;
@@ -1861,6 +2002,14 @@ export default {
           })
           .catch(error => {
             console.error('Error deleting file from S3:', error);
+            // Send push notification for file deletion error
+            this.sendPushNotification({
+              title: 'File Removal Warning',
+              message: `File preview cleared but file may still exist on server for risk ${this.selectedRiskId}.`,
+              category: 'risk',
+              priority: 'medium',
+              user_id: this.selectedUserId || 'default_user'
+            });
             alert('Error removing file. The file preview will be cleared, but the file may still exist on the server.');
             
             // Clear file data anyway
@@ -2132,9 +2281,25 @@ export default {
     saveQuestionnaireRemarks() {
       // Validate that remarks are provided when rejecting
       if (this.formDetails.approved === false && !this.formDetails.remarks.trim()) {
+        // Send push notification for missing questionnaire feedback
+        this.sendPushNotification({
+          title: 'Missing Questionnaire Feedback',
+          message: `Please provide feedback for the questionnaire in risk ${this.currentReviewTask?.RiskInstanceId || this.selectedRiskId}.`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         alert('Please provide feedback for the questionnaire');
         return;
       }
+      // Send push notification for questionnaire feedback saved
+      this.sendPushNotification({
+        title: 'Questionnaire Feedback Saved',
+        message: `Questionnaire feedback has been saved for risk ${this.currentReviewTask?.RiskInstanceId || this.selectedRiskId}.`,
+        category: 'risk',
+        priority: 'medium',
+        user_id: this.selectedUserId || 'default_user'
+      });
       
       // Show confirmation to the user
       alert('Questionnaire feedback saved');
@@ -2347,6 +2512,14 @@ export default {
         }
       } catch (error) {
         console.error('Error in global version change:', error);
+        // Send push notification for version loading error
+        this.sendPushNotification({
+          title: 'Version Data Loading Failed',
+          message: `Failed to load version data for risk ${this.currentReviewTask?.RiskInstanceId || this.selectedRiskId}. Please try again.`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: this.selectedUserId || 'default_user'
+        });
         alert('Failed to load version data. Please try again.');
       } finally {
         this.loadingVersions = false;

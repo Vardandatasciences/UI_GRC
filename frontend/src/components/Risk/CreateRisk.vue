@@ -607,6 +607,26 @@ export default {
     document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
+    // Add sendPushNotification method
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
+
     // Security utility methods without external dependencies
     sanitizeHTML(html) {
       if (!html) return '';
@@ -659,6 +679,15 @@ export default {
         this.compliances = [];
         this.filteredCompliances = [];
         this.$popup.error('Failed to fetch compliances. Please try again.');
+        
+        // Send push notification for compliance fetch failure
+        this.sendPushNotification({
+          title: 'Compliance Data Fetch Failed',
+          message: 'Failed to fetch compliance data for risk creation. Please try again.',
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
       }
     },
 
@@ -809,6 +838,15 @@ export default {
     generateAiSuggestion() {
       if (!this.aiInput.title && !this.aiInput.description) {
         this.$popup.warning('Please provide either a title or description for AI analysis.');
+        
+        // Send push notification for AI analysis warning
+        this.sendPushNotification({
+          title: 'AI Analysis Warning',
+          message: 'Please provide either a title or description for AI analysis.',
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         return;
       }
       
@@ -867,6 +905,15 @@ export default {
               errorMessage += ' Error: ' + error.response.data
             }
           }
+          
+          // Send push notification for AI analysis failure
+          this.sendPushNotification({
+            title: 'AI Analysis Failed',
+            message: `Failed to generate AI suggestion: ${errorMessage}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: 'default_user'
+          });
           
           // Show error message with options
           this.$popup.confirm(
@@ -1077,6 +1124,15 @@ export default {
       } catch (error) {
         console.error('Error adding new business impact:', error);
         this.$popup.error('Failed to add new business impact: ' + (error.response?.data?.message || error.message));
+        
+        // Send push notification for business impact addition failure
+        this.sendPushNotification({
+          title: 'Business Impact Addition Failed',
+          message: `Failed to add new business impact: ${error.response?.data?.message || error.message}`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
       }
     },
 
@@ -1136,6 +1192,15 @@ export default {
       } catch (error) {
         console.error('Error adding new category:', error);
         this.$popup.error('Failed to add new category: ' + (error.response?.data?.message || error.message));
+        
+        // Send push notification for category addition failure
+        this.sendPushNotification({
+          title: 'Category Addition Failed',
+          message: `Failed to add new category: ${error.response?.data?.message || error.message}`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
       }
     },
 
@@ -1146,6 +1211,15 @@ export default {
       if (Object.keys(validationErrors).length > 0) {
         Object.entries(validationErrors).forEach(([field, error]) => {
           this.$popup.error(`${field}: ${error}`);
+          
+          // Send push notification for validation errors
+          this.sendPushNotification({
+            title: 'Risk Validation Error',
+            message: `Validation error in ${field}: ${error}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         });
         return;
       }
@@ -1173,6 +1247,15 @@ export default {
         console.log('Risk created successfully:', response.data);
         this.resetForm();
         this.$popup.success('Risk created successfully!');
+        
+        // Send push notification for successful risk creation
+        this.sendPushNotification({
+          title: 'New Risk Created Successfully',
+          message: `A new risk "${sanitizedRiskData.RiskTitle || 'Untitled Risk'}" has been created successfully.`,
+          category: 'risk',
+          priority: 'high',
+          user_id: 'default_user'
+        });
       } catch (error) {
         console.error('Error creating risk:', error);
         
@@ -1182,9 +1265,27 @@ export default {
           if (error.response.data.errors) {
             Object.entries(error.response.data.errors).forEach(([field, error]) => {
               this.$popup.error(`${field}: ${error}`);
+              
+              // Send push notification for field-specific errors
+              this.sendPushNotification({
+                title: 'Risk Creation Error',
+                message: `Error in ${field}: ${error}`,
+                category: 'risk',
+                priority: 'high',
+                user_id: 'default_user'
+              });
             });
           } else {
             this.$popup.error('Failed to create risk. Please try again.');
+            
+            // Send push notification for general creation failure
+            this.sendPushNotification({
+              title: 'Risk Creation Failed',
+              message: 'Failed to create risk. Please try again.',
+              category: 'risk',
+              priority: 'high',
+              user_id: 'default_user'
+            });
           }
         }
         // 401/403 errors are handled by the global interceptor

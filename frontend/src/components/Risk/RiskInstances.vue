@@ -318,6 +318,32 @@ export default {
       console.log('Row selected:', data)
     },
     
+    async sendPushNotification(riskData) {
+      try {
+        const notificationData = {
+          title: 'Risk Instance Update',
+          message: riskData.message || `Risk instance "${riskData.RiskDescription || 'Untitled Risk'}" has been updated in the Risk module.`,
+          category: 'risk',
+          priority: 'high',
+          user_id: 'default_user' // You can replace this with actual user ID
+        };
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
+    
     submitInstance() {
       const formData = {
         RiskId: parseInt(this.newInstance.RiskId) || null,
@@ -364,6 +390,12 @@ export default {
           
           this.showAddForm = false
           this.$popup.success('Risk instance added successfully!')
+          
+          // Send push notification for successful creation
+          this.sendPushNotification({
+            RiskDescription: formData.RiskDescription,
+            message: `A new risk instance "${formData.RiskDescription || 'Untitled Risk'}" has been created in the Risk module.`
+          })
         })
         .catch(error => {
           console.error('Error adding risk instance:', error.response?.data || error.message)
@@ -374,6 +406,12 @@ export default {
           }
           
           this.$popup.error('Error adding risk instance. Please check your data and try again.')
+          
+          // Send push notification for failed creation
+          this.sendPushNotification({
+            RiskDescription: formData.RiskDescription,
+            message: `Failed to create risk instance "${formData.RiskDescription || 'Untitled Risk'}". Please check your data and try again.`
+          })
         })
     }
   }

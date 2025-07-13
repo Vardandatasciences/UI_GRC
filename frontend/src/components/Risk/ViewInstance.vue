@@ -142,6 +142,24 @@ export default {
     this.fetchInstanceDetails()
   },
   methods: {
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
     fetchInstanceDetails() {
       const instanceId = this.$route.params.id
       if (!instanceId) {
@@ -152,9 +170,25 @@ export default {
       axios.get(`http://localhost:8000/api/risk-instances/${instanceId}/`)
         .then(response => {
           this.instance = response.data
+          // Send push notification for successful instance view
+          this.sendPushNotification({
+            title: 'Risk Instance Viewed',
+            message: `Risk instance "${response.data.RiskId || 'Unknown Risk'}" has been viewed in the Risk module.`,
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         })
         .catch(error => {
           console.error('Error fetching risk instance details:', error)
+          // Send push notification for error
+          this.sendPushNotification({
+            title: 'Risk Instance View Failed',
+            message: `Failed to load risk instance details: ${error.response?.data?.error || error.message}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: 'default_user'
+          });
           // Try alternative endpoint if the first one fails
           this.tryAlternativeEndpoint(instanceId)
         })
@@ -163,9 +197,25 @@ export default {
       axios.get(`http://localhost:8000/risk-instances/${instanceId}/`)
         .then(response => {
           this.instance = response.data
+          // Send push notification for successful instance view via alternative endpoint
+          this.sendPushNotification({
+            title: 'Risk Instance Viewed',
+            message: `Risk instance "${response.data.RiskId || 'Unknown Risk'}" has been viewed via alternative endpoint.`,
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         })
         .catch(error => {
           console.error('Error with alternative endpoint:', error)
+          // Send push notification for alternative endpoint error
+          this.sendPushNotification({
+            title: 'Risk Instance View Failed',
+            message: `Failed to load risk instance details via alternative endpoint: ${error.response?.data?.error || error.message}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         })
     },
     goBack() {

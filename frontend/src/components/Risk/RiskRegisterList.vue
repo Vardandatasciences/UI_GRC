@@ -1,5 +1,20 @@
 <template>
   <div class="risk-register-container">
+    <!-- Export Controls -->
+    <div class="risk-register-export-controls" style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 16px;">
+      <select v-model="selectedExportFormat" class="risk-register-export-dropdown" style="min-width: 120px; height: 32px; border-radius: 8px; border: 1.5px solid #e2e8f0; font-size: 0.85rem; padding: 0 10px; background: #fff; color: #222;">
+        <option value="" disabled>Select format</option>
+        <option value="xlsx">Excel (.xlsx)</option>
+        <option value="pdf">PDF (.pdf)</option>
+        <option value="csv">CSV (.csv)</option>
+        <option value="json">JSON (.json)</option>
+        <option value="xml">XML (.xml)</option>
+        <option value="txt">Text (.txt)</option>
+      </select>
+      <button @click="exportRiskRegister" :disabled="!selectedExportFormat" style="padding: 6px 16px; border-radius: 8px; border: none; font-size: 0.85rem; font-weight: 600; cursor: pointer; background: #4f6cff; color: #fff; transition: background 0.2s;">
+        Export
+      </button>
+    </div>
     <!-- Add PopupModal component -->
     <PopupModal />
     
@@ -79,6 +94,7 @@ export default {
       selectedCategory: '',
       searchQuery: '',
       loading: false,
+      selectedExportFormat: '',
       // Filter configurations for CustomDropdown
       criticalityFilter: {
         name: 'criticality',
@@ -188,17 +204,79 @@ export default {
   methods: {
     fetchRisks() {
       this.loading = true
-      
       axios.get('http://localhost:8000/api/risks/')
         .then(response => {
           this.risks = response.data
           this.updateFilterOptions()
           this.loading = false
+          // Send push notification for successful risk data fetch
+          this.sendPushNotification({
+            title: 'Risk Register Updated',
+            message: `Successfully loaded ${this.risks.length} risks from the Risk Register.`,
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          })
         })
         .catch(error => {
           console.error('Error fetching risks:', error)
           this.loading = false
+          // Send push notification for error
+          this.sendPushNotification({
+            title: 'Risk Register Load Failed',
+            message: `Failed to load risks from the Risk Register: ${error.response?.data?.error || error.message}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: 'default_user'
+          })
         })
+    },
+    async exportRiskRegister() {
+      if (!this.selectedExportFormat) return;
+      try {
+        // Prepare export data (filtered risks)
+        const exportData = this.tableData;
+        const payload = {
+          export_format: this.selectedExportFormat,
+          risk_data: exportData,
+          user_id: 'default_user',
+          file_name: 'risk_register_export'
+        };
+        const response = await fetch('http://localhost:8000/api/export-risk-register/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (result.success) {
+          alert('Export successful!');
+        } else {
+          alert('Export failed: ' + (result.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Export error: ' + error.message);
+      }
+    },
+    
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
     },
     
     updateFilterOptions() {
@@ -246,6 +324,18 @@ export default {
     },
     
     viewRiskDetails(riskId) {
+      // Find the risk data for the notification
+      const risk = this.risks.find(r => r.RiskId === riskId)
+      
+      // Send push notification for risk view action
+      this.sendPushNotification({
+        title: 'Risk Details Viewed',
+        message: `Risk "${risk?.RiskTitle || 'Untitled Risk'}" (ID: ${riskId}) details have been viewed.`,
+        category: 'risk',
+        priority: 'low',
+        user_id: 'default_user'
+      })
+      
       this.$router.push(`/view-risk/${riskId}`)
     },
 
@@ -268,4 +358,4 @@ export default {
     }
   }
 }
-</script> 
+</script>

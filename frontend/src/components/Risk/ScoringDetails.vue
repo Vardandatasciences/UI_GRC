@@ -777,6 +777,26 @@ export default {
     }
   },
   methods: {
+    // Add push notification method
+    async sendPushNotification(notificationData) {
+      try {
+        const response = await fetch('http://localhost:8000/api/push-notification/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+        if (response.ok) {
+          console.log('Push notification sent successfully');
+        } else {
+          console.error('Failed to send push notification');
+        }
+      } catch (error) {
+        console.error('Error sending push notification:', error);
+      }
+    },
+
     setReadOnlyMode() {
       this.isReadOnly = true;
       
@@ -929,6 +949,15 @@ export default {
           .join('\n');
         
         this.$popup.error('Please fix the following validation errors:\n' + errorMessages);
+        
+        // Send push notification for validation errors
+        this.sendPushNotification({
+          title: 'Risk Instance Validation Failed',
+          message: `Validation errors found in risk instance "${this.editedRiskInstance.RiskTitle || 'Untitled Risk'}". Please fix the errors and try again.`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         return;
       }
 
@@ -953,6 +982,15 @@ export default {
         }
       } catch (e) {
         this.$popup.error('Invalid Risk Mitigation JSON format. Please check the format and try again.');
+        
+        // Send push notification for JSON format error
+        this.sendPushNotification({
+          title: 'Risk Mitigation JSON Error',
+          message: `Invalid JSON format in risk mitigation for risk "${this.editedRiskInstance.RiskTitle || 'Untitled Risk'}". Please check the format and try again.`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
         this.submitting = false;
         return;
       }
@@ -986,6 +1024,15 @@ export default {
           this.submitting = false;
           this.submitSuccess = true;
           this.$popup.success('Risk instance updated successfully!');
+          
+          // Send push notification for successful update
+          this.sendPushNotification({
+            title: 'Risk Instance Updated Successfully',
+            message: `Risk instance "${this.editedRiskInstance.RiskTitle || 'Untitled Risk'}" has been updated successfully in the Risk module.`,
+            category: 'risk',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         })
         .catch(error => {
           console.error('Error updating risk instance:', error);
@@ -993,6 +1040,15 @@ export default {
           this.$popup.error('Failed to update risk instance: ' + 
             this.sanitize.escapeHtml(error.response?.data?.message || error.message)
           );
+          
+          // Send push notification for failed update
+          this.sendPushNotification({
+            title: 'Risk Instance Update Failed',
+            message: `Failed to update risk instance "${this.editedRiskInstance.RiskTitle || 'Untitled Risk'}": ${error.response?.data?.message || error.message}`,
+            category: 'risk',
+            priority: 'high',
+            user_id: 'default_user'
+          });
         });
     },
     formatLabel(key) {
@@ -1041,6 +1097,15 @@ export default {
       // This method will be used to map scoring risk
       // For now, we'll just show an info popup
       this.$popup.info('Mapping scoring risk functionality will be implemented here.');
+      
+      // Send push notification for mapping functionality
+      this.sendPushNotification({
+        title: 'Risk Mapping Feature',
+        message: `Risk mapping functionality will be implemented for risk "${this.editedRiskInstance.RiskTitle || 'Untitled Risk'}".`,
+        category: 'risk',
+        priority: 'low',
+        user_id: 'default_user'
+      });
     },
     fillScoringFromSelectedRisk() {
       if (this.selectedRisks.length > 0) {
@@ -1061,11 +1126,38 @@ export default {
           
           // Show success message
           this.$popup.success('Risk scoring data has been filled from the selected risk.');
+          
+          // Send push notification for successful scoring fill
+          this.sendPushNotification({
+            title: 'Risk Scoring Data Filled',
+            message: `Risk scoring data has been filled from selected risk for "${this.editedRiskInstance.RiskTitle || 'Untitled Risk'}".`,
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         } else {
           this.$popup.error('Could not find the selected risk data.');
+          
+          // Send push notification for error finding selected risk
+          this.sendPushNotification({
+            title: 'Risk Data Not Found',
+            message: `Could not find the selected risk data for risk "${this.editedRiskInstance.RiskTitle || 'Untitled Risk'}".`,
+            category: 'risk',
+            priority: 'medium',
+            user_id: 'default_user'
+          });
         }
       } else {
         this.$popup.warning('Please select a risk first.');
+        
+        // Send push notification for no risk selection
+        this.sendPushNotification({
+          title: 'No Risk Selected',
+          message: `Please select a risk first to fill scoring data for "${this.editedRiskInstance.RiskTitle || 'Untitled Risk'}".`,
+          category: 'risk',
+          priority: 'low',
+          user_id: 'default_user'
+        });
       }
     },
     validateField() {
@@ -1183,6 +1275,15 @@ export default {
       } catch (error) {
         console.error('Error adding new business impact:', error);
         this.$popup.error('Failed to add new business impact: ' + (error.response?.data?.message || error.message));
+        
+        // Send push notification for failed business impact addition
+        this.sendPushNotification({
+          title: 'Business Impact Addition Failed',
+          message: `Failed to add new business impact "${this.newBusinessImpact}": ${error.response?.data?.message || error.message}`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
       }
     },
 
@@ -1247,6 +1348,15 @@ export default {
       } catch (error) {
         console.error('Error adding new category:', error);
         this.$popup.error('Failed to add new category: ' + (error.response?.data?.message || error.message));
+        
+        // Send push notification for failed category addition
+        this.sendPushNotification({
+          title: 'Category Addition Failed',
+          message: `Failed to add new category "${this.newCategory}": ${error.response?.data?.message || error.message}`,
+          category: 'risk',
+          priority: 'medium',
+          user_id: 'default_user'
+        });
       }
     },
     

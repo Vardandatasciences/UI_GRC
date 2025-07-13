@@ -446,6 +446,26 @@ const closeRequestDetails = () => {
   showDetails.value = false
 }
 
+// Send push notification
+const sendPushNotification = async (notificationData) => {
+  try {
+    const response = await fetch('http://localhost:8000/api/push-notification/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(notificationData)
+    });
+    if (response.ok) {
+      console.log('Push notification sent successfully');
+    } else {
+      console.error('Failed to send push notification');
+    }
+  } catch (error) {
+    console.error('Error sending push notification:', error);
+  }
+}
+
 // Approve status change request
 const approveRequest = async (request) => {
   const itemName = request.FrameworkName || request.PolicyName
@@ -477,6 +497,15 @@ const approveRequest = async (request) => {
             const affectedCount = request.ItemType === 'policy' ? request.SubpolicyCount : request.PolicyCount
             const affectedType = request.ItemType === 'policy' ? 'subpolicies' : 'policies'
             
+            // Send push notification for successful approval
+            await sendPushNotification({
+              title: 'Status Change Request Approved',
+              message: `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} "${itemName}" has been set to Inactive.${affectedCount > 0 ? ` ${affectedCount} ${affectedType} were also made inactive.` : ''}`,
+              category: 'status_change',
+              priority: 'high',
+              user_id: 'default_user'
+            });
+            
             PopupService.success(
               `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} "${itemName}" has been set to Inactive.${affectedCount > 0 ? ` ${affectedCount} ${affectedType} were also made inactive.` : ''}`,
               'Status Changed'
@@ -487,6 +516,16 @@ const approveRequest = async (request) => {
             await fetchRequests()
           } catch (error) {
             console.error('Error approving status change request:', error)
+            
+            // Send push notification for failed approval
+            await sendPushNotification({
+              title: 'Status Change Approval Failed',
+              message: `Failed to approve status change request for "${itemName}". Please try again.`,
+              category: 'status_change',
+              priority: 'high',
+              user_id: 'default_user'
+            });
+            
             PopupService.error('Failed to approve status change request. Please try again.', 'Approval Failed')
           }
         }
@@ -519,6 +558,15 @@ const rejectRequest = async (request) => {
               remarks: remarks || 'Status change rejected'
             })
             
+            // Send push notification for successful rejection
+            await sendPushNotification({
+              title: 'Status Change Request Rejected',
+              message: `Status change request for "${itemName}" has been rejected. The ${itemType} remains Active.`,
+              category: 'status_change',
+              priority: 'medium',
+              user_id: 'default_user'
+            });
+            
             PopupService.success(
               `Status change request for "${itemName}" has been rejected. The ${itemType} remains Active.`,
               'Request Rejected'
@@ -529,6 +577,16 @@ const rejectRequest = async (request) => {
             await fetchRequests()
           } catch (error) {
             console.error('Error rejecting status change request:', error)
+            
+            // Send push notification for failed rejection
+            await sendPushNotification({
+              title: 'Status Change Rejection Failed',
+              message: `Failed to reject status change request for "${itemName}". Please try again.`,
+              category: 'status_change',
+              priority: 'high',
+              user_id: 'default_user'
+            });
+            
             PopupService.error('Failed to reject status change request. Please try again.', 'Rejection Failed')
           }
         }

@@ -43,7 +43,7 @@ from django.db import models
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from .export_service import (
+from .export_service1 import (
     export_to_excel,
     export_to_csv,
     export_to_pdf,
@@ -3751,7 +3751,7 @@ def export_compliances(request, export_format, item_type=None, item_id=None):
                 })
             
             # Use the export_data function from export_service
-            from .export_service import export_data
+            from .export_service1 import export_data
             result = export_data(
                 data=compliances_data,
                 file_format=export_format,
@@ -3860,7 +3860,7 @@ def process_export_task(task_id, item_type=None, item_id=None):
                 })
             
             # Use the export_data function from export_service
-            from .export_service import export_data
+            from .export_service1 import export_data
             result = export_data(
                 data=compliances_data,
                 file_format=task.file_type,
