@@ -863,25 +863,51 @@ def resubmit_policy_approval(request, approval_id):
         # Set the new version
         new_version = f"u{highest_u_version + 1}"
         print(f"Setting new version: {new_version}")
+
+        # Ensure all required fields are present in ExtractedData
+        required_fields = [
+            'PolicyName', 'PolicyDescription', 'Objective', 'Scope',
+            'Department', 'Applicability', 'PolicyType', 'PolicyCategory',
+            'PolicySubCategory', 'Status', 'CreatedBy', 'CreatedByDate'
+        ]
+        
+        for field in required_fields:
+            if field not in extracted_data:
+                extracted_data[field] = approval.ExtractedData.get(field, '')
+
+        # Update metadata
+        extracted_data['Status'] = 'Under Review'
+        extracted_data['LastModifiedDate'] = datetime.date.today().isoformat()
+        
+        # Handle subpolicies
+        if 'subpolicies' in extracted_data and isinstance(extracted_data['subpolicies'], list):
+            for subpolicy in extracted_data['subpolicies']:
+                # Ensure each subpolicy has required fields
+                if not subpolicy.get('SubPolicyId'):
+                    continue
+                
+                # Reset approval status for rejected subpolicies
+                if subpolicy.get('Status') == 'Rejected':
+                    subpolicy['Status'] = 'Under Review'
+                    subpolicy['approval'] = {
+                        'approved': None,
+                        'remarks': ''
+                    }
+                    subpolicy['resubmitted'] = True
+                
+                # Preserve version and ID
+                subpolicy['version'] = subpolicy.get('version', 'u1')
        
-        # Create a new approval object manually
+        # Create a new approval object
         new_approval = PolicyApproval(
             Identifier=approval.Identifier,
             ExtractedData=extracted_data,
             UserId=approval.UserId,
             ReviewerId=approval.ReviewerId,
             ApprovedNot=None,  # Reset approval status
-            Version=new_version
+            Version=new_version,
+            PolicyId=approval.PolicyId  # Preserve PolicyId reference
         )
-       
-        # Reset subpolicy approvals
-        if 'subpolicies' in extracted_data and isinstance(extracted_data['subpolicies'], list):
-            for subpolicy in extracted_data['subpolicies']:
-                if subpolicy.get('approval', {}).get('approved') == False:
-                    subpolicy['approval'] = {
-                        'approved': None,
-                        'remarks': ''
-                    }
        
         # Save the new record
         new_approval.save()
@@ -2677,7 +2703,83 @@ def list_users(request):
             'error': 'Error fetching users',
             'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_user_role_simple(request):
+    """
+    Get user role and permissions from RBAC table
+    """
+    try:
+        # Get user_id from session
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({
+                'success': False,
+                'error': 'No user ID found in session'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Get RBAC record
+        from .models import RBAC
+        rbac_record = RBAC.objects.filter(user_id=user_id, is_active='Y').first()
         
+        if not rbac_record:
+            return Response({
+                'success': False,
+                'error': 'No active RBAC record found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # Get user details
+        user = Users.objects.filter(UserId=user_id).first()
+        if not user:
+            return Response({
+                'success': False,
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({
+            'success': True,
+            'user_id': user_id,
+            'username': user.UserName,
+            'role': rbac_record.role,
+            'permissions': {
+                'view_all_policy': rbac_record.view_all_policy,
+                'create_policy': rbac_record.create_policy,
+                'edit_policy': rbac_record.edit_policy,
+                'approve_policy': rbac_record.approve_policy,
+                'policy_performance_analytics': rbac_record.policy_performance_analytics
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error in get_user_role_simple: {str(e)}")
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_users_for_dropdown_simple(request):
+    """Simple users dropdown endpoint that gets users from session data"""
+    try:
+        # Get all users from RBAC table
+        from .models import RBAC
+        rbac_users = RBAC.objects.filter(is_active='Y').order_by('username')
+        
+        user_data = []
+        for rbac_user in rbac_users:
+            user_data.append({
+                'UserId': rbac_user.user_id,
+                'UserName': rbac_user.username,
+                'Role': rbac_user.role
+            })
+        
+        return Response(user_data)
+    except Exception as e:
+        print(f"Error fetching users for dropdown: {e}")
+        return Response({"error": str(e)}, status=500)
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_framework_explorer_data(request):

@@ -91,6 +91,8 @@ class NotificationService:
             'frameworkSubmitted': 1,   # index of framework_title in template_data
             'policySubmitted': 1,      # index of policy_title in template_data
             'frameworkResubmitted': 1,
+            'frameworkVersionSubmitted': 0,  # index of framework_title in template_data
+            'policyVersionSubmitted': 0,     # index of policy_title in template_data
             'subpolicyApproved': 1,
             'subpolicyRejected': 1,
             'frameworkFinalApproved': 1,
@@ -198,13 +200,13 @@ class NotificationService:
                 'subject': 'Framework "{framework_title}" Resubmitted for Your Review',
                 'template': lambda reviewer_name, framework_title, submitter_name: f"""
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-                  <div style="background-color: #3498db; padding: 20px; text-align: center;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Framework Resubmission Review Required</h1>
+                  <div style="background-color: #f39c12; padding: 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Framework Resubmitted</h1>
                   </div>
                   <div style="padding: 20px;">
                     <p style="color: #333333; font-size: 16px;">Hello {reviewer_name},</p>
                     <p style="color: #333333; font-size: 16px;">{submitter_name} has resubmitted the framework <strong>"{framework_title}"</strong> for your review.</p>
-                    <p style="color: #333333; font-size: 16px;">The framework has been updated based on previous feedback. Please review the changes and either approve or reject this framework.</p>
+                    <p style="color: #333333; font-size: 16px;">Please review and either approve or reject this framework.</p>
                     <p style="color: #333333; margin-top: 20px;">– GRC Team</p>
                   </div>
                 </div>
@@ -772,17 +774,17 @@ class NotificationService:
                 '''
             },
             'frameworkVersionSubmitted': {
-                'subject': 'Framework "{framework_title}" Version {version} Submitted for Your Review',
-                'template': lambda reviewer_name, framework_title, submitter_name, version: f"""
-                <div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;\">
-                  <div style=\"background-color: #3498db; padding: 20px; text-align: center;\">
-                    <h1 style=\"color: #ffffff; margin: 0; font-size: 28px;\">Framework Version Review Required</h1>
+                'subject': 'Framework Version "{framework_title}" v{version} Submitted for Your Review',
+                'template': lambda framework_title, reviewer_name, submitter_name, version: f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                  <div style="background-color: #9b59b6; padding: 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 28px;">New Framework Version</h1>
                   </div>
-                  <div style=\"padding: 20px;\">
-                    <p style=\"color: #333333; font-size: 16px;\">Hello {reviewer_name},</p>
-                    <p style=\"color: #333333; font-size: 16px;\">{submitter_name} has submitted a new version (v{version}) of framework <strong>\"{framework_title}\"</strong> for your review.</p>
-                    <p style=\"color: #333333; font-size: 16px;\">Please review and either approve or reject this framework version.</p>
-                    <p style=\"color: #333333; margin-top: 20px;\">– GRC Team</p>
+                  <div style="padding: 20px;">
+                    <p style="color: #333333; font-size: 16px;">Hello {reviewer_name},</p>
+                    <p style="color: #333333; font-size: 16px;">{submitter_name} has created a new version (v{version}) of framework <strong>"{framework_title}"</strong> for your review.</p>
+                    <p style="color: #333333; font-size: 16px;">Please review the changes and either approve or reject this version.</p>
+                    <p style="color: #333333; margin-top: 20px;">– GRC Team</p>
                   </div>
                 </div>
                 """
@@ -832,6 +834,22 @@ class NotificationService:
                     <p style=\"color: #333333; font-size: 16px;\">Your request to inactivate the framework <strong>\"{framework_title}\"</strong> has been <strong>rejected</strong> by {reviewer_name}.</p>
                     <p style=\"color: #333333; font-size: 16px;\"><strong>Remarks:</strong> {remarks}</p>
                     <p style=\"color: #333333; margin-top: 20px;\">– GRC Team</p>
+                  </div>
+                </div>
+                """
+            },
+            'policyVersionSubmitted': {
+                'subject': 'Policy Version "{policy_title}" v{version} Submitted for Your Review',
+                'template': lambda policy_title, reviewer_name, submitter_name, version: f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                  <div style="background-color: #9b59b6; padding: 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 28px;">New Policy Version</h1>
+                  </div>
+                  <div style="padding: 20px;">
+                    <p style="color: #333333; font-size: 16px;">Hello {reviewer_name},</p>
+                    <p style="color: #333333; font-size: 16px;">{submitter_name} has created a new version (v{version}) of policy <strong>"{policy_title}"</strong> for your review.</p>
+                    <p style="color: #333333; font-size: 16px;">Please review the changes and either approve or reject this version.</p>
+                    <p style="color: #333333; margin-top: 20px;">– GRC Team</p>
                   </div>
                 </div>
                 """

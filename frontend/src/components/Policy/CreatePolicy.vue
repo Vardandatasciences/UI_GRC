@@ -970,7 +970,7 @@ export default {
     // Fetch current logged-in user information
     async function fetchCurrentUser() {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/user-role/`)
+        const response = await axios.get('http://localhost:8000/api/user-role/')
         if (response.data.success) {
           currentUser.value = {
             UserId: response.data.user_id,

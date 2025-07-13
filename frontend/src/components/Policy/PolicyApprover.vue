@@ -964,7 +964,7 @@ export default {
         console.log('Initializing user and checking role...');
         
         // Get current user role
-        const response = await axios.get('http://localhost:8000/api/api/user-role/');
+        const response = await axios.get('http://localhost:8000/api/user-role/');
         console.log('User role API response:', response.data);
         
         if (response.data.success) {

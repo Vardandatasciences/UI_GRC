@@ -136,7 +136,7 @@ export const PolicyRbacUtils = {
     try {
       // First try the specific API endpoint
       try {
-        const response = await axios.get('/api/user-role/', {
+        const response = await axios.get('http://localhost:8000/api/user-role/', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
             'Content-Type': 'application/json'
