@@ -94,9 +94,9 @@ DATABASES = {
     "default": {
         "ENGINE": 'django.db.backends.mysql',
         "NAME": "grc",
-        "USER": "root",
-        "PASSWORD": "root",
-        "HOST": "localhost",
+        "USER": "Bhaskar",
+        "PASSWORD": "vardaa@123",
+        "HOST": "202.53.78.150",
         "PORT": "3306",
         "OPTIONS": {
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES', time_zone='+00:00'",
