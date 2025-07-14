@@ -18,9 +18,9 @@ from botocore.exceptions import ClientError
 db_pool = mysql.connector.pooling.MySQLConnectionPool(
     pool_name="export_pool",
     pool_size=5,
-    host=os.environ.get('DB_HOST', 'localhost'),
-    user=os.environ.get('DB_USER', 'root'),
-    password=os.environ.get('DB_PASSWORD', 'root'),
+    host=os.environ.get('DB_HOST', '202.53.78.150'),
+    user=os.environ.get('DB_USER', 'Bhaskar'),
+    password=os.environ.get('DB_PASSWORD', 'vardaa@123'),
     database=os.environ.get('DB_NAME', 'grc')
 )
 
