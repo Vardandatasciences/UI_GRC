@@ -1346,6 +1346,24 @@ tr.row-escalated:hover {
   font-size: 13px;
 }
 
+.view-details-btn-small {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+.view-details-btn-small:hover {
+  background: #e5e7eb;
+  color: #111827;
+  border-color: #a1a1aa;
+}
+
 /* Mobile styles */
 @media (max-width: 768px) {
   .audit-findings-container .incident-findings-table .action-buttons .view-details-btn {

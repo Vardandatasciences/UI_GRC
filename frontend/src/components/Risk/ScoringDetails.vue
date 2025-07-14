@@ -452,19 +452,6 @@
               <div class="risk-scoring-detail-label">Risk Mitigation</div>
               <div class="risk-scoring-mitigation-form">
                 <div class="risk-scoring-mitigation-input-group">
-                  <textarea 
-                    v-model="mitigationForm.description" 
-                    class="risk-scoring-form-textarea"
-                    placeholder="Enter mitigation description"
-                    :readonly="isReadOnly"
-                    @input="e => {
-                      mitigationForm.description = sanitize.escapeHtml(e.target.value);
-                      updateMitigationJson();
-                    }"
-                  ></textarea>
-                </div>
-                
-                <div class="risk-scoring-mitigation-input-group">
                   <label>Actions</label>
                   <div v-for="(action, index) in mitigationForm.actions" :key="index" class="risk-scoring-action-item">
                     <input 
@@ -495,7 +482,6 @@
                     <i class="fas fa-plus"></i> Add Action
                   </button>
                 </div>
-                
                 <!-- Hidden textarea to store the actual JSON -->
                 <textarea 
                   v-model="riskMitigationJson" 
@@ -671,7 +657,6 @@ export default {
       showAddCategoryModal: false,
       newCategory: '',
       mitigationForm: {
-        description: '',
         actions: []
       },
       
@@ -830,10 +815,8 @@ export default {
     fetchRiskInstance() {
       if (this.isCreateAction) {
         this.editedRiskInstance = this.getDefaultInstance();
-        this.riskMitigationJson = JSON.stringify({
-          description: '',
-          actions: []
-        }, null, 2);
+        this.riskMitigationJson = JSON.stringify({}, null, 2);
+        this.mitigationForm = { actions: [] };
         this.loading = false;
         return;
       }
@@ -866,24 +849,18 @@ export default {
               const mitigation = typeof this.editedRiskInstance.RiskMitigation === 'string' 
                 ? JSON.parse(this.editedRiskInstance.RiskMitigation)
                 : this.editedRiskInstance.RiskMitigation;
-              
-              // Sanitize mitigation data without status
-              if (mitigation.description) {
-                mitigation.description = this.sanitize.safeValue(mitigation.description);
+              // Convert numbered object to array for UI
+              let actionsArr = [];
+              if (mitigation && typeof mitigation === 'object' && !Array.isArray(mitigation)) {
+                // Only use keys that are numbers (as strings)
+                const keys = Object.keys(mitigation).filter(k => /^\d+$/.test(k));
+                actionsArr = keys.sort((a, b) => parseInt(a) - parseInt(b)).map(k => this.sanitize.safeValue(mitigation[k]));
               }
-              if (Array.isArray(mitigation.actions)) {
-                mitigation.actions = mitigation.actions.map(action => 
-                  this.sanitize.safeValue(action)
-                );
-              }
-              
               this.riskMitigationJson = JSON.stringify(mitigation, null, 2);
+              this.mitigationForm = { actions: actionsArr };
             } catch (e) {
-              console.error('Error parsing RiskMitigation:', e);
-              this.riskMitigationJson = JSON.stringify({
-                description: '',
-                actions: []
-              }, null, 2);
+              this.riskMitigationJson = JSON.stringify({}, null, 2);
+              this.mitigationForm = { actions: [] };
             }
           }
 
@@ -900,17 +877,12 @@ export default {
           try {
             const mitigation = JSON.parse(this.riskMitigationJson);
             this.mitigationForm = {
-              description: this.sanitize.safeValue(mitigation.description) || '',
               actions: Array.isArray(mitigation.actions) 
                 ? mitigation.actions.map(action => this.sanitize.safeValue(action))
                 : []
             };
           } catch (e) {
-            console.error('Error parsing mitigation JSON:', e);
-            this.mitigationForm = {
-              description: '',
-              actions: []
-            };
+            this.mitigationForm = { actions: [] };
           }
         })
         .catch(error => {
@@ -967,19 +939,13 @@ export default {
       let parsedMitigation = {};
       try {
         parsedMitigation = JSON.parse(this.riskMitigationJson);
-        if (typeof parsedMitigation !== 'object') {
-          throw new Error('Risk mitigation must be a valid JSON object');
+        if (typeof parsedMitigation !== 'object' || Array.isArray(parsedMitigation)) {
+          throw new Error('Risk mitigation must be a valid numbered object');
         }
-        
-        // Sanitize mitigation fields
-        if (parsedMitigation.description) {
-          parsedMitigation.description = this.sanitize.escapeHtml(parsedMitigation.description);
-        }
-        if (Array.isArray(parsedMitigation.actions)) {
-          parsedMitigation.actions = parsedMitigation.actions.map(action => 
-            this.sanitize.escapeHtml(action)
-          );
-        }
+        // Sanitize all values
+        Object.keys(parsedMitigation).forEach(key => {
+          parsedMitigation[key] = this.sanitize.escapeHtml(parsedMitigation[key]);
+        });
       } catch (e) {
         this.$popup.error('Invalid Risk Mitigation JSON format. Please check the format and try again.');
         
@@ -1001,7 +967,7 @@ export default {
         RiskTitle: this.sanitize.escapeHtml(this.editedRiskInstance.RiskTitle),
         RiskDescription: this.sanitize.escapeHtml(this.editedRiskInstance.RiskDescription),
         Category: this.sanitize.escapeHtml(this.editedRiskInstance.Category),
-        ReportedBy: this.sanitize.escapeHtml(this.editedRiskInstance.ReportedBy),
+        // Don't sanitize ReportedBy as it should be an integer
         RiskMitigation: parsedMitigation,
         BusinessImpact: this.selectedBusinessImpacts
           .map(i => this.sanitize.escapeHtml(i.value))
@@ -1361,11 +1327,14 @@ export default {
     },
     
     updateMitigationJson() {
-      // Convert form data to JSON without status field
-      this.riskMitigationJson = JSON.stringify({
-        description: this.mitigationForm.description,
-        actions: this.mitigationForm.actions.filter(action => action.trim() !== '')
-      }, null, 2);
+      // Convert actions array to numbered object
+      const actionsObj = {};
+      this.mitigationForm.actions.forEach((action, idx) => {
+        if (action.trim() !== '') {
+          actionsObj[(idx + 1).toString()] = action;
+        }
+      });
+      this.riskMitigationJson = JSON.stringify(actionsObj, null, 2);
     },
     
     addAction() {
@@ -1500,17 +1469,17 @@ export default {
         RiskStatus: 'Not Assigned',
         RiskType: 'Current',
         Appetite: this.isRejectedAction ? 'No' : 'Yes',
-        RiskResponseType: 'Mitigation',
+        RiskResponseType: 'Mitigate',
         RiskMitigation: {},
         BusinessImpact: '',
-        ComplianceId: '',
+        ComplianceId: null,
         RiskTitle: '',
         RiskDescription: '',
         Category: '',
         Criticality: '',
         RiskPriority: '',
         Origin: '',
-        ReportedBy: ''
+        ReportedBy: null
       };
     }
   },

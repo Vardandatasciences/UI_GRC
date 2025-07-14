@@ -2729,6 +2729,47 @@ button.review-btn:hover, .user-tasks-table .review-btn:hover {
   cursor: not-allowed;
 }
 
+/* Currency input group styles */
+.cost-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cost-input-group input[type="number"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.currency-select {
+  min-width: 80px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.currency-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.currency-select:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.currency-select option {
+  padding: 8px;
+  font-size: 14px;
+}
+
 /* Update the submission area to show when questionnaire is complete */
 .submission-area.ready {
   transform: translateY(-10px);

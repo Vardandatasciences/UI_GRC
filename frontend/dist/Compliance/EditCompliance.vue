@@ -492,8 +492,25 @@
                   placeholder="Search or add risk category"
                   @input="validateFieldRealTime('RiskCategory')"
                   @blur="validateField('RiskCategory')"
+                  @focus="showDropdown('RiskCategory')"
                   :ref="'field_RiskCategory'"
                 />
+                <div v-show="activeDropdown === 'RiskCategory'" class="dropdown-options">
+                  <div v-if="filteredOptions.RiskCategory.length === 0 && riskCategorySearch" class="dropdown-add-option">
+                    <span>No matches found. Add new:</span>
+                    <button @click="addNewOption('RiskCategory', riskCategorySearch)" class="dropdown-add-btn">
+                      + Add "{{ riskCategorySearch }}"
+                    </button>
+                  </div>
+                  <div 
+                    v-for="option in filteredOptions.RiskCategory" 
+                    :key="option.id" 
+                    class="dropdown-option"
+                    @click="selectOption('RiskCategory', option.value)"
+                  >
+                    {{ option.value }}
+                  </div>
+                </div>
                 <div class="validation-indicator" v-if="compliance.RiskCategory">
                   <span v-if="isFieldValid('RiskCategory')" class="valid-icon">✓</span>
                   <span v-else class="invalid-icon">!</span>
@@ -522,8 +539,25 @@
                   placeholder="Search or add business impact"
                   @input="validateFieldRealTime('RiskBusinessImpact')"
                   @blur="validateField('RiskBusinessImpact')"
+                  @focus="showDropdown('RiskBusinessImpact')"
                   :ref="'field_RiskBusinessImpact'"
                 />
+                <div v-show="activeDropdown === 'RiskBusinessImpact'" class="dropdown-options">
+                  <div v-if="filteredOptions.RiskBusinessImpact.length === 0 && riskBusinessImpactSearch" class="dropdown-add-option">
+                    <span>No matches found. Add new:</span>
+                    <button @click="addNewOption('RiskBusinessImpact', riskBusinessImpactSearch)" class="dropdown-add-btn">
+                      + Add "{{ riskBusinessImpactSearch }}"
+                    </button>
+                  </div>
+                  <div 
+                    v-for="option in filteredOptions.RiskBusinessImpact" 
+                    :key="option.id" 
+                    class="dropdown-option"
+                    @click="selectOption('RiskBusinessImpact', option.value)"
+                  >
+                    {{ option.value }}
+                  </div>
+                </div>
                 <div class="validation-indicator" v-if="compliance.RiskBusinessImpact">
                   <span v-if="isFieldValid('RiskBusinessImpact')" class="valid-icon">✓</span>
                   <span v-else class="invalid-icon">!</span>
@@ -1114,24 +1148,34 @@ export default {
         const buResponse = await complianceService.getCategoryBusinessUnits('BusinessUnitsCovered');
         if (buResponse.data.success) {
           this.categoryOptions.BusinessUnitsCovered = buResponse.data.data;
+          this.filteredOptions.BusinessUnitsCovered = [...this.categoryOptions.BusinessUnitsCovered];
         }
         
         // Load risk types
         const rtResponse = await complianceService.getCategoryBusinessUnits('RiskType');
         if (rtResponse.data.success) {
           this.categoryOptions.RiskType = rtResponse.data.data;
+          this.filteredOptions.RiskType = [...this.categoryOptions.RiskType];
         }
         
         // Load risk categories
         const rcResponse = await complianceService.getCategoryBusinessUnits('RiskCategory');
         if (rcResponse.data.success) {
           this.categoryOptions.RiskCategory = rcResponse.data.data;
+          this.filteredOptions.RiskCategory = [...this.categoryOptions.RiskCategory];
         }
         
         // Load risk business impacts
         const rbiResponse = await complianceService.getCategoryBusinessUnits('RiskBusinessImpact');
         if (rbiResponse.data.success) {
           this.categoryOptions.RiskBusinessImpact = rbiResponse.data.data;
+          this.filteredOptions.RiskBusinessImpact = [...this.categoryOptions.RiskBusinessImpact];
+        }
+
+        // Initialize search fields with current values
+        if (this.compliance) {
+          this.riskCategorySearch = this.compliance.RiskCategory || '';
+          this.riskBusinessImpactSearch = this.compliance.RiskBusinessImpact || '';
         }
       } catch (error) {
         console.error('Failed to load category options:', error);

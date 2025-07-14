@@ -240,6 +240,24 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+.deactivation-options {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deactivation-options label {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.deactivation-options #reviewer-dropdown {
+  width: 100%;
+  min-width: 200px;
+  max-width: 100%;
+}
+
 @media (max-width: 768px) {
   .filter-section,
   .version-list-header,

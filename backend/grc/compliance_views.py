@@ -520,16 +520,13 @@ class ComplianceInputValidator:
         try:
             # Validate and clean mitigation (JSON step-by-step format)
             raw_mitigation = request_data.get('mitigation')
-            
-            # Use our helper function to format mitigation data
+            # Always use format_mitigation_data to handle both string and object types
             formatted_mitigation = format_mitigation_data(raw_mitigation)
-            
             # If risk requires mitigation but none provided, add error
             if validated_data.get('IsRisk', False) and not formatted_mitigation:
                 errors['mitigation'] = ["At least one mitigation step is required for risks"]
             else:
                 validated_data['mitigation'] = formatted_mitigation
-                
                 # Debug log
                 print(f"DEBUG: Validated mitigation data: {formatted_mitigation}")
         except Exception as e:
@@ -627,6 +624,10 @@ class ComplianceInputValidator:
         validated_data['PermanentTemporary'] = 'Permanent'
         validated_data['MaturityLevel'] = 'Initial'
         
+        # Always copy CreatedByName from request_data if present (no validation, just sanitize)
+        if 'CreatedByName' in request_data:
+            validated_data['CreatedByName'] = str(request_data['CreatedByName']).strip()
+        
         if errors:
             raise ValidationError(errors)
         
@@ -641,12 +642,28 @@ def login(request):
     email = request.data.get('email')
     password = request.data.get('password')
    
-    # This is a test/demo login endpoint - in production, use proper authentication
-    # For now, we'll comment this out to force proper authentication
-    return Response({
-        'success': False,
-        'message': 'Please use the main login endpoint at /api/login/'
-    }, status=status.HTTP_401_UNAUTHORIZED)
+    # Hardcoded credentials
+    if email == "admin@example.com" and password == "password123":
+        # Set user_id in session for RBAC
+        request.session['user_id'] = 1  # Default admin user ID
+        request.session['email'] = email
+        request.session['name'] = 'Admin User'
+        request.session.save()  # Ensure session is saved
+        
+        return Response({
+            'success': True,
+            'message': 'Login successful',
+            'user': {
+                'email': email,
+                'name': 'Admin User',
+                'user_id': 1
+            }
+        })
+    else:
+        return Response({
+            'success': False,
+            'message': 'Invalid credentials'
+        }, status=status.HTTP_401_UNAUTHORIZED)
  
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -935,12 +952,7 @@ def create_compliance(request):
     print(f"Received request data: {request.data}")
     
     # Get user_id from session for logging and tracking
-    user_id = request.session.get('user_id')
-    if not user_id:
-        return Response({
-            'success': False,
-            'message': 'User authentication required. Please log in and try again.'
-        }, status=status.HTTP_401_UNAUTHORIZED)
+    user_id = request.session.get('user_id', 1)  # Default to 1 if no session
     print(f"User ID from session: {user_id}")
     
     try:
@@ -959,15 +971,22 @@ def create_compliance(request):
         identifier = f"COMP-{subpolicy_id}-{datetime.date.today().strftime('%y%m%d')}-{uuid.uuid4().hex[:6]}"
         validated_data['Identifier'] = identifier
     
-    # Get reviewer ID and approval due date
-    reviewer_id = validated_data['reviewer']
-    approval_due_date = validated_data['ApprovalDueDate']
+    # Get creator user ID (as string) from validated_data['CreatedByName']
+    created_by_id = validated_data.get('CreatedByName', 'System')
+    logger = logging.getLogger(__name__)
+    logger.debug(f'Creating compliance: created_by_id={created_by_id}')
+    # Fetch the user's name from the custom Users model
+    from .models import Users
+    try:
+        user_obj = Users.objects.get(UserId=created_by_id)
+        created_by_name = (user_obj.FirstName + ' ' + user_obj.LastName).strip() if user_obj.FirstName or user_obj.LastName else user_obj.UserName
+        logger.debug(f'User lookup success: {created_by_name}')
+    except Exception as e:
+        logger.warning(f'User lookup failed for id {created_by_id}: {e}')
+        created_by_name = 'Unknown User'
+    # Get reviewer ID from validated_data['reviewer']
+    reviewer_id = validated_data.get('reviewer')
     
-    # Get creator name
-    created_by_name = 'System'
-    if request.user.is_authenticated:
-        created_by_name = request.user.username
-
     # Create new compliance
     try:
         # Get the SubPolicy object
@@ -981,8 +1000,8 @@ def create_compliance(request):
                 'message': 'Failed to create compliance',
                 'errors': {'general': ['SubPolicy not found']}
             }, status=status.HTTP_400_BAD_REQUEST)
-            
-        # Create the compliance with the SubPolicy object
+        # Always use format_mitigation_data to ensure correct type
+        mitigation_for_db = format_mitigation_data(validated_data['mitigation'])
         new_compliance = Compliance.objects.create(
             SubPolicy=subpolicy,
             ComplianceTitle=validated_data['ComplianceTitle'],
@@ -993,7 +1012,7 @@ def create_compliance(request):
             BusinessUnitsCovered=validated_data['BusinessUnitsCovered'],
             IsRisk=validated_data['IsRisk'],
             PossibleDamage=validated_data['PossibleDamage'],
-            mitigation=format_mitigation_data(validated_data['mitigation']),
+            mitigation=mitigation_for_db,
             PotentialRiskScenarios=validated_data.get('PotentialRiskScenarios', ''),
             RiskType=validated_data.get('RiskType', ''),
             RiskCategory=validated_data.get('RiskCategory', ''),
@@ -1006,7 +1025,7 @@ def create_compliance(request):
             MaturityLevel=validated_data.get('MaturityLevel', 'Initial'),
             ActiveInactive=validated_data.get('ActiveInactive', 'Inactive'),
             PermanentTemporary=validated_data.get('PermanentTemporary', 'Permanent'),
-            CreatedByName=validated_data.get('CreatedByName', created_by_name),
+            CreatedByName=created_by_name,
             CreatedByDate=datetime.date.today(),
             ComplianceVersion='1.0',
             Status='Under Review',
@@ -1031,17 +1050,18 @@ def create_compliance(request):
             'Status': 'Under Review',
             'ComplianceId': new_compliance.ComplianceId,
             'ComplianceVersion': '1.0',
-            'SubPolicy': validated_data['SubPolicy']
+            'SubPolicy': validated_data['SubPolicy'],
+            'Identifier': validated_data['Identifier'],
         }
         
         extracted_data['compliance_approval'] = {
             'approved': None,
-            'remarks': '',
-            'ApprovalDueDate': approval_due_date
+            'remarks': ''
+            # 'ApprovalDueDate': approval_due_date
         }
        
         # Use session user_id or fall back to validated data
-        session_user_id = user_id or int(validated_data.get('CreatedByName', 1))
+        session_user_id = user_id or int(validated_data.get('CreatedByName'))
         
         # Ensure users have emails for notifications
         ensure_user_has_email(session_user_id, "system@example.com")
@@ -1060,8 +1080,8 @@ def create_compliance(request):
             ReviewerId=reviewer_id,
             ApprovedNot=None,
             Version="u1",
-            PolicyId=policy,  # Use the actual Policy instance from the foreign key
-            ApprovalDueDate=approval_due_date
+            PolicyId=policy  # Use the actual Policy instance from the foreign key
+            # ApprovalDueDate=approval_due_date
         )
         
         # Send notification to reviewer
@@ -1297,61 +1317,84 @@ def get_compliances_by_subpolicy(request, subpolicy_id):
 @permission_classes([AllowAny])
 def submit_compliance_review(request, approval_id):
     try:
-        # Get the approval record
         approval = get_object_or_404(PolicyApproval, ApprovalId=approval_id)
-        
-        # Get the data from request
-        # The frontend sends ApprovedNot directly, or as part of ExtractedData
         if 'ApprovedNot' in request.data:
             approved_not = request.data.get('ApprovedNot')
         elif 'ExtractedData' in request.data and 'compliance_approval' in request.data['ExtractedData']:
             approved_not = request.data['ExtractedData']['compliance_approval'].get('approved')
         else:
             approved_not = request.data.get('approved', False)
-        
-        # Convert to boolean if it's a string
         if isinstance(approved_not, str):
             approved_not = approved_not.lower() == 'true'
-        
-        # Add debug logging
         print(f"Received approval request with approved_not value: {approved_not} (type: {type(approved_not)})")
         print(f"Request data: {request.data}")
-        
         remarks = request.data.get('remarks', '')
-        
-        # Get extracted data from approval
         extracted_data = approval.ExtractedData
-        
-        # Update approval status
-        approval.ApprovedNot = approved_not
-        approval.save()
-        
-        # Create new approval record with incremented version
-        current_version = approval.Version
-        if current_version.startswith('u'):
-            # User version, increment number
-            version_num = int(current_version[1:])
-            new_version = f"u{version_num + 1}"
-        else:
-            # Start with u1
-            new_version = "u1"
-            
-        # Update extracted data with approval info
-        if 'compliance_approval' in extracted_data:
-            extracted_data['compliance_approval']['approved'] = approved_not
+        # --- Ensure rejection reason is saved in ExtractedData ---
+        if approved_not is False:
+            if 'compliance_approval' not in extracted_data:
+                extracted_data['compliance_approval'] = {}
             extracted_data['compliance_approval']['remarks'] = remarks
-            
-        # Create new approval record - preserve ApprovalDueDate from original approval
-        new_approval = PolicyApproval.objects.create(
-            Identifier=approval.Identifier,
-            ExtractedData=extracted_data,
-            UserId=approval.UserId,
-            ReviewerId=approval.ReviewerId,
-            ApprovedNot=approved_not,
-            Version=new_version,
-            ApprovalDueDate=approval.ApprovalDueDate
-        )
-        
+        approval.ApprovedNot = approved_not
+        approval.ExtractedData = extracted_data
+        approval.save()
+        current_version = approval.Version
+        # --- Always use the original UserId for reviewer versions ---
+        all_versions = PolicyApproval.objects.filter(Identifier=approval.Identifier)
+        original_user_version = all_versions.filter(Version__startswith='u').order_by('ApprovalId').first()
+        original_user_id = original_user_version.UserId if original_user_version else approval.UserId
+        # --- ReviewerId should be the current reviewer ---
+        current_reviewer_id = approval.ReviewerId
+        if approved_not is False:
+            highest_r_version = 0
+            for pa in all_versions:
+                if pa.Version and pa.Version.startswith('r'):
+                    try:
+                        version_num = int(pa.Version[1:])
+                        if version_num > highest_r_version:
+                            highest_r_version = version_num
+                    except ValueError:
+                        continue
+            new_version = f"r{highest_r_version + 1}"
+            # --- Ensure remarks are included in new reviewer version ---
+            if 'compliance_approval' not in extracted_data:
+                extracted_data['compliance_approval'] = {}
+            extracted_data['compliance_approval']['remarks'] = remarks
+            extracted_data['compliance_approval']['approved'] = False
+            extracted_data['Status'] = 'Rejected'
+            new_approval = PolicyApproval.objects.create(
+                Identifier=approval.Identifier,
+                ExtractedData=extracted_data,
+                UserId=original_user_id,
+                ReviewerId=current_reviewer_id,
+                ApprovedNot=approved_not,
+                Version=new_version,
+                ApprovalDueDate=approval.ApprovalDueDate,
+                PolicyId=approval.PolicyId
+            )
+            print(f"Created new reviewer approval record with ID {new_approval.ApprovalId}, Version: {new_version}")
+        else:
+            highest_r_version = 0
+            for pa in all_versions:
+                if pa.Version and pa.Version.startswith('r'):
+                    try:
+                        version_num = int(pa.Version[1:])
+                        if version_num > highest_r_version:
+                            highest_r_version = version_num
+                    except ValueError:
+                        continue
+            new_version = f"r{highest_r_version + 1}"
+            new_approval = PolicyApproval.objects.create(
+                Identifier=approval.Identifier,
+                ExtractedData=extracted_data,
+                UserId=original_user_id,
+                ReviewerId=current_reviewer_id,
+                ApprovedNot=approved_not,
+                Version=new_version,
+                ApprovalDueDate=approval.ApprovalDueDate,
+                PolicyId=approval.PolicyId
+            )
+            print(f"Created new approval record with ID {new_approval.ApprovalId}, Approved: {new_approval.ApprovedNot}")
         print(f"Created new approval record with ID {new_approval.ApprovalId}, Approved: {new_approval.ApprovedNot}")
         
         if 'SubPolicy' in extracted_data:
@@ -1367,7 +1410,7 @@ def submit_compliance_review(request, approval_id):
                     print(f"Processing compliance: {current_compliance.ComplianceId}")
                     
                     if approved_not is True:
-                        # If approved, set current to Active and previous to Inactive
+                        # If approved, set current to Approved and Active
                         current_compliance.Status = 'Approved'
                         current_compliance.ActiveInactive = 'Active'
                         
@@ -1384,6 +1427,7 @@ def submit_compliance_review(request, approval_id):
                     else:
                         # If rejected, mark as rejected
                         current_compliance.Status = 'Rejected'
+                        current_compliance.ActiveInactive = 'Inactive'
                         
                     current_compliance.save()
                     print(f"Updated compliance status to: {current_compliance.Status}")
@@ -1436,20 +1480,26 @@ def submit_compliance_review(request, approval_id):
 @permission_classes([AllowAny])
 def resubmit_compliance_approval(request, approval_id):
     try:
-        # Get the original approval
         approval = PolicyApproval.objects.get(ApprovalId=approval_id)
-   
-        # Validate data
         extracted_data = request.data.get('ExtractedData')
         if not extracted_data:
             return Response({'error': 'ExtractedData is required'}, status=status.HTTP_400_BAD_REQUEST)
-   
         print(f"Resubmitting compliance with ID: {approval_id}, Identifier: {approval.Identifier}")
-   
-        # Get all versions for this identifier with 'u' prefix
         all_versions = PolicyApproval.objects.filter(Identifier=approval.Identifier)
-   
-        # Find the highest 'u' version number
+        # Check for an existing pending user version (ApprovedNot=None)
+        pending_user_version = all_versions.filter(Version__startswith='u', ApprovedNot=None).order_by('-Version').first()
+        if pending_user_version:
+            # Update the existing pending user version instead of creating a new one
+            pending_user_version.ExtractedData = extracted_data
+            pending_user_version.save()
+            print(f"Updated existing pending user version: {pending_user_version.Version}")
+            return Response({
+                'success': True,
+                'message': 'Compliance review resubmitted successfully (updated existing pending user version)',
+                'ApprovalId': pending_user_version.ApprovalId,
+                'Version': pending_user_version.Version
+            })
+        # Otherwise, create a new user version
         highest_u_version = 0
         for pa in all_versions:
             if pa.Version and pa.Version.startswith('u') and len(pa.Version) > 1:
@@ -1459,86 +1509,40 @@ def resubmit_compliance_approval(request, approval_id):
                         highest_u_version = version_num
                 except ValueError:
                     continue
-   
-        # Set the new version
         new_version = f"u{highest_u_version + 1}"
         print(f"Setting new version: {new_version}")
-   
-        # Reset approval status in the ExtractedData
         if 'compliance_approval' in extracted_data:
             extracted_data['compliance_approval']['approved'] = None
             extracted_data['compliance_approval']['remarks'] = ''
-            # Add flag to indicate this is a resubmission
             extracted_data['compliance_approval']['inResubmission'] = True
+            extracted_data['compliance_approval'].pop('reviewer_id', None)
+            extracted_data['compliance_approval'].pop('reviewed_date', None)
         else:
             extracted_data['compliance_approval'] = {
                 'approved': None,
                 'remarks': '',
                 'inResubmission': True
             }
-            
-        # Update the status in the extracted data to 'Under Review'
         extracted_data['Status'] = 'Under Review'
         extracted_data['ActiveInactive'] = 'Inactive'
-   
-        # Create a new approval object
         new_approval = PolicyApproval(
             Identifier=approval.Identifier,
             ExtractedData=extracted_data,
             UserId=approval.UserId,
             ReviewerId=approval.ReviewerId,
-            ApprovedNot=None,  # Reset approval status
+            ApprovedNot=0,
             Version=new_version,
-            PolicyId=approval.PolicyId,  # Preserve the PolicyId
-            ApprovalDueDate=approval.ApprovalDueDate  # Preserve the ApprovalDueDate
+            PolicyId=approval.PolicyId,
+            ApprovalDueDate=approval.ApprovalDueDate
         )
-       
-        # Save the new record
         new_approval.save()
         print(f"Saved new approval with ID: {new_approval.ApprovalId}, Version: {new_approval.Version}")
-        
-        # Update the corresponding compliance status back to 'Under Review'
-        try:
-            # Find the compliance being resubmitted
-            if 'SubPolicy' in extracted_data:
-                compliance = Compliance.objects.filter(
-                    SubPolicy=extracted_data.get('SubPolicy'),
-                    Identifier=approval.Identifier,
-                    Status='Rejected'  # Find the rejected compliance
-                ).first()
-                
-                if compliance:
-                    # Update the compliance with the edited data
-                    compliance.ComplianceItemDescription = extracted_data.get('ComplianceItemDescription', compliance.ComplianceItemDescription)
-                    compliance.IsRisk = extracted_data.get('IsRisk', compliance.IsRisk)
-                    compliance.PossibleDamage = extracted_data.get('PossibleDamage', compliance.PossibleDamage)
-                    compliance.mitigation = extracted_data.get('mitigation', compliance.mitigation)
-                    compliance.Criticality = extracted_data.get('Criticality', compliance.Criticality)
-                    compliance.MandatoryOptional = extracted_data.get('MandatoryOptional', compliance.MandatoryOptional)
-                    compliance.ManualAutomatic = extracted_data.get('ManualAutomatic', compliance.ManualAutomatic)
-                    compliance.Impact = extracted_data.get('Impact', compliance.Impact)
-                    compliance.Probability = extracted_data.get('Probability', compliance.Probability)
-                    compliance.MaturityLevel = extracted_data.get('MaturityLevel', compliance.MaturityLevel)
-                    
-                    # Update the status back to 'Under Review'
-                    compliance.Status = 'Under Review'
-                    compliance.save()
-                    print(f"Updated compliance {compliance.ComplianceId} status to 'Under Review' and updated fields")
-                else:
-                    print(f"No rejected compliance found with SubPolicy={extracted_data.get('SubPolicy')}, Identifier={approval.Identifier}")
-        except Exception as e:
-            print(f"Error updating compliance status: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            # Continue even if compliance update fails
-       
         return Response({
             'success': True,
             'message': 'Compliance review resubmitted successfully',
             'ApprovalId': new_approval.ApprovalId,
             'Version': new_version
         })
-       
     except PolicyApproval.DoesNotExist:
         return Response({'error': 'Policy approval not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
@@ -1592,87 +1596,99 @@ def get_policy_approvals_by_reviewer(request):
         # Get their corresponding policy approvals
         approvals = []
         for compliance in under_review_compliances:
-            # Get the latest policy approval for this compliance, regardless of approval status
-            # This ensures we get the latest version even after rejection and resubmission
-            latest_approval = PolicyApproval.objects.filter(
+            # Get ALL user-submitted (u*) PolicyApproval versions for this compliance and reviewer that are pending review
+            pending_user_versions = PolicyApproval.objects.filter(
                 Identifier=compliance.Identifier,
                 ReviewerId=reviewer_id,
-            ).order_by('-Version', '-ApprovalId').first()
-            
-            # Check if this is a version that needs review (newest user-submitted version)
-            # Include if: 1) No approval exists, 2) Latest version is pending review, or 
-            # 3) Latest version starts with 'u' (user submission) with no decision yet
-            if not latest_approval or latest_approval.ApprovedNot is None or (
-                latest_approval.Version and latest_approval.Version.startswith('u') and latest_approval.ApprovedNot is None
-            ):
-                # If no approval exists or we need to show the latest version for review
-                if latest_approval:
+                Version__startswith='u',
+                ApprovedNot=None
+            ).order_by('ApprovalId')
+
+            if pending_user_versions.exists():
+                for approval in pending_user_versions:
                     approval_dict = {
-                        'ApprovalId': latest_approval.ApprovalId,
-                        'Identifier': latest_approval.Identifier,
-                        'ExtractedData': latest_approval.ExtractedData,
-                        'UserId': latest_approval.UserId,
-                        'ReviewerId': latest_approval.ReviewerId,
-                        'ApprovedNot': latest_approval.ApprovedNot,
-                        'Version': latest_approval.Version,
-                        'ApprovedDate': latest_approval.ApprovedDate.strftime('%Y-%m-%d %H:%M:%S') if latest_approval.ApprovedDate and hasattr(latest_approval.ApprovedDate, 'strftime') else None,
-                        'ApprovalDueDate': latest_approval.ApprovalDueDate.strftime('%Y-%m-%d') if latest_approval.ApprovalDueDate and hasattr(latest_approval.ApprovalDueDate, 'strftime') else None
+                        'ApprovalId': approval.ApprovalId,
+                        'Identifier': approval.Identifier,
+                        'ExtractedData': approval.ExtractedData,
+                        'UserId': approval.UserId,
+                        'ReviewerId': approval.ReviewerId,
+                        'ApprovedNot': approval.ApprovedNot,
+                        'Version': approval.Version,
+                        'ApprovedDate': approval.ApprovedDate.strftime('%Y-%m-%d %H:%M:%S') if approval.ApprovedDate and hasattr(approval.ApprovedDate, 'strftime') else None,
+                        'ApprovalDueDate': approval.ApprovalDueDate.strftime('%Y-%m-%d') if approval.ApprovalDueDate and hasattr(approval.ApprovalDueDate, 'strftime') else None
                     }
                     approvals.append(approval_dict)
-                else:
-                    # If no approval exists, create one
-                    extracted_data = {
-                        'type': 'compliance',
-                        'ComplianceItemDescription': compliance.ComplianceItemDescription,
-                        'IsRisk': compliance.IsRisk,
-                        'PossibleDamage': compliance.PossibleDamage,
-                        'mitigation': compliance.mitigation,
-                        'Criticality': compliance.Criticality,
-                        'MandatoryOptional': compliance.MandatoryOptional,
-                        'ManualAutomatic': compliance.ManualAutomatic,
-                        'Impact': compliance.Impact,
-                        'Probability': compliance.Probability,
-                        'MaturityLevel': compliance.MaturityLevel,
-                        'ActiveInactive': compliance.ActiveInactive,
-                        'PermanentTemporary': compliance.PermanentTemporary,
-                        'Status': compliance.Status,
-                        'ComplianceVersion': compliance.ComplianceVersion,
-                        'CreatedByName': compliance.CreatedByName,
-                        'CreatedByDate': compliance.CreatedByDate.isoformat() if compliance.CreatedByDate else None,
-                        'SubPolicy': compliance.SubPolicy.SubPolicyId if compliance.SubPolicy else None,
-                        'compliance_approval': {
-                            'approved': None,
-                            'remarks': '',
-                            'ApprovalDueDate': None
+            else:
+                # Fallback to previous logic if no pending user version exists
+                latest_approval = PolicyApproval.objects.filter(
+                    Identifier=compliance.Identifier,
+                    ReviewerId=reviewer_id,
+                ).order_by('-Version', '-ApprovalId').first()
+                if not latest_approval or latest_approval.ApprovedNot is None or (
+                    latest_approval.Version and latest_approval.Version.startswith('u') and latest_approval.ApprovedNot is None
+                ):
+                    if latest_approval:
+                        approval_dict = {
+                            'ApprovalId': latest_approval.ApprovalId,
+                            'Identifier': latest_approval.Identifier,
+                            'ExtractedData': latest_approval.ExtractedData,
+                            'UserId': latest_approval.UserId,
+                            'ReviewerId': latest_approval.ReviewerId,
+                            'ApprovedNot': latest_approval.ApprovedNot,
+                            'Version': latest_approval.Version,
+                            'ApprovedDate': latest_approval.ApprovedDate.strftime('%Y-%m-%d %H:%M:%S') if latest_approval.ApprovedDate and hasattr(latest_approval.ApprovedDate, 'strftime') else None,
+                            'ApprovalDueDate': latest_approval.ApprovalDueDate.strftime('%Y-%m-%d') if latest_approval.ApprovalDueDate and hasattr(latest_approval.ApprovalDueDate, 'strftime') else None
                         }
-                    }
-                    
-                    # Set a default due date 7 days from today
-                    from datetime import datetime, timedelta
-                    default_due_date = datetime.now().date() + timedelta(days=7)
-                    
-                    new_approval = PolicyApproval.objects.create(
-                        Identifier=compliance.Identifier,
-                        ExtractedData=extracted_data,
-                        UserId=1,  # System user
-                        ReviewerId=reviewer_id,
-                        ApprovedNot=None,
-                        Version="u1",
-                        ApprovalDueDate=default_due_date
-                    )
-                    
-                    approval_dict = {
-                        'ApprovalId': new_approval.ApprovalId,
-                        'Identifier': new_approval.Identifier,
-                        'ExtractedData': extracted_data,
-                        'UserId': new_approval.UserId,
-                        'ReviewerId': new_approval.ReviewerId,
-                        'ApprovedNot': new_approval.ApprovedNot,
-                        'Version': new_approval.Version,
-                        'ApprovedDate': None,
-                        'ApprovalDueDate': new_approval.ApprovalDueDate.strftime('%Y-%m-%d') if new_approval.ApprovalDueDate else None
-                    }
-                    approvals.append(approval_dict)
+                        approvals.append(approval_dict)
+                    else:
+                        extracted_data = {
+                            'type': 'compliance',
+                            'ComplianceItemDescription': compliance.ComplianceItemDescription,
+                            'IsRisk': compliance.IsRisk,
+                            'PossibleDamage': compliance.PossibleDamage,
+                            'mitigation': compliance.mitigation,
+                            'Criticality': compliance.Criticality,
+                            'MandatoryOptional': compliance.MandatoryOptional,
+                            'ManualAutomatic': compliance.ManualAutomatic,
+                            'Impact': compliance.Impact,
+                            'Probability': compliance.Probability,
+                            'MaturityLevel': compliance.MaturityLevel,
+                            'ActiveInactive': compliance.ActiveInactive,
+                            'PermanentTemporary': compliance.PermanentTemporary,
+                            'Status': compliance.Status,
+                            'ComplianceVersion': compliance.ComplianceVersion,
+                            'CreatedByName': compliance.CreatedByName,
+                            'CreatedByDate': compliance.CreatedByDate.isoformat() if compliance.CreatedByDate else None,
+                            'SubPolicy': compliance.SubPolicy.SubPolicyId if compliance.SubPolicy else None,
+                            'compliance_approval': {
+                                'approved': None,
+                                'remarks': '',
+                                'ApprovalDueDate': None
+                            }
+                        }
+                        from datetime import datetime, timedelta
+                        default_due_date = datetime.now().date() + timedelta(days=7)
+                        new_approval = PolicyApproval.objects.create(
+                            Identifier=compliance.Identifier,
+                            ExtractedData=extracted_data,
+                            UserId=1,  # System user
+                            ReviewerId=reviewer_id,
+                            ApprovedNot=None,
+                            Version="u1",
+                            ApprovalDueDate=default_due_date
+                        )
+                        approval_dict = {
+                            'ApprovalId': new_approval.ApprovalId,
+                            'Identifier': new_approval.Identifier,
+                            'ExtractedData': extracted_data,
+                            'UserId': new_approval.UserId,
+                            'ReviewerId': new_approval.ReviewerId,
+                            'ApprovedNot': new_approval.ApprovedNot,
+                            'Version': new_approval.Version,
+                            'ApprovedDate': None,
+                            'ApprovalDueDate': new_approval.ApprovalDueDate.strftime('%Y-%m-%d') if new_approval.ApprovalDueDate else None
+                        }
+                        approvals.append(approval_dict)
         
         # Get pending deactivation requests
         print("\n=== QUERYING DEACTIVATION REQUESTS ===")
@@ -1890,24 +1906,17 @@ def get_rejected_approvals(request, reviewer_id):
                 'rejection_reason': approval.ExtractedData.get('compliance_approval', {}).get('remarks', ''),
                 'ApprovalDueDate': approval.ApprovalDueDate.strftime('%Y-%m-%d') if approval.ApprovalDueDate and hasattr(approval.ApprovalDueDate, 'strftime') else None
             }
-            
-            # Properly handle the ApprovedDate field if it exists
             if approval.ApprovedDate:
-                # Convert to string to avoid JSON serialization issues
                 approval_dict['ApprovedDate'] = approval.ApprovedDate.strftime('%Y-%m-%d %H:%M:%S') if hasattr(approval.ApprovedDate, 'strftime') else str(approval.ApprovedDate)
-            
-            # Check if this approval is already in a resubmission process
             is_resubmitted = approval.ExtractedData.get('compliance_approval', {}).get('inResubmission', False)
-            
-            # Only include if not already resubmitted
-            if not is_resubmitted:
-                # Include all rejected approvals for editing and resubmission
-                # Don't deduplicate since each rejection represents a separate submission
+            # NEW LOGIC: Only show truly rejected (finalized) approvals, not pending resubmissions
+            status = approval.ExtractedData.get('Status', '').lower()
+            approved_val = approval.ExtractedData.get('compliance_approval', {}).get('approved', None)
+            if not is_resubmitted and status == 'rejected' and approved_val is False:
                 approvals_list.append(approval_dict)
                 print(f"Added rejection for {approval.Identifier} (ID: {approval.ApprovalId})")
             else:
-                print(f"Skipping {approval.Identifier} as it's already in resubmission process")
-           
+                print(f"Skipping {approval.Identifier} as it's already in resubmission process or under review")
         print(f"Returning {len(approvals_list)} rejections")
         return Response(approvals_list)
        
@@ -2275,9 +2284,15 @@ def deactivate_compliance(request, compliance_id):
         # Get the reason from the request
         reason = request.data.get('reason', 'No longer needed')
         
-        # Get reviewer ID from the request
-        reviewer_id = request.data.get('reviewer_id', 1)  # Default to admin reviewer
-        print(f"Using reviewer_id: {reviewer_id}")
+        # Get reviewer ID and user ID from the request (required)
+        reviewer_id = request.data.get('reviewer_id')
+        user_id = request.data.get('user_id')
+        if not reviewer_id or not user_id:
+            return Response({
+                'success': False,
+                'message': 'Both reviewer_id and user_id are required.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        print(f"Using reviewer_id: {reviewer_id}, user_id: {user_id}")
         
         # Create a unique identifier for this deactivation request
         deactivation_identifier = f"COMP-DEACTIVATE-{compliance.Identifier}"
@@ -2297,21 +2312,32 @@ def deactivate_compliance(request, compliance_id):
             'cascade_to_policies': 'Yes' if request.data.get('cascade_to_policies', True) else 'No'
         }
         
-        # Log the extracted data
-        print(f"ExtractedData: {extracted_data}")
+        # Determine next user version for this identifier
+        all_versions = PolicyApproval.objects.filter(Identifier=deactivation_identifier)
+        highest_u_version = 0
+        for pa in all_versions:
+            if pa.Version and pa.Version.startswith('u'):
+                try:
+                    version_num = int(pa.Version[1:]) if len(pa.Version) > 1 else 1
+                    if version_num > highest_u_version:
+                        highest_u_version = version_num
+                except ValueError:
+                    continue
+        new_version = f"u{highest_u_version + 1}"
+        print(f"Assigning user version: {new_version}")
         
         # Create a PolicyApproval record for the deactivation request
         approval = PolicyApproval.objects.create(
             Identifier=deactivation_identifier,
-            UserId=request.data.get('user_id', 1),  # Default to admin user
+            UserId=user_id,
             ReviewerId=reviewer_id,
-            Version=compliance.ComplianceVersion,
+            Version=new_version,
             ApprovedNot=None,  # Null initially
             PolicyId=compliance.SubPolicy.Policy.PolicyId if hasattr(compliance, 'SubPolicy') and hasattr(compliance.SubPolicy, 'Policy') else None,
             ExtractedData=extracted_data
         )
         
-        print(f"Created PolicyApproval record: {approval.ApprovalId}, ReviewerId: {approval.ReviewerId}")
+        print(f"Created PolicyApproval record: {approval.ApprovalId}, ReviewerId: {approval.ReviewerId}, Version: {approval.Version}")
         
         # Verify the approval was created correctly
         try:
@@ -2378,7 +2404,7 @@ def approve_compliance_deactivation(request, approval_id):
         print(f"\n\n==== DEBUGGING APPROVE_DEACTIVATION ====")
         print(f"Approving deactivation request for approval_id: {approval_id}")
         
-        # Get the approval record
+        # Get the approval record (user's uN row)
         approval = get_object_or_404(PolicyApproval, ApprovalId=approval_id)
         print(f"Found approval: {approval.Identifier}")
         
@@ -2401,33 +2427,40 @@ def approve_compliance_deactivation(request, approval_id):
         compliance.save()
         print(f"Updated compliance {compliance.Identifier} to Inactive")
         
-        # Update the approval status
-        approval.ApprovedNot = True
-        approval.ApprovedDate = timezone.now()
+        # Determine next reviewer version for this identifier
+        all_versions = PolicyApproval.objects.filter(Identifier=approval.Identifier)
+        highest_r_version = 0
+        for pa in all_versions:
+            if pa.Version and pa.Version.startswith('r'):
+                try:
+                    version_num = int(pa.Version[1:]) if len(pa.Version) > 1 else 1
+                    if version_num > highest_r_version:
+                        highest_r_version = version_num
+                except ValueError:
+                    continue
+        new_version = f"r{highest_r_version + 1}"
+        print(f"Assigning reviewer version: {new_version}")
         
-        # Update ExtractedData to reflect the changed status
-        extracted_data['current_status'] = 'Inactive'
-        approval.ExtractedData = extracted_data
-        
-        # If cascade to policies is enabled, deactivate related policies
-        if extracted_data.get('cascade_to_policies') == 'Yes':
-            print("Cascade to policies enabled - would deactivate related policies here")
-            # Implementation for cascading deactivation would go here
-        
-        approval.save()
-        print(f"Updated approval status to Approved")
-        
+        # Create a new PolicyApproval row for the reviewer action (ApprovedNot=1 for approve)
+        reviewer_approval = PolicyApproval.objects.create(
+            Identifier=approval.Identifier,
+            UserId=approval.UserId,
+            ReviewerId=approval.ReviewerId,
+            Version=new_version,
+            ApprovedNot=1,  # 1 for approve
+            ApprovedDate=timezone.now(),
+            PolicyId=approval.PolicyId,
+            ExtractedData={**extracted_data, 'current_status': 'Inactive'}
+        )
+        print(f"Created reviewer PolicyApproval record: {reviewer_approval.ApprovalId}, Version: {reviewer_approval.Version}")
+        # The user (uN) row remains with ApprovedNot=NULL
         # Send notification to compliance creator
         try:
             from .notification_service import NotificationService
             notification_service = NotificationService()
-            
-            # Get creator's email
             creator_id = approval.UserId
             creator_email, creator_name = notification_service.get_user_email_by_id(creator_id)
-            
             if creator_email:
-                # Send notification
                 notification_result = notification_service.send_compliance_review_notification(
                     compliance=compliance,
                     reviewer_decision=True,  # Approved
@@ -2439,10 +2472,7 @@ def approve_compliance_deactivation(request, approval_id):
                 print(f"No email found for creator ID {creator_id}")
         except Exception as e:
             print(f"Error sending deactivation approval notification: {str(e)}")
-            # Continue even if notification fails
-        
         print("==== END DEBUGGING APPROVE_DEACTIVATION ====\n\n")
-        
         return Response({
             'success': True,
             'message': f'Compliance {compliance.Identifier} has been deactivated successfully',
@@ -2451,9 +2481,10 @@ def approve_compliance_deactivation(request, approval_id):
                 'Identifier': compliance.Identifier,
                 'Status': compliance.Status,
                 'ActiveInactive': compliance.ActiveInactive
-            }
+            },
+            'approval_id': reviewer_approval.ApprovalId,
+            'version': new_version
         })
-        
     except Exception as e:
         print(f"Error in approve_compliance_deactivation: {str(e)}")
         import traceback
@@ -2471,7 +2502,7 @@ def reject_compliance_deactivation(request, approval_id):
         print(f"\n\n==== DEBUGGING REJECT_DEACTIVATION ====")
         print(f"Rejecting deactivation request for approval_id: {approval_id}")
         
-        # Get the approval record
+        # Get the approval record (user's uN row)
         approval = get_object_or_404(PolicyApproval, ApprovalId=approval_id)
         print(f"Found approval: {approval.Identifier}")
         
@@ -2492,44 +2523,53 @@ def reject_compliance_deactivation(request, approval_id):
         try:
             compliance = Compliance.objects.get(ComplianceId=compliance_id)
             print(f"Found compliance: {compliance.Identifier}, Current status: {compliance.ActiveInactive}")
-            
-            # For clarity, explicitly make sure the compliance stays Active
             if compliance.ActiveInactive != 'Active':
                 compliance.ActiveInactive = 'Active'
                 compliance.save()
                 print(f"Ensured compliance {compliance.Identifier} remains Active")
         except Compliance.DoesNotExist:
-            # The compliance might not exist, but we can still reject the request
             print(f"Warning: Compliance with ID {compliance_id} not found")
-        
-        # Update the approval status
-        approval.ApprovedNot = False
-        approval.ApprovedDate = timezone.now()
         
         # Get rejection remarks
         remarks = request.data.get('remarks', 'No reason provided')
-        
-        # Add rejection remarks to ExtractedData
         if request.data.get('remarks'):
             extracted_data['rejection_remarks'] = remarks
-            approval.ExtractedData = extracted_data
-            print(f"Added rejection remarks: {remarks}")
         
-        approval.save()
-        print(f"Updated approval status to Rejected")
+        # Determine next reviewer version for this identifier
+        all_versions = PolicyApproval.objects.filter(Identifier=approval.Identifier)
+        highest_r_version = 0
+        for pa in all_versions:
+            if pa.Version and pa.Version.startswith('r'):
+                try:
+                    version_num = int(pa.Version[1:]) if len(pa.Version) > 1 else 1
+                    if version_num > highest_r_version:
+                        highest_r_version = version_num
+                except ValueError:
+                    continue
+        new_version = f"r{highest_r_version + 1}"
+        print(f"Assigning reviewer version: {new_version}")
         
+        # Create a new PolicyApproval row for the reviewer rejection (ApprovedNot=0 for reject)
+        reviewer_approval = PolicyApproval.objects.create(
+            Identifier=approval.Identifier,
+            UserId=approval.UserId,
+            ReviewerId=approval.ReviewerId,
+            Version=new_version,
+            ApprovedNot=0,  # 0 for reject
+            ApprovedDate=timezone.now(),
+            PolicyId=approval.PolicyId,
+            ExtractedData=extracted_data
+        )
+        print(f"Created reviewer PolicyApproval record: {reviewer_approval.ApprovalId}, Version: {reviewer_approval.Version}")
+        # The user (uN) row remains with ApprovedNot=NULL
         # Send notification to compliance creator
         if compliance:
             try:
                 from .notification_service import NotificationService
                 notification_service = NotificationService()
-                
-                # Get creator's email
                 creator_id = approval.UserId
                 creator_email, creator_name = notification_service.get_user_email_by_id(creator_id)
-                
                 if creator_email:
-                    # Send notification
                     notification_result = notification_service.send_compliance_review_notification(
                         compliance=compliance,
                         reviewer_decision=False,  # Rejected
@@ -2541,15 +2581,13 @@ def reject_compliance_deactivation(request, approval_id):
                     print(f"No email found for creator ID {creator_id}")
             except Exception as e:
                 print(f"Error sending deactivation rejection notification: {str(e)}")
-                # Continue even if notification fails
-        
         print("==== END DEBUGGING REJECT_DEACTIVATION ====\n\n")
-        
         return Response({
             'success': True,
-            'message': 'Deactivation request has been rejected'
+            'message': 'Deactivation request has been rejected',
+            'approval_id': reviewer_approval.ApprovalId,
+            'version': new_version
         })
-        
     except Exception as e:
         print(f"Error in reject_compliance_deactivation: {str(e)}")
         import traceback
@@ -2822,18 +2860,49 @@ def get_maturity_level_kpi(request):
 @permission_classes([AllowAny])
 def get_non_compliance_count(request):
     try:
-        # Count records with non-zero count
-        non_compliance_count = LastChecklistItemVerified.objects.filter(
+        # Get non-compliance records
+        non_compliance_records = LastChecklistItemVerified.objects.filter(
             Count__gt=0
-        ).count()
-        
+        )
+
+        # Get all relevant Frameworks in one query for efficiency
+        framework_ids = set(record.FrameworkId for record in non_compliance_records if record.FrameworkId)
+        frameworks = Framework.objects.filter(FrameworkId__in=framework_ids)
+        framework_id_to_name = {fw.FrameworkId: fw.FrameworkName for fw in frameworks}
+
+        # Get total count
+        total_count = non_compliance_records.count()
+
+        # Group by framework and count
+        framework_breakdown = {}
+        for record in non_compliance_records:
+            framework_id = record.FrameworkId
+            framework_name = framework_id_to_name.get(framework_id, f"Framework {framework_id}") if framework_id else "Unknown Framework"
+            if framework_name not in framework_breakdown:
+                framework_breakdown[framework_name] = 0
+            framework_breakdown[framework_name] += 1
+
+        # Convert to list format for frontend
+        framework_data = []
+        for framework_name, count in framework_breakdown.items():
+            framework_data.append({
+                'framework_name': framework_name,
+                'count': count,
+                'percentage': round((count / total_count * 100), 1) if total_count > 0 else 0
+            })
+
+        # Sort by count descending
+        framework_data.sort(key=lambda x: x['count'], reverse=True)
+
         return Response({
             'success': True,
             'data': {
-                'non_compliance_count': non_compliance_count
+                'total_non_compliance_count': total_count,
+                'framework_breakdown': framework_data,
+                'framework_count': len(framework_data)
             }
         })
-        
+
     except Exception as e:
         print(f"Error in get_non_compliance_count: {str(e)}")
         return Response({
@@ -3220,19 +3289,30 @@ def all_policies_get_policy_versions(request, policy_id):
 def all_policies_get_subpolicies(request):
     """
     API endpoint to get all subpolicies for AllPolicies.vue component.
+    Now supports filtering by policy_id (GET param) in addition to framework_id.
     """
     try:
         print("Request received for all subpolicies")
        
-        # Optional framework filter
+        # Optional framework and policy filter
         framework_id = request.GET.get('framework_id')
+        policy_id = request.GET.get('policy_id')
         print(f"Framework filter: {framework_id}")
+        print(f"Policy filter: {policy_id}")
        
         # Start with all subpolicies
         subpolicies_query = SubPolicy.objects.all()
        
-        # If framework filter is provided, filter through policies
-        if framework_id:
+        # If policy filter is provided, filter by policy_id
+        if policy_id:
+            try:
+                subpolicies_query = subpolicies_query.filter(PolicyId=policy_id)
+                print(f"Filtered subpolicies by policy_id: {policy_id}")
+            except Exception as e:
+                print(f"Error filtering by policy: {str(e)}")
+                # Continue with all subpolicies if filtering fails
+        # Else, if framework filter is provided, filter through policies
+        elif framework_id:
             try:
                 policy_ids = Policy.objects.filter(FrameworkId=framework_id).values_list('PolicyId', flat=True)
                 print(f"Found {len(policy_ids)} policies for framework {framework_id}")
@@ -3733,7 +3813,7 @@ def export_compliances(request, export_format, item_type=None, item_id=None):
                 })
             
             # Use the export_data function from export_service
-            from .export_service1 import export_data
+            from .export_service import export_data
             result = export_data(
                 data=compliances_data,
                 file_format=export_format,
@@ -3842,7 +3922,7 @@ def process_export_task(task_id, item_type=None, item_id=None):
                 })
             
             # Use the export_data function from export_service
-            from .export_service1 import export_data
+            from .export_service import export_data
             result = export_data(
                 data=compliances_data,
                 file_format=task.file_type,
@@ -5033,21 +5113,16 @@ def edit_compliance(request, compliance_id):
                 'message': 'Invalid version type. Must be either Major or Minor'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Parse current version
-        try:
-            major, minor = latest_version.ComplianceVersion.split('.')
-            current_major = int(major)
-            current_minor = int(minor)
-        except (ValueError, AttributeError):
-            # If version is not in correct format, start with 1.0
-            current_major = 1
-            current_minor = 0
-
-        # Calculate new version based on version type
-        if version_type == 'Major':
-            new_version = f"{current_major + 1}.0"
-        else:  # Minor version
-            new_version = f"{current_major}.{current_minor + 1}"
+        # Use the version calculated by the frontend
+        new_version = request.data.get('ComplianceVersion')
+        if not new_version:
+            return Response({
+                'success': False,
+                'message': 'ComplianceVersion is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        print(f"DEBUG: Using frontend-calculated version: {new_version}")
+        print(f"DEBUG: Version type: {version_type}")
 
         # Get the policy through the subpolicy relationship
         policy = compliance.SubPolicy.PolicyId
@@ -5231,9 +5306,8 @@ def clone_compliance(request, compliance_id):
             formatted_mitigation = {}
             print("Using empty mitigation object")
         
-        # Ensure mitigation is serialized as JSON string for storage
-        mitigation_json = json.dumps(formatted_mitigation)
-        print(f"Final mitigation JSON: {mitigation_json}")
+        # Store mitigation as JSON object (not string) for proper database storage
+        print(f"Final mitigation object: {formatted_mitigation}")
         
         # Create new compliance instance
         new_compliance = Compliance.objects.create(
@@ -5246,7 +5320,7 @@ def clone_compliance(request, compliance_id):
             BusinessUnitsCovered=data.get('BusinessUnitsCovered', source_compliance.BusinessUnitsCovered),
             IsRisk=data.get('IsRisk', source_compliance.IsRisk),
             PossibleDamage=data.get('PossibleDamage', source_compliance.PossibleDamage),
-            mitigation=mitigation_json,  # Use the JSON string
+            mitigation=formatted_mitigation,  # Store as JSON object, not string
             PotentialRiskScenarios=data.get('PotentialRiskScenarios', source_compliance.PotentialRiskScenarios),
             RiskType=data.get('RiskType', source_compliance.RiskType),
             RiskCategory=data.get('RiskCategory', source_compliance.RiskCategory),
@@ -5482,10 +5556,10 @@ def format_mitigation_data(mitigation_data):
             return {}
             
         if isinstance(mitigation_data, dict):
-            # If it's already a dict, ensure values are strings
+            # If it's already a dict, ensure values are strings and include all steps
             for key, value in mitigation_data.items():
-                if value and (isinstance(value, str) or isinstance(value, int) or isinstance(value, float)):
-                    processed_mitigation[str(key)] = str(value).strip()
+                # Include all steps, including empty ones, to maintain step order
+                processed_mitigation[str(key)] = str(value).strip() if value else ''
             print(f"DEBUG: Processed dictionary mitigation data")
         elif isinstance(mitigation_data, str):
             try:
@@ -5495,17 +5569,16 @@ def format_mitigation_data(mitigation_data):
                     parsed = json.loads(mitigation_data)
                     
                     if isinstance(parsed, dict):
-                        # Process dictionary format
+                        # Process dictionary format - include all steps
                         for key, value in parsed.items():
-                            if value and (isinstance(value, str) or isinstance(value, int) or isinstance(value, float)):
-                                processed_mitigation[str(key)] = str(value).strip()
+                            processed_mitigation[str(key)] = str(value).strip() if value else ''
                     elif isinstance(parsed, list):
-                        # Process array format
+                        # Process array format - include all steps
                         for i, item in enumerate(parsed):
-                            if item and (isinstance(item, str) or isinstance(item, int) or isinstance(item, float)):
-                                processed_mitigation[str(i+1)] = str(item).strip()
-                            elif isinstance(item, dict) and 'description' in item:
-                                processed_mitigation[str(i+1)] = str(item['description']).strip()
+                            if isinstance(item, dict) and 'description' in item:
+                                processed_mitigation[str(i+1)] = str(item['description']).strip() if item['description'] else ''
+                            else:
+                                processed_mitigation[str(i+1)] = str(item).strip() if item else ''
                     
                     print(f"DEBUG: Successfully parsed mitigation JSON string")
                 else:
@@ -5519,12 +5592,12 @@ def format_mitigation_data(mitigation_data):
                     processed_mitigation["1"] = mitigation_data.strip()
                 print(f"DEBUG: JSON decode error: {str(e)}")
         elif isinstance(mitigation_data, list):
-            # Process array format
+            # Process array format - include all steps
             for i, item in enumerate(mitigation_data):
-                if item and (isinstance(item, str) or isinstance(item, int) or isinstance(item, float)):
-                    processed_mitigation[str(i+1)] = str(item).strip()
-                elif isinstance(item, dict) and 'description' in item:
-                    processed_mitigation[str(i+1)] = str(item['description']).strip()
+                if isinstance(item, dict) and 'description' in item:
+                    processed_mitigation[str(i+1)] = str(item['description']).strip() if item['description'] else ''
+                else:
+                    processed_mitigation[str(i+1)] = str(item).strip() if item else ''
             print(f"DEBUG: Processed list mitigation data")
         else:
             # Unknown type
@@ -5739,3 +5812,32 @@ def test_compliance_versioning_edge_cases(request):
             'success': False,
             'message': f'Error testing edge cases: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+from .serializers import PolicyApprovalSerializer
+from .models import PolicyApproval
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_compliance_approvals_by_user(request, user_id):
+    """
+    Get all compliance approvals where UserId matches the given user_id (My Tasks)
+    """
+    try:
+        approvals = PolicyApproval.objects.filter(UserId=user_id).order_by('-ApprovalId')
+        serializer = PolicyApprovalSerializer(approvals, many=True)
+        return Response(serializer.data, status=200)
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_compliance_approvals_by_reviewer(request, user_id):
+    """
+    Get all compliance approvals where ReviewerId matches the given user_id (Reviewer Tasks)
+    """
+    try:
+        approvals = PolicyApproval.objects.filter(ReviewerId=user_id).order_by('-ApprovalId')
+        serializer = PolicyApprovalSerializer(approvals, many=True)
+        return Response(serializer.data, status=200)
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)

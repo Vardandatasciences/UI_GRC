@@ -104,6 +104,12 @@
   color: white;
 }
 
+.tab-button.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
 /* Tab Content */
 .tab-content {
   width: 100%;

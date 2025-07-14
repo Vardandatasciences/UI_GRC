@@ -351,39 +351,55 @@
           
           <div class="question-group">
             <label for="cost-input"><span class="question-number">1</span> What is the cost for this mitigation?</label>
-            <input id="cost-input" type="number" v-model="formDetails.cost" :disabled="!allStepsCompleted || questionnaireApproved" min="0" placeholder="Enter the cost..." />
+            <div class="cost-input-group">
+              <input id="cost-input" type="number" v-model="formDetails.cost" :disabled="questionnaireApproved" min="0" placeholder="Enter the cost..." />
+              <select v-model="formDetails.costCurrency" :disabled="questionnaireApproved" class="currency-select">
+                <option value="USD">USD</option>
+                <option value="INR">INR</option>
+                <option value="AED">AED</option>
+                <option value="MUR">MUR</option>
+              </select>
+            </div>
           </div>
           <div class="question-group">
             <label for="impact-input"><span class="question-number">2</span> What is the impact for this mitigation?</label>
-            <input id="impact-input" type="number" v-model="formDetails.impact" :disabled="!allStepsCompleted || questionnaireApproved" min="0" placeholder="Enter the impact..." />
+            <input id="impact-input" type="number" v-model="formDetails.impact" :disabled="questionnaireApproved" min="0" placeholder="Enter the impact..." />
           </div>
           <div class="question-group">
             <label for="financial-impact-input"><span class="question-number">3</span> What is the financial impact for this mitigation?</label>
-            <input id="financial-impact-input" type="number" v-model="formDetails.financialImpact" :disabled="!allStepsCompleted || questionnaireApproved" min="0" placeholder="Enter the financial impact..." />
+            <input id="financial-impact-input" type="number" v-model="formDetails.financialImpact" :disabled="questionnaireApproved" min="0" placeholder="Enter the financial impact..." />
           </div>
           <div class="question-group">
             <label for="reputational-impact-input"><span class="question-number">4</span> What is the reputational impact for this mitigation?</label>
-            <textarea id="reputational-impact-input" v-model="formDetails.reputationalImpact" :disabled="!allStepsCompleted || questionnaireApproved" placeholder="Describe the reputational impact..."></textarea>
+            <textarea id="reputational-impact-input" v-model="formDetails.reputationalImpact" :disabled="questionnaireApproved" placeholder="Describe the reputational impact..."></textarea>
           </div>
           <div class="question-group">
             <label for="operational-impact-input"><span class="question-number">5</span> What is the Operational Impact for this mitigation?</label>
-            <input id="operational-impact-input" type="number" v-model="formDetails.operationalImpact" :disabled="!allStepsCompleted || questionnaireApproved" min="0" placeholder="Enter the operational impact..." />
+            <input id="operational-impact-input" type="number" v-model="formDetails.operationalImpact" :disabled="questionnaireApproved" min="0" placeholder="Enter the operational impact..." />
           </div>
           <div class="question-group">
             <label for="financial-loss-input"><span class="question-number">6</span> What is the Financial Loss for this mitigation?</label>
-            <input id="financial-loss-input" type="number" v-model="formDetails.financialLoss" :disabled="!allStepsCompleted || questionnaireApproved" min="0" placeholder="Enter the financial loss..." />
+            <div class="cost-input-group">
+              <input id="financial-loss-input" type="number" v-model="formDetails.financialLoss" :disabled="questionnaireApproved" min="0" placeholder="Enter the financial loss..." />
+              <select v-model="formDetails.financialLossCurrency" :disabled="questionnaireApproved" class="currency-select">
+                <option value="USD">USD</option>
+                <option value="INR">INR</option>
+                <option value="AED">AED</option>
+                <option value="MUR">MUR</option>
+              </select>
+            </div>
           </div>
           <div class="question-group">
             <label for="system-downtime-input"><span class="question-number">7</span> What is the expected system downtime (hrs) if this risk occurs?</label>
-            <input id="system-downtime-input" type="number" v-model="formDetails.systemDowntime" :disabled="!allStepsCompleted || questionnaireApproved" min="0" placeholder="Enter expected downtime in hours..." />
+            <input id="system-downtime-input" type="number" v-model="formDetails.systemDowntime" :disabled="questionnaireApproved" min="0" placeholder="Enter expected downtime in hours..." />
           </div>
           <div class="question-group">
             <label for="recovery-time-input"><span class="question-number">8</span> How long did it take to recover last time (hrs)?</label>
-            <input id="recovery-time-input" type="number" v-model="formDetails.recoveryTime" :disabled="!allStepsCompleted || questionnaireApproved" min="0" placeholder="Enter recovery time in hours..." />
+            <input id="recovery-time-input" type="number" v-model="formDetails.recoveryTime" :disabled="questionnaireApproved" min="0" placeholder="Enter recovery time in hours..." />
           </div>
           <div class="question-group">
             <label for="recurrence-possible-input"><span class="question-number">9</span> Is it possible that this risk will recur again?</label>
-            <select id="recurrence-possible-input" v-model="formDetails.recurrencePossible" :disabled="!allStepsCompleted || questionnaireApproved">
+            <select id="recurrence-possible-input" v-model="formDetails.recurrencePossible" :disabled="questionnaireApproved">
               <option value="">Select</option>
               <option value="Yes">Yes</option>
               <option value="No">No</option>
@@ -392,7 +408,7 @@
           </div>
           <div class="question-group">
             <label for="improvement-initiative-input"><span class="question-number">10</span> Is this an Improvement Initiative which will prevent the future recurrence of said risk?</label>
-            <select id="improvement-initiative-input" v-model="formDetails.improvementInitiative" :disabled="!allStepsCompleted || questionnaireApproved">
+            <select id="improvement-initiative-input" v-model="formDetails.improvementInitiative" :disabled="questionnaireApproved">
               <option value="">Select</option>
               <option value="Yes">Yes</option>
               <option value="No">No</option>
@@ -775,11 +791,11 @@
             <div class="form-field-split">
               <div class="form-field-previous" v-if="previousFormDetails">
                 <div class="version-label">Previous Version</div>
-                <p>{{ getPreviousFormDetail('cost') }}</p>
+                <p>{{ getPreviousFormDetail('cost') }} {{ getPreviousFormDetail('costCurrency') || 'USD' }}</p>
               </div>
               <div class="form-field-current" :class="{ 'highlight-changed': hasFormFieldChanged('cost') }">
                 <div class="version-label">Current Version</div>
-                <p>{{ formDetails.cost || 'Not specified' }}</p>
+                <p>{{ formDetails.cost || 'Not specified' }} {{ formDetails.costCurrency || 'USD' }}</p>
               </div>
             </div>
           </div>
@@ -846,11 +862,11 @@
             <div class="form-field-split">
               <div class="form-field-previous" v-if="previousFormDetails">
                 <div class="version-label">Previous Version</div>
-                <p>{{ getPreviousFormDetail('financialLoss') }}</p>
+                <p>{{ getPreviousFormDetail('financialLoss') }} {{ getPreviousFormDetail('financialLossCurrency') || 'USD' }}</p>
               </div>
               <div class="form-field-current" :class="{ 'highlight-changed': hasFormFieldChanged('financialLoss') }">
                 <div class="version-label">Current Version</div>
-                <p>{{ formDetails.financialLoss || 'Not specified' }}</p>
+                <p>{{ formDetails.financialLoss || 'Not specified' }} {{ formDetails.financialLossCurrency || 'USD' }}</p>
               </div>
             </div>
           </div>
@@ -979,6 +995,9 @@
         </div>
       </div>
     </div>
+    
+    <!-- Popup Modal -->
+    <PopupModal />
   </div>
 </template>
 
@@ -986,11 +1005,14 @@
 import axios from 'axios';
 import './RiskWorkflow.css'; // Import the CSS file
 import CustomDropdown from '../CustomDropdown.vue';
+import PopupModal from '../../modules/popus/PopupModal.vue';
+import { PopupService } from '../../modules/popus/popupService';
 
 export default {
   name: 'UserTasks',
   components: {
     CustomDropdown,
+    PopupModal,
   },
   data() {
     return {
@@ -1017,11 +1039,13 @@ export default {
       isLoadingUser: true,
       formDetails: {
         cost: '',
+        costCurrency: 'USD',
         impact: '',
         financialImpact: '',
         reputationalImpact: '',
         operationalImpact: '',
         financialLoss: '',
+        financialLossCurrency: 'USD',
         systemDowntime: '',
         recoveryTime: '',
         recurrencePossible: '',
@@ -1344,7 +1368,7 @@ export default {
           priority: 'medium',
           user_id: this.selectedUserId || 'default_user'
         });
-        alert('Mitigation marked as completed!');
+        PopupService.success('Mitigation marked as completed!', 'Success');
       })
       .catch(error => {
         console.error('Error updating status:', error);
@@ -1378,11 +1402,13 @@ export default {
               // Ensure all form values are strings
               this.formDetails = {
                 cost: String(formResponse.data.cost || ''),
+                costCurrency: formResponse.data.costCurrency || 'USD',
                 impact: String(formResponse.data.impact || ''),
                 financialImpact: String(formResponse.data.financialImpact || ''),
                 reputationalImpact: String(formResponse.data.reputationalImpact || ''),
                 operationalImpact: String(formResponse.data.operationalImpact || ''),
                 financialLoss: String(formResponse.data.financialLoss || ''),
+                financialLossCurrency: formResponse.data.financialLossCurrency || 'USD',
                 systemDowntime: String(formResponse.data.systemDowntime || ''),
                 recoveryTime: String(formResponse.data.recoveryTime || ''),
                 recurrencePossible: formResponse.data.recurrencePossible || '',
@@ -1468,7 +1494,7 @@ export default {
                           priority: 'high',
                           user_id: this.selectedUserId || 'default_user'
                         });
-                        alert('No reviewer has been assigned to this risk yet. Please contact your administrator.');
+                        PopupService.warning('No reviewer has been assigned to this risk yet. Please contact your administrator.', 'No Reviewer Assigned');
                         this.selectedReviewer = '';
                       }
                       this.loadingMitigations = false;
@@ -1486,7 +1512,7 @@ export default {
                         priority: 'medium',
                         user_id: this.selectedUserId || 'default_user'
                       });
-                      alert('Could not fetch reviewer information. Please try again later.');
+                      PopupService.error('Could not fetch reviewer information. Please try again later.', 'Error');
                       this.selectedReviewer = '';
                       this.loadingMitigations = false;
                       
@@ -1507,11 +1533,13 @@ export default {
               // Continue with default empty form details
               this.formDetails = {
                 cost: '',
+                costCurrency: 'USD',
                 impact: '',
                 financialImpact: '',
                 reputationalImpact: '',
                 operationalImpact: '',
                 financialLoss: '',
+                financialLossCurrency: 'USD',
                 systemDowntime: '',
                 recoveryTime: '',
                 recurrencePossible: '',
@@ -1645,7 +1673,7 @@ export default {
           priority: 'medium',
           user_id: this.selectedUserId || 'default_user'
         });
-        alert('Please complete all questionnaire fields before submitting');
+        PopupService.warning('Please complete all questionnaire fields before submitting', 'Incomplete Form');
         return;
       }
       
@@ -1726,7 +1754,7 @@ export default {
           user_id: this.selectedUserId || 'default_user'
         });
         // Show success message
-        alert('Risk submitted for review successfully!');
+        PopupService.success('Risk submitted for review successfully!', 'Success');
       })
       .catch(error => {
         console.error('Error submitting for review:', error);
@@ -1739,7 +1767,7 @@ export default {
           priority: 'high',
           user_id: this.selectedUserId || 'default_user'
         });
-        alert('Failed to submit for review. Please try again.');
+        PopupService.error('Failed to submit for review. Please try again.', 'Submission Failed');
       });
     },
     closeReviewerModal() {
@@ -1843,7 +1871,7 @@ export default {
           });
           
           // Show success message
-          alert(`Risk ${approved ? 'approved' : 'rejected'} successfully!`);
+          PopupService.success(`Risk ${approved ? 'approved' : 'rejected'} successfully!`, 'Review Complete');
           
           // After a short delay, close the workflow view and return to tasks
           setTimeout(() => {
@@ -1861,7 +1889,7 @@ export default {
             priority: 'high',
             user_id: this.currentReviewTask.UserId || 'default_user'
           });
-          alert('Failed to submit review. Please try again.');
+          PopupService.error('Failed to submit review. Please try again.', 'Review Failed');
         });
     },
     updateRemarks(id) {
@@ -1874,7 +1902,7 @@ export default {
           priority: 'medium',
           user_id: this.selectedUserId || 'default_user'
         });
-        alert('Please provide remarks for rejection');
+        PopupService.warning('Please provide remarks for rejection', 'Missing Remarks');
         return;
       }
       
@@ -1900,7 +1928,7 @@ export default {
           priority: 'medium',
           user_id: this.selectedUserId || 'default_user'
         });
-        alert('File size exceeds 5MB limit');
+        PopupService.warning('File size exceeds 5MB limit', 'File Size Limit');
         event.target.value = '';
         return;
       }
@@ -1944,7 +1972,7 @@ export default {
             });
             
             // Optional: Add alert or notification
-            alert('File uploaded successfully');
+            PopupService.success('File uploaded successfully', 'Success');
           } else {
             console.error('S3 upload returned error:', response.data);
             // Send push notification for file upload error
@@ -1955,7 +1983,7 @@ export default {
               priority: 'high',
               user_id: this.selectedUserId || 'default_user'
             });
-            alert('Error uploading file. Please try again.');
+            PopupService.error('Error uploading file. Please try again.', 'Upload Failed');
           }
         })
         .catch(error => {
@@ -1968,7 +1996,7 @@ export default {
             priority: 'high',
             user_id: this.selectedUserId || 'default_user'
           });
-          alert('Error uploading file. Please try again.');
+          PopupService.error('Error uploading file. Please try again.', 'Upload Failed');
         });
       };
       reader.readAsDataURL(file);
@@ -2010,7 +2038,7 @@ export default {
               priority: 'medium',
               user_id: this.selectedUserId || 'default_user'
             });
-            alert('Error removing file. The file preview will be cleared, but the file may still exist on the server.');
+            PopupService.warning('Error removing file. The file preview will be cleared, but the file may still exist on the server.', 'File Removal Warning');
             
             // Clear file data anyway
             this.mitigationSteps[index].fileData = null;
@@ -2064,14 +2092,10 @@ export default {
     },
     // Complete a step
     completeStep(index) {
-      // Only allow completing if previous steps are completed
-      if (this.isStepLocked(index)) return;
-      
+      // Remove locking check so any step can be completed anytime
       this.mitigationSteps[index].status = 'Completed';
-      
       // Animate the timeline progress
       this.$nextTick(() => {
-        // Use setTimeout to ensure the DOM has updated
         setTimeout(() => {
           const timelineEl = document.querySelector('.timeline');
           if (timelineEl) {
@@ -2089,25 +2113,12 @@ export default {
       this.mitigationSteps[index].status = 'In Progress';
     },
     isStepActive(index) {
-      // A step is active if all previous steps are completed
-      // and this step is not completed or is rejected
+      // A step is active if it is not completed or is rejected
       if (this.mitigationSteps[index].approved === false) return true;
-      
-      for (let i = 0; i < index; i++) {
-        if (this.mitigationSteps[i].status !== 'Completed') return false;
-      }
-      
       return this.mitigationSteps[index].status !== 'Completed';
     },
-    
-    isStepLocked(index) {
-      // A step is locked if any previous step is not completed
-      if (index === 0) return false; // First step is never locked
-      
-      for (let i = 0; i < index; i++) {
-        if (this.mitigationSteps[i].status !== 'Completed') return true;
-      }
-      
+    isStepLocked() {
+      // Always return false so no step is locked
       return false;
     },
     formatDate(dateString) {
@@ -2199,11 +2210,13 @@ export default {
             const d = extractedInfo.risk_form_details;
             this.formDetails = {
               cost: String(d.cost ?? ''),
+              costCurrency: d.costCurrency ?? 'USD',
               impact: String(d.impact ?? ''),
               financialImpact: String(d.financialImpact ?? d.financialimpact ?? ''),
               reputationalImpact: String(d.reputationalImpact ?? d.reputationalimpact ?? ''),
               operationalImpact: String(d.operationalImpact ?? d.operationalimpact ?? ''),
               financialLoss: String(d.financialLoss ?? d.financialloss ?? ''),
+              financialLossCurrency: d.financialLossCurrency ?? 'USD',
               systemDowntime: String(d.systemDowntime ?? d.expecteddowntime ?? ''),
               recoveryTime: String(d.recoveryTime ?? d.recoverytime ?? ''),
               recurrencePossible: d.recurrencePossible ?? d.riskrecurrence ?? '',
@@ -2217,11 +2230,13 @@ export default {
             // Reset form details to empty
             this.formDetails = {
               cost: '',
+              costCurrency: 'USD',
               impact: '',
               financialImpact: '',
               reputationalImpact: '',
               operationalImpact: '',
               financialLoss: '',
+              financialLossCurrency: 'USD',
               systemDowntime: '',
               recoveryTime: '',
               recurrencePossible: '',
@@ -2289,7 +2304,7 @@ export default {
           priority: 'medium',
           user_id: this.selectedUserId || 'default_user'
         });
-        alert('Please provide feedback for the questionnaire');
+        PopupService.warning('Please provide feedback for the questionnaire', 'Missing Feedback');
         return;
       }
       // Send push notification for questionnaire feedback saved
@@ -2302,7 +2317,7 @@ export default {
       });
       
       // Show confirmation to the user
-      alert('Questionnaire feedback saved');
+      PopupService.success('Questionnaire feedback saved', 'Success');
     },
     // Format date and time
     formatDateTime(dateString) {
@@ -2348,6 +2363,19 @@ export default {
       const prevValue = this.previousFormDetails[field] || '';
       const currentValue = this.formDetails[field] || '';
       
+      // For cost and financialLoss fields, also check currency changes
+      if (field === 'cost') {
+        const prevCurrency = this.previousFormDetails.costCurrency || 'USD';
+        const currentCurrency = this.formDetails.costCurrency || 'USD';
+        return prevValue !== currentValue || prevCurrency !== currentCurrency;
+      }
+      
+      if (field === 'financialLoss') {
+        const prevCurrency = this.previousFormDetails.financialLossCurrency || 'USD';
+        const currentCurrency = this.formDetails.financialLossCurrency || 'USD';
+        return prevValue !== currentValue || prevCurrency !== currentCurrency;
+      }
+      
       return prevValue !== currentValue;
     },
     getFieldLabel(field) {
@@ -2372,7 +2400,7 @@ export default {
     },
     mapRiskFormDetails(details) {
       if (!details) return {
-        cost: '', impact: '', financialImpact: '', reputationalImpact: '', operationalImpact: '', financialLoss: '', systemDowntime: '', recoveryTime: '', recurrencePossible: '', improvementInitiative: ''
+        cost: '', costCurrency: 'USD', impact: '', financialImpact: '', reputationalImpact: '', operationalImpact: '', financialLoss: '', financialLossCurrency: 'USD', systemDowntime: '', recoveryTime: '', recurrencePossible: '', improvementInitiative: ''
       };
       function normalizeYN(val) {
         if (!val) return '';
@@ -2385,11 +2413,13 @@ export default {
       }
       return {
         cost: details.cost ?? '',
+        costCurrency: details.costCurrency ?? 'USD',
         impact: details.impact ?? '',
         financialImpact: details.financialImpact ?? details.financialimpact ?? '',
         reputationalImpact: details.reputationalImpact ?? details.reputationalimpact ?? '',
         operationalImpact: details.operationalImpact ?? details.operationalimpact ?? '',
         financialLoss: details.financialLoss ?? details.financialloss ?? '',
+        financialLossCurrency: details.financialLossCurrency ?? 'USD',
         systemDowntime: details.systemDowntime ?? details.expecteddowntime ?? '',
         recoveryTime: details.recoveryTime ?? details.recoverytime ?? '',
         recurrencePossible: normalizeYN(details.recurrencePossible ?? details.riskrecurrence),
@@ -2520,7 +2550,7 @@ export default {
           priority: 'medium',
           user_id: this.selectedUserId || 'default_user'
         });
-        alert('Failed to load version data. Please try again.');
+        PopupService.error('Failed to load version data. Please try again.', 'Version Loading Failed');
       } finally {
         this.loadingVersions = false;
       }

@@ -3467,12 +3467,7 @@ def create_incident(request):
     
     try:
         # Apply strict allow-list validation using centralized validation function
-        # validated_data = validate_incident_data(request.data)
-        validated_data = request.data.copy()
-        
-        # Set default values for required fields if they're empty
-        if not validated_data.get('Origin'):
-            validated_data['Origin'] = 'Manual'
+        validated_data = validate_incident_data(request.data)
         
         # After validation, use the serializer with validated data
         serializer = IncidentSerializer(data=validated_data)
@@ -9890,90 +9885,12 @@ from rest_framework.response import Response
 
 from .models import Incident
 from .serializers import IncidentSerializer
-from .s3_fucntions import RenderS3Client
+from .export_service1 import export_data
 
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([IncidentViewPermission])
 def export_incidents(request):
-    """
-    Export incidents to various file formats.
-    
-    Supported formats:
-    - xlsx (Excel)
-    - pdf (PDF)
-    - csv (CSV)
-    - json (JSON)
-    - xml (XML)
-    - txt (Text)
-    """
-    client_ip = get_client_ip(request)
-    user_id = request.data.get('user_id')
-    
-    # Log export incidents attempt
-    send_log(
-        module="Incident",
-        actionType="EXPORT_INCIDENTS_ATTEMPT",
-        description="User attempting to export incidents",
-        userId=str(user_id) if user_id else None,
-        userName=request.data.get('userName', 'Unknown'),
-        entityType="Export",
-        ipAddress=client_ip
-    )
-    
-    try:
-        # Get export format from request
-        export_format = request.data.get('format', 'pdf').lower()
-        if export_format not in ['xlsx', 'pdf', 'csv', 'json', 'xml', 'txt']:
-            return Response({
-                'success': False,
-                'message': f'Unsupported export format: {export_format}'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Get incidents data
-        incidents = Incident.objects.all()
-        incidents_data = IncidentSerializer(incidents, many=True).data
-
-        # Create filename with timestamp
-        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        file_name = f"incidents_export_{timestamp}"
-
-        # Initialize S3 client
-        s3_client = RenderS3Client()
-        
-        # Export and upload to S3
-        result = s3_client.export(incidents_data, export_format, file_name, str(user_id))
-        
-        if result['success']:
-            return Response({
-                'success': True,
-                'message': 'Incidents exported successfully',
-                'file_url': result['file_url'],
-                'file_name': result['file_name']
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({
-                'success': False,
-                'message': result['message']
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-    except Exception as e:
-        error_message = f'Export failed: {str(e)}'
-        # Log export error
-        send_log(
-            module="Incident",
-            actionType="EXPORT_INCIDENTS_ERROR",
-            description=error_message,
-            userId=str(user_id) if user_id else None,
-            userName=request.data.get('userName', 'Unknown'),
-            entityType="Export",
-            ipAddress=client_ip,
-            logLevel='ERROR'
-        )
-        return Response({
-            'success': False,
-            'message': error_message
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     """
     Export incidents to various file formats.
     
@@ -10282,187 +10199,120 @@ def export_audit_findings(request):
     - xml (XML)
     - txt (Text)
     """
-    client_ip = get_client_ip(request)
-    user_id = request.data.get('user_id')
-    
     try:
-        # Get export format from request
-        export_format = request.data.get('format', 'pdf').lower()
-        if export_format not in ['xlsx', 'pdf', 'csv', 'json', 'xml', 'txt']:
-            return Response({
-                'success': False,
-                'message': f'Unsupported export format: {export_format}'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Get audit findings data
-        audit_findings = Incident.objects.filter(origin='Audit Finding')
-        findings_data = IncidentSerializer(audit_findings, many=True).data
-
-        # Create filename with timestamp
-        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        file_name = f"audit_findings_export_{timestamp}"
-
-        # Initialize S3 client
-        s3_client = RenderS3Client()
+        from .export_service import export_data
+        from django.utils import timezone
         
-        # Export and upload to S3
-        result = s3_client.export(findings_data, export_format, file_name, str(user_id))
+        # Define validation rules for export parameters
+        validation_rules = {
+            'file_format': {
+                'type': 'choice',
+                'choices': ['xlsx', 'pdf', 'csv', 'json', 'xml', 'txt'],
+                'required': False
+            },
+            'user_id': {
+                'type': 'string',
+                'max_length': 255,
+                'pattern': SecureValidator.ALPHANUMERIC_WITH_SPACES,
+                'required': False
+            },
+            'options': {
+                'type': 'string',  # JSON object as string
+                'max_length': 5000,
+                'required': False
+            },
+            'data': {
+                'type': 'string',  # JSON array as string
+                'max_length': 100000,  # Large limit for data export
+                'required': False
+            }
+        }
         
-        if result['success']:
-            return Response({
-                'success': True,
-                'message': 'Audit findings exported successfully',
-                'file_url': result['file_url'],
-                'file_name': result['file_name']
-            }, status=status.HTTP_200_OK)
+        # Validate JSON request body
+        try:
+            validated_data = validate_json_request_body(request, validation_rules)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=400)
+        
+        # Get validated request data
+        file_format = validated_data.get('file_format', 'xlsx')
+        user_id = validated_data.get('user_id', 'anonymous')
+        export_options = validated_data.get('options', {})
+        
+        # Get audit findings data from request or fetch from database
+        if 'data' in validated_data and validated_data['data']:
+            # Use data provided in request (parse JSON string if needed)
+            audit_findings_data = validated_data['data']
+            if isinstance(audit_findings_data, str):
+                try:
+                    audit_findings_data = json.loads(audit_findings_data)
+                except json.JSONDecodeError:
+                    return Response({'error': 'Invalid JSON format in data field'}, status=400)
         else:
-            return Response({
-                'success': False,
-                'message': result['message']
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Fetch audit finding incidents from database (where Origin = 'Audit Finding')
+            audit_findings = Incident.objects.filter(Origin='Audit Finding').order_by('-Date')
+            serializer = IncidentSerializer(audit_findings, many=True)
+            audit_findings_data = serializer.data
+        
+        # Parse export_options if it's a JSON string
+        if isinstance(export_options, str):
+            try:
+                export_options = json.loads(export_options)
+            except json.JSONDecodeError:
+                export_options = {}
+        elif not isinstance(export_options, dict):
+            export_options = {}
+        
+        # Log the export request
+        print(f"Exporting {len(audit_findings_data)} audit findings to {file_format} format for user {user_id}")
+        
+        # Log audit findings export operation
+        send_log(
+            module="Incident",
+            actionType="EXPORT_AUDIT_FINDINGS",
+            description=f"User exporting {len(audit_findings_data)} audit findings in {file_format} format",
+            userId=request.user.id if request.user.is_authenticated else None,
+            userName=request.user.username if request.user.is_authenticated else None,
+            entityType="AuditFinding",
+            ipAddress=get_client_ip(request),
+            additionalInfo={"file_format": file_format, "record_count": len(audit_findings_data), "export_user_id": user_id}
+        )
+        
+        # Add metadata for the export
+        export_options['exported_at'] = timezone.now().isoformat()
+        export_options['record_count'] = len(audit_findings_data)
+        export_options['export_type'] = 'audit_findings'
+        
+        # Call the export service
+        export_result = export_data(
+            data=audit_findings_data,
+            file_format=file_format,
+            user_id=user_id,
+            options=export_options
+        )
+        
+        # Return the export result
+        return Response(export_result)
     
     except Exception as e:
-        error_message = f'Export failed: {str(e)}'
+        print(f"Audit findings export error: {str(e)}")
+        
         # Log export error
         send_log(
             module="Incident",
             actionType="EXPORT_AUDIT_FINDINGS_ERROR",
-            description=error_message,
-            userId=str(user_id) if user_id else None,
-            userName=request.data.get('userName', 'Unknown'),
-            entityType="Export",
-            ipAddress=client_ip,
-            logLevel='ERROR'
+            description=f"Audit findings export failed: {str(e)}",
+            userId=request.user.id if request.user.is_authenticated else None,
+            userName=request.user.username if request.user.is_authenticated else None,
+            entityType="AuditFinding",
+            logLevel="ERROR",
+            ipAddress=get_client_ip(request)
         )
+        
         return Response({
             'success': False,
-            'message': error_message
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    # """
-    # Export audit finding incidents to various file formats.
-    
-    # Supported formats:
-    # - xlsx (Excel)
-    # - pdf (PDF)
-    # - csv (CSV)
-    # - json (JSON)
-    # - xml (XML)
-    # - txt (Text)
-    # """
-    # try:
-    #     from .export_service import export_data
-    #     from django.utils import timezone
-        
-    #     # Define validation rules for export parameters
-    #     validation_rules = {
-    #         'file_format': {
-    #             'type': 'choice',
-    #             'choices': ['xlsx', 'pdf', 'csv', 'json', 'xml', 'txt'],
-    #             'required': False
-    #         },
-    #         'user_id': {
-    #             'type': 'string',
-    #             'max_length': 255,
-    #             'pattern': SecureValidator.ALPHANUMERIC_WITH_SPACES,
-    #             'required': False
-    #         },
-    #         'options': {
-    #             'type': 'string',  # JSON object as string
-    #             'max_length': 5000,
-    #             'required': False
-    #         },
-    #         'data': {
-    #             'type': 'string',  # JSON array as string
-    #             'max_length': 100000,  # Large limit for data export
-    #             'required': False
-    #         }
-    #     }
-        
-    #     # Validate JSON request body
-    #     try:
-    #         validated_data = validate_json_request_body(request, validation_rules)
-    #     except ValidationError as e:
-    #         return Response({'error': str(e)}, status=400)
-        
-    #     # Get validated request data
-    #     file_format = validated_data.get('file_format', 'xlsx')
-    #     user_id = validated_data.get('user_id', 'anonymous')
-    #     export_options = validated_data.get('options', {})
-        
-    #     # Get audit findings data from request or fetch from database
-    #     if 'data' in validated_data and validated_data['data']:
-    #         # Use data provided in request (parse JSON string if needed)
-    #         audit_findings_data = validated_data['data']
-    #         if isinstance(audit_findings_data, str):
-    #             try:
-    #                 audit_findings_data = json.loads(audit_findings_data)
-    #             except json.JSONDecodeError:
-    #                 return Response({'error': 'Invalid JSON format in data field'}, status=400)
-    #     else:
-    #         # Fetch audit finding incidents from database (where Origin = 'Audit Finding')
-    #         audit_findings = Incident.objects.filter(Origin='Audit Finding').order_by('-Date')
-    #         serializer = IncidentSerializer(audit_findings, many=True)
-    #         audit_findings_data = serializer.data
-        
-    #     # Parse export_options if it's a JSON string
-    #     if isinstance(export_options, str):
-    #         try:
-    #             export_options = json.loads(export_options)
-    #         except json.JSONDecodeError:
-    #             export_options = {}
-    #     elif not isinstance(export_options, dict):
-    #         export_options = {}
-        
-    #     # Log the export request
-    #     print(f"Exporting {len(audit_findings_data)} audit findings to {file_format} format for user {user_id}")
-        
-    #     # Log audit findings export operation
-    #     send_log(
-    #         module="Incident",
-    #         actionType="EXPORT_AUDIT_FINDINGS",
-    #         description=f"User exporting {len(audit_findings_data)} audit findings in {file_format} format",
-    #         userId=request.user.id if request.user.is_authenticated else None,
-    #         userName=request.user.username if request.user.is_authenticated else None,
-    #         entityType="AuditFinding",
-    #         ipAddress=get_client_ip(request),
-    #         additionalInfo={"file_format": file_format, "record_count": len(audit_findings_data), "export_user_id": user_id}
-    #     )
-        
-    #     # Add metadata for the export
-    #     export_options['exported_at'] = timezone.now().isoformat()
-    #     export_options['record_count'] = len(audit_findings_data)
-    #     export_options['export_type'] = 'audit_findings'
-        
-    #     # Call the export service
-    #     export_result = export_data(
-    #         data=audit_findings_data,
-    #         file_format=file_format,
-    #         user_id=user_id,
-    #         options=export_options
-    #     )
-        
-    #     # Return the export result
-    #     return Response(export_result)
-    
-    # except Exception as e:
-    #     print(f"Audit findings export error: {str(e)}")
-        
-    #     # Log export error
-    #     send_log(
-    #         module="Incident",
-    #         actionType="EXPORT_AUDIT_FINDINGS_ERROR",
-    #         description=f"Audit findings export failed: {str(e)}",
-    #         userId=request.user.id if request.user.is_authenticated else None,
-    #         userName=request.user.username if request.user.is_authenticated else None,
-    #         entityType="AuditFinding",
-    #         logLevel="ERROR",
-    #         ipAddress=get_client_ip(request)
-    #     )
-        
-    #     return Response({
-    #         'success': False,
-    #         'error': str(e)
-    #     }, status=500) 
+            'error': str(e)
+        }, status=500) 
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -10959,7 +10809,7 @@ def user_incidents(request, user_id):
         return JsonResponse({'error': safe_error}, status=500)
 
 @api_view(['GET'])
-@permission_classes([IncidentEvaluatePermission])
+@permission_classes([AllowAny])
 def incident_reviewer_tasks(request, user_id):
     """Get incidents where the user is assigned as reviewer"""
     try:
@@ -11000,7 +10850,7 @@ def incident_reviewer_tasks(request, user_id):
         return JsonResponse({'error': safe_error}, status=500)
 
 @api_view(['GET'])
-@permission_classes([IncidentEvaluatePermission])
+@permission_classes([AllowAny])
 def incident_mitigations(request, incident_id):
     """Get mitigation steps for a specific incident with reviewer feedback"""
     try:
@@ -11799,7 +11649,7 @@ def incident_approval_data(request, incident_id):
 
 # Audit Finding User Task Endpoints
 @api_view(['GET'])
-@permission_classes([IncidentEvaluatePermission])
+@permission_classes([AllowAny])
 def user_audit_findings(request, user_id):
     """Get audit findings assigned to a specific user (where user is the assignee)"""
     try:
@@ -11841,7 +11691,7 @@ def user_audit_findings(request, user_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['GET'])
-@permission_classes([IncidentEvaluatePermission])
+@permission_classes([AllowAny])
 def audit_finding_reviewer_tasks(request, user_id):
     """Get audit findings where the user is assigned as reviewer"""
     try:

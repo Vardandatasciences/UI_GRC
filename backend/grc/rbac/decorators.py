@@ -123,7 +123,7 @@ def audit_analytics_required(view_func):
 
 def audit_view_all_required(view_func):
     """Decorator for functions that require view all audits permission"""
-    return rbac_required(required_permission='view_all_audits')(view_func)
+    return rbac_required(required_permission='assign_audit')(view_func)
 
 def audit_or_conduct_required(view_func):
     """Decorator for functions that require either audit view or conduct permission"""

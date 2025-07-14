@@ -143,6 +143,74 @@
   margin-top: 12px;
 }
 
+/* Framework Breakdown Styles */
+.framework-breakdown {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.breakdown-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.framework-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.framework-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.framework-item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+}
+
+.framework-item.top-framework {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: #f59e0b;
+}
+
+.framework-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1e293b;
+  flex: 1;
+  text-align: left;
+}
+
+.framework-count {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ef4444;
+  margin: 0 12px;
+  min-width: 30px;
+  text-align: center;
+}
+
+.framework-percentage {
+  font-size: 0.8rem;
+  color: #64748b;
+  min-width: 40px;
+  text-align: right;
+}
+
 /* Chart containers */
 .automated-chart-container,
 .repetitions-chart-container {
@@ -273,6 +341,28 @@
     width: 80px;
     height: 80px;
     font-size: 2rem;
+  }
+  
+  .framework-breakdown {
+    margin-top: 16px;
+    padding: 12px;
+  }
+  
+  .framework-item {
+    padding: 6px 8px;
+  }
+  
+  .framework-name {
+    font-size: 0.8rem;
+  }
+  
+  .framework-count {
+    font-size: 0.85rem;
+    margin: 0 8px;
+  }
+  
+  .framework-percentage {
+    font-size: 0.75rem;
   }
 }
 
@@ -1075,5 +1165,80 @@
   .incident-meta {
     font-size: 0.7rem;
     gap: 8px;
+  }
+}
+
+/* Non-Compliance Chart Styles */
+.non-compliance-chart-container {
+  height: 250px;
+  margin: 16px 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.non-compliance-summary {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 16px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.total-count,
+.framework-count {
+  text-align: center;
+  flex: 1;
+}
+
+.count-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #dc2626;
+  line-height: 1;
+}
+
+.count-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.framework-count .count-value {
+  color: #475569;
+}
+
+/* Doughnut Chart Enhancements */
+.non-compliance-chart-container canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+.non-compliance-card .kpi-header {
+  border-bottom: 2px solid #f1f5f9;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+  .non-compliance-chart-container {
+    height: 200px;
+    margin: 12px 0;
+  }
+  
+  .non-compliance-summary {
+    padding: 8px;
+  }
+  
+  .count-value {
+    font-size: 1.2rem;
+  }
+  
+  .count-label {
+    font-size: 0.75rem;
   }
 } 

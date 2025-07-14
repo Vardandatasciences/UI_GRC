@@ -1,13 +1,18 @@
 import json
 import re
+import random
+import traceback
+
 try:
     from langchain_ollama import OllamaLLM
     from langchain.prompts import PromptTemplate
     from langchain.chains import LLMChain
+    from langchain_community.chat_models import ChatOpenAI
     OLLAMA_AVAILABLE = True
 except ImportError:
     OLLAMA_AVAILABLE = False
-    print("Warning: langchain_ollama not available, falling back to mock analysis")
+    print("Warning: langchain_ollama not available, falling back to OpenAI")
+
 import random
 import traceback
 
@@ -23,15 +28,31 @@ def analyze_incident_comprehensive(incident_title, incident_description):
         dict: JSON object containing comprehensive incident analysis
     """
     try:
-        # Check if Ollama is available
-        if not OLLAMA_AVAILABLE:
-            print("Ollama not available, using fallback analysis")
-            return generate_comprehensive_fallback_analysis(incident_title, incident_description)
+        # # Check if Ollama is available
+        # if OLLAMA_AVAILABLE:
+        #     print("Using Ollama model for incident analysis")
+        #     llm = OllamaLLM(model="llama3.2:3b", temperature=0.7, request_timeout=80.0)
+        # else:
+        print("Using OpenAI model for incident analysis")
+        try:
+            import os
+            api_key = os.getenv('OPENAI_API_KEY')
+            if not api_key:
+                raise Exception("OPENAI_API_KEY environment variable not set")
             
-        # Initialize the local SLM model with increased timeout
-        llm = OllamaLLM(model="llama3.2:3b", temperature=0.7, request_timeout=60.0)
-       
-        prompt_template = PromptTemplate.from_template("""
+            llm = ChatOpenAI(
+                model="gpt-3.5-turbo", 
+                temperature=0.7,
+                api_key=api_key
+            )
+            if llm is None:
+                raise Exception("Failed to initialize ChatOpenAI - check API key configuration")
+        except Exception as e:
+            print(f"Error initializing ChatOpenAI: {e}")
+            print("Falling back to comprehensive fallback analysis")
+            return generate_comprehensive_fallback_analysis(incident_title, incident_description)
+
+        prompt_template = PromptTemplate.from_template(""" 
         You are a senior cybersecurity analyst and risk management expert specializing in banking GRC (Governance, Risk, and Compliance) systems with 15+ years of experience in financial services security, regulatory compliance, and operational risk management.
         
         Analyze the following security incident and provide a comprehensive, detailed assessment in JSON format. Each field must contain extensive, banking-specific information, not generic responses.
@@ -195,7 +216,7 @@ def analyze_incident_comprehensive(incident_title, incident_description):
 
         Respond ONLY with a valid JSON object containing all fields above with comprehensive, banking-specific analysis. No additional text or formatting.
         """)
-       
+        
         chain = LLMChain(llm=llm, prompt=prompt_template)
        
         # Process the incident
@@ -206,135 +227,20 @@ def analyze_incident_comprehensive(incident_title, incident_description):
        
         # Clean and parse the JSON from the response
         try:
-            # Remove any extra text before or after the JSON
+            # Handle different response formats and attempt parsing
             json_text = response.strip()
             
-            # Handle different response formats
+            # Clean response
             if json_text.startswith("```json") and json_text.endswith("```"):
                 json_text = json_text[7:-3].strip()
             elif json_text.startswith("```") and json_text.endswith("```"):
                 json_text = json_text[3:-3].strip()
-            elif "```json" in json_text:
-                # Extract JSON from markdown code block
-                start_idx = json_text.find("```json") + 7
-                end_idx = json_text.find("```", start_idx)
-                if end_idx != -1:
-                    json_text = json_text[start_idx:end_idx].strip()
-            elif "{" in json_text and "}" in json_text:
-                # Extract JSON object from response
-                start_idx = json_text.find("{")
-                end_idx = json_text.rfind("}") + 1
-                json_text = json_text[start_idx:end_idx]
-            
+
             print(f"Cleaned JSON text: {json_text}")
             
-            try:
-                # First attempt: Try to parse the JSON directly
-                incident_analysis = json.loads(json_text)
-            except json.JSONDecodeError as e:
-                print(f"Initial JSON parsing failed: {e}")
-                
-                # Try to fix the JSON by removing problematic backslashes
-                try:
-                    # Fix the specific issue with escaped backslashes
-                    fixed_json = json_text.replace('\"', '"')
-                    
-                    # Try to parse the fixed JSON
-                    try:
-                        incident_analysis = json.loads(fixed_json)
-                        print("Successfully parsed JSON after fixing backslashes")
-                    except json.JSONDecodeError:
-                        # If still failing, try a more aggressive approach
-                        print("Still having JSON parsing issues, trying more aggressive fix")
-                        
-                        # Recreate the JSON from scratch with banking-specific defaults
-                        import ast
-                        try:
-                            # Extract the raw data using regex patterns
-                            risk_priority = re.search(r'"riskPriority":\s*"([^"]+)"', json_text)
-                            criticality = re.search(r'"criticality":\s*"([^"]+)"', json_text)
-                            cost = re.search(r'"costOfIncident":\s*"([^"]+)"', json_text)
-                            damage = re.search(r'"possibleDamage":\s*"([^"]+)"', json_text)
-                            impact = re.search(r'"initialImpactAssessment":\s*"([^"]+)"', json_text)
-                            comments = re.search(r'"comments":\s*"([^"]+)"', json_text)
-                            
-                            # Create a new clean JSON structure with banking-specific defaults
-                            incident_analysis = {
-                                "riskPriority": risk_priority.group(1) if risk_priority else "P1",
-                                "criticality": criticality.group(1) if criticality else "High",
-                                "costOfIncident": cost.group(1) if cost else "$250,000 - $1,500,000 including $500,000 in regulatory fines, $300,000 in operational costs, $200,000 in customer remediation",
-                                "possibleDamage": damage.group(1) if damage else "Potential compromise of core banking systems affecting customer transaction processing, regulatory compliance violations under FFIEC guidelines, customer data exposure requiring notification under GLBA, operational disruption to payment processing systems, reputational damage affecting market confidence and customer trust in banking services",
-                                "systemsInvolved": [
-                                    "Core Banking System (CBS)",
-                                    "Online Banking Platform",
-                                    "Payment Processing System",
-                                    "Customer Database",
-                                    "Network Infrastructure",
-                                    "SIEM and Security Monitoring",
-                                    "ATM Network",
-                                    "Mobile Banking Application"
-                                ],
-                                "initialImpactAssessment": impact.group(1) if impact else "Immediate assessment indicates potential compromise of customer-facing banking systems with possible exposure of personally identifiable information (PII) and financial data. Approximately 5,000-15,000 customers potentially affected. Core banking operations remain functional but monitoring systems detected anomalous activity. Regulatory notification requirements under FFIEC guidelines triggered within 72 hours. Business continuity measures activated.",
-                                "mitigationSteps": [
-                                    "Immediately isolate affected banking systems and network segments",
-                                    "Activate incident response team including CISO, CRO, and legal counsel",
-                                    "Notify primary regulators (OCC, Fed, FDIC) within 72 hours per FFIEC requirements",
-                                    "Conduct forensic analysis of compromised systems using banking-certified forensics team",
-                                    "Implement enhanced fraud monitoring on all customer accounts",
-                                    "Prepare customer notification strategy in compliance with GLBA privacy requirements",
-                                    "Activate business continuity plan for critical banking operations",
-                                    "Coordinate with cyber insurance provider and external legal counsel",
-                                    "Implement temporary access controls and enhanced monitoring",
-                                    "Prepare regulatory examination response and documentation"
-                                ],
-                                "comments": comments.group(1) if comments else "This incident represents a significant operational risk event for the banking institution requiring immediate regulatory notification and comprehensive response. The incident demonstrates potential weaknesses in the bank's cybersecurity framework and may trigger enhanced regulatory scrutiny. Given the banking sector's interconnected nature, this incident could impact correspondent banking relationships and third-party service providers. The institution should prepare for potential regulatory examination and enforcement action.",
-                                "violatedPolicies": [
-                                    "Information Security Policy - Data Classification and Protection Standards",
-                                    "Access Control Policy - Privileged Access Management",
-                                    "Incident Response Policy - Escalation and Notification Procedures",
-                                    "Customer Data Protection Policy - GLBA Privacy Requirements",
-                                    "Third-Party Risk Management Policy - Vendor Security Oversight",
-                                    "Network Security Policy - Segmentation and Monitoring",
-                                    "Business Continuity Policy - Disaster Recovery Procedures",
-                                    "Regulatory Compliance Framework - FFIEC Cybersecurity Guidelines"
-                                ],
-                                "procedureControlFailures": [
-                                    "Identity and Access Management (IAM) - Inadequate privileged access controls",
-                                    "Network Security Controls - Insufficient network segmentation between banking zones",
-                                    "Security Information and Event Management (SIEM) - Delayed threat detection and response",
-                                    "Endpoint Detection and Response (EDR) - Inadequate monitoring of banking workstations",
-                                    "Data Loss Prevention (DLP) - Failed to prevent sensitive data exfiltration",
-                                    "Vulnerability Management - Unpatched systems in critical banking infrastructure",
-                                    "Security Awareness Training - Inadequate phishing and social engineering awareness",
-                                    "Third-Party Security Assessment - Insufficient vendor risk management",
-                                    "Backup and Recovery Controls - Inadequate recovery procedures for banking systems",
-                                    "Regulatory Compliance Monitoring - Failed to meet FFIEC cybersecurity requirements"
-                                ],
-                                "lessonsLearned": [
-                                    "Implement enhanced network segmentation separating core banking systems from general IT infrastructure with specific focus on payment processing isolation",
-                                    "Strengthen privileged access management with multi-factor authentication and just-in-time access for all banking system administrators",
-                                    "Deploy advanced threat detection capabilities specifically tuned for banking sector threats including insider trading and financial fraud patterns",
-                                    "Enhance incident response procedures with specific regulatory notification workflows for banking regulators (OCC, Fed, FDIC, CFPB)",
-                                    "Implement comprehensive security awareness training program focused on banking-specific threats including business email compromise and wire fraud",
-                                    "Establish dedicated cybersecurity governance committee with board-level oversight and regular reporting to banking regulators",
-                                    "Develop enhanced third-party risk management program with continuous monitoring of critical banking service providers",
-                                    "Implement real-time fraud detection and prevention systems integrated with core banking platforms",
-                                    "Establish cyber threat intelligence sharing with banking industry consortiums and federal banking agencies",
-                                    "Create comprehensive cyber resilience testing program including tabletop exercises simulating banking-specific cyber scenarios"
-                                ]
-                            }
-                            print("Created comprehensive banking-specific JSON structure from regex extraction")
-                        except Exception as regex_error:
-                            print(f"Regex extraction failed: {regex_error}")
-                            # If all else fails, use the fallback
-                            return generate_comprehensive_fallback_analysis(incident_title, incident_description)
-                except Exception as fix_error:
-                    print(f"Failed to fix JSON: {fix_error}")
-                    # If parsing still fails, fall back to the generated response
-                    print("Falling back to generated analysis")
-                    return generate_comprehensive_fallback_analysis(incident_title, incident_description)
+            incident_analysis = json.loads(json_text)
             
-            # Validate that we have the required fields
+            # Validate fields
             required_fields = ['riskPriority', 'criticality', 'costOfIncident', 'possibleDamage', 
                              'systemsInvolved', 'initialImpactAssessment', 'mitigationSteps', 
                              'comments', 'violatedPolicies', 'procedureControlFailures', 'lessonsLearned']
@@ -342,24 +248,19 @@ def analyze_incident_comprehensive(incident_title, incident_description):
             
             if missing_fields:
                 print(f"Missing required fields in AI response: {missing_fields}")
-                print("Falling back to generated analysis")
                 return generate_comprehensive_fallback_analysis(incident_title, incident_description)
             
             print(f"Successfully parsed comprehensive banking GRC incident analysis: {incident_analysis}")
             return incident_analysis
             
         except Exception as e:
-            print(f"JSON parsing error: {e}")
-            print(f"Failed to parse JSON from: {json_text}")
-            # If JSON parsing fails, fall back to the generated response
+            print(f"Error parsing JSON: {e}")
             return generate_comprehensive_fallback_analysis(incident_title, incident_description)
-            
-    except Exception as e:
-        print(f"Error using Ollama model: {e}")
-        traceback.print_exc()
-        # Fall back to a generated response if the model fails
-        return generate_comprehensive_fallback_analysis(incident_title, incident_description)
 
+    except Exception as e:
+        print(f"Error with model processing: {e}")
+        traceback.print_exc()
+        return generate_comprehensive_fallback_analysis(incident_title, incident_description)
 
 def generate_comprehensive_fallback_analysis(incident_title, incident_description):
     """Generate a comprehensive fallback analysis when the AI model is unavailable."""

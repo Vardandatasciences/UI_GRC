@@ -162,50 +162,45 @@
               <td>{{ truncateText(item.Description, 50) }}</td>
               <td>
                 <div class="action-buttons">
-                  <!-- Show Actions dropdown only for Open status -->
-                  <div v-if="!item.Status || item.Status === 'Open'" class="actions-dropdown">
+                  <template v-if="!item.Status || item.Status === 'Open'">
                     <button 
-                      class="actions-button" 
-                      @click="toggleActionDropdown(index)"
-                      :class="{ active: dropdownOpenFor === index }"
+                      class="incident-action-icon"
+                      @click="handleDropdownAction('assign', item)"
+                      title="Assign as Incident"
                     >
-                      <i class="fas fa-cog gear-icon"></i>
-                      Actions
-                      <i class="fas fa-chevron-down dropdown-arrow" :class="{ rotate: dropdownOpenFor === index }"></i>
+                      <i class="fas fa-user-plus"></i>
                     </button>
-                    <div 
-                      class="actions-dropdown-menu" 
-                      :class="{ show: dropdownOpenFor === index }"
+                    <button 
+                      class="incident-action-icon"
+                      @click="handleDropdownAction('escalate', item)"
+                      title="Escalate to Risk"
                     >
-                      <button class="dropdown-item" @click="handleDropdownAction('view', item)">
-                        <i class="fas fa-eye"></i>
-                        View Details
-                      </button>
-                      <button class="dropdown-item" @click="handleDropdownAction('assign', item)">
-                        <i class="fas fa-user-plus"></i>
-                        Assign as Incident
-                      </button>
-                      <button class="dropdown-item" @click="handleDropdownAction('escalate', item)">
-                        <i class="fas fa-arrow-up"></i>
-                        Escalate to Risk
-                      </button>
-                      <button class="dropdown-item" @click="handleDropdownAction('reject', item)">
-                        <i class="fas fa-times"></i>
-                        Reject Incident
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <!-- Show only View Details button for processed items -->
-                  <button 
-                    v-else
-                    class="view-details-btn" 
-                    @click="viewDetails(item)" 
-                    title="View Details"
-                  >
-                    <i class="fas fa-eye"></i>
-                    View Details
-                  </button>
+                      <i class="fas fa-arrow-up"></i>
+                    </button>
+                    <button 
+                      class="incident-action-icon"
+                      @click="handleDropdownAction('close', item)"
+                      title="Close Incident"
+                    >
+                      <i class="fas fa-check-circle"></i>
+                    </button>
+                    <button 
+                      class="view-details-btn-small"
+                      @click="handleDropdownAction('view', item)"
+                      title="View Details"
+                    >
+                      View Details
+                    </button>
+                  </template>
+                  <template v-else>
+                    <button 
+                      class="view-details-btn-small"
+                      @click="handleDropdownAction('view', item)"
+                      title="View Details"
+                    >
+                      View Details
+                    </button>
+                  </template>
                 </div>
               </td>
             </tr>
@@ -234,11 +229,11 @@
             </div>
           </div>
           
-          <div v-else-if="modalAction === 'reject'" class="rejected-container">
-            <div class="rejected-icon">✕</div>
-            <h3 class="modal-title rejected">REJECTED</h3>
+          <div v-else-if="modalAction === 'close'" class="closed-container">
+            <div class="closed-icon">✔</div>
+            <h3 class="modal-title closed">CLOSED</h3>
             <div class="modal-footer">
-              <button @click="confirmReject" class="modal-btn reject-btn">Confirm Reject</button>
+              <button @click="confirmClose" class="modal-btn close-btn">Confirm Close</button>
               <button @click="closeModal" class="modal-btn cancel-btn">Cancel</button>
             </div>
           </div>
@@ -665,50 +660,21 @@ export default {
       // Validate selections
       if (!selectedAssigner.value || !selectedReviewer.value) {
         PopupService.error('Please select both assigner and reviewer');
-        sendPushNotification({
-          title: 'Assignment Validation Error',
-          message: 'Please select both assigner and reviewer for incident assignment.',
-          category: 'incident_assignment',
-          priority: 'high',
-          user_id: 'audit_user'
-        });
         return;
       }
 
       if (selectedAssigner.value === selectedReviewer.value) {
         PopupService.error('Assigner and reviewer cannot be the same person');
-        sendPushNotification({
-          title: 'Assignment Validation Error',
-          message: 'Assigner and reviewer cannot be the same person for incident assignment.',
-          category: 'incident_assignment',
-          priority: 'high',
-          user_id: 'audit_user'
-        });
         return;
       }
 
       if (mitigationSteps.value.length === 0) {
         PopupService.error('Please add at least one mitigation step');
-        sendPushNotification({
-          title: 'Assignment Validation Error',
-          message: 'Please add at least one mitigation step before assigning the incident.',
-          category: 'incident_assignment',
-          priority: 'high',
-          user_id: 'audit_user'
-        });
         return;
       }
 
       if (!mitigationDueDate.value) {
         PopupService.error('Please select a due date');
-        sendPushNotification({
-          title: 'Assignment Validation Error',
-          message: 'Please select a due date for incident mitigation completion.',
-          category: 'incident_assignment',
-          priority: 'high',
-          user_id: 'audit_user'
-        });
-      
         return;
       }
 
@@ -741,13 +707,6 @@ export default {
         
         // Show success popup
         PopupService.success(`Incident ${selectedIncident.value.IncidentId} assigned successfully with mitigation steps!`);
-        sendPushNotification({
-          title: 'Incident Assignment Successful',
-          message: `Incident ${selectedIncident.value.IncidentId} "${selectedIncident.value.IncidentTitle || 'Untitled Incident'}" has been successfully assigned with ${mitigationSteps.value.length} mitigation step(s).`,
-          category: 'incident_assignment',
-          priority: 'high',
-          user_id: 'audit_user'
-        });
         
         // Refresh the audit findings data
         fetchData();
@@ -761,35 +720,21 @@ export default {
       .catch(err => {
         console.error('Error assigning incident:', err);
         PopupService.error('Failed to assign incident. Please try again.');
-        sendPushNotification({
-          title: 'Incident Assignment Failed',
-          message: `Failed to assign incident ${selectedIncident.value.IncidentId}: ${err.response?.data?.error || err.message}`,
-          category: 'incident_assignment',
-          priority: 'high',
-          user_id: 'audit_user'
-        });
       });
     };
     
-    const confirmSolve = () => {
-      console.log('Escalating incident to risk:', selectedIncident.value.IncidentId);
+    const confirmSolve = (incident) => {
+      console.log('Escalating incident to risk:', incident.IncidentId);
       
       // Update incident status to "Scheduled"
-      axios.put(`http://localhost:8000/api/incidents/${selectedIncident.value.IncidentId}/status/`, {
+      axios.put(`http://localhost:8000/api/incidents/${incident.IncidentId}/status/`, {
         status: 'Scheduled'
       })
       .then(response => {
         console.log('Incident escalated to risk - API response:', response.data);
         
         // Show success popup
-        PopupService.success(`Incident ${selectedIncident.value.IncidentId} escalated to Risk successfully!`);
-        sendPushNotification({
-          title: 'Incident Escalated to Risk',
-          message: `Incident ${selectedIncident.value.IncidentId} "${selectedIncident.value.IncidentTitle || 'Untitled Incident'}" has been successfully escalated to the Risk module for further assessment.`,
-          category: 'incident_escalation',
-          priority: 'high',
-          user_id: 'audit_user'
-        });
+        PopupService.success(`Incident #${incident.IncidentId} escalated to Risk successfully!`);
         
         // Refresh the audit findings data
         fetchData();
@@ -803,13 +748,6 @@ export default {
       .catch(err => {
         console.error('Error updating incident status:', err);
         PopupService.error('Failed to escalate incident. Please try again.');
-        sendPushNotification({
-          title: 'Incident Escalation Failed',
-          message: `Failed to escalate incident ${selectedIncident.value.IncidentId} to Risk module: ${err.response?.data?.error || err.message}`,
-          category: 'incident_escalation',
-          priority: 'high',
-          user_id: 'audit_user'
-        });
       });
     };
     
@@ -826,13 +764,6 @@ export default {
         
         // Show success popup
         PopupService.success(`Incident ${selectedIncident.value.IncidentId} rejected successfully!`);
-        sendPushNotification({
-          title: 'Incident Rejected',
-          message: `Incident ${selectedIncident.value.IncidentId} "${selectedIncident.value.IncidentTitle || 'Untitled Incident'}" has been successfully rejected and will no longer be processed.`,
-          category: 'incident_rejection',
-          priority: 'medium',
-          user_id: 'audit_user'
-        });
         
         // Refresh the audit findings data
         fetchData();
@@ -846,13 +777,6 @@ export default {
       .catch(err => {
         console.error('Error updating incident status:', err);
         PopupService.error('Failed to reject incident. Please try again.');
-        sendPushNotification({
-          title: 'Incident Rejection Failed',
-          message: `Failed to reject incident ${selectedIncident.value.IncidentId}: ${err.response?.data?.error || err.message}`,
-          category: 'incident_rejection',
-          priority: 'high',
-          user_id: 'audit_user'
-        });
       });
     };
     
@@ -930,47 +854,13 @@ export default {
           
           // Show success popup
           PopupService.success('Export completed successfully');
-          sendPushNotification({
-            title: 'Audit Findings Export Completed',
-            message: `Audit findings have been successfully exported in ${exportFormat.value.toUpperCase()} format.`,
-            category: 'audit_findings',
-            priority: 'medium',
-            user_id: 'audit_user'
-          });
         }
         
       } catch (err) {
         console.error('Export failed:', err);
         PopupService.error('Export failed. Please try again.');
-        sendPushNotification({
-          title: 'Audit Findings Export Failed',
-          message: `Failed to export audit findings in ${exportFormat.value.toUpperCase()} format: ${err.message}`,
-          category: 'audit_findings',
-          priority: 'high',
-          user_id: 'audit_user'
-        });
-        
       } finally {
         isExporting.value = false;
-      }
-    };
-
-    const sendPushNotification = async (notificationData) => {
-      try {
-        const response = await fetch('http://localhost:8000/api/push-notification/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(notificationData)
-        });
-        if (response.ok) {
-          console.log('Push notification sent successfully');
-        } else {
-          console.error('Failed to send push notification');
-        }
-      } catch (error) {
-        console.error('Error sending push notification:', error);
       }
     };
     
@@ -1006,12 +896,43 @@ export default {
           openAssignModal(item);
           break;
         case 'escalate':
-          openSolveModal(item);
+          PopupService.confirm(
+            `Are you sure you want to escalate Incident #${item.IncidentId} to Risk? This will forward the incident to the Risk module for further evaluation and mitigation.`,
+            'Escalate to Risk',
+            () => confirmSolve(item)
+          );
           break;
-        case 'reject':
-          openRejectModal(item);
+        case 'close':
+          PopupService.confirm(
+            `Are you sure you want to close Incident #${item.IncidentId}? This action cannot be undone.`,
+            'Close Incident',
+            () => confirmClose(item)
+          );
           break;
       }
+    };
+    
+    const openCloseModal = (incident) => {
+      selectedIncident.value = incident;
+      modalAction.value = 'close';
+      showModal.value = true;
+    };
+
+    const confirmClose = (incident) => {
+      axios.put(`http://localhost:8000/api/incidents/${incident.IncidentId}/status/`, {
+        status: 'Closed',
+        close_source: 'INCIDENT'
+      })
+      .then(() => {
+        PopupService.success(`Incident #${incident.IncidentId} closed successfully!`, 'Incident Closed');
+        fetchData();
+        setTimeout(() => {
+          // Optionally redirect or refresh
+        }, 1500);
+      })
+      .catch(() => {
+        PopupService.error('Failed to close incident. Please try again.');
+      });
     };
     
     onMounted(() => {
@@ -1089,6 +1010,8 @@ export default {
       confirmAssignmentWorkflow,
       confirmSolve,
       confirmReject,
+      openCloseModal,
+      confirmClose,
 
       formatDate,
       truncateText,

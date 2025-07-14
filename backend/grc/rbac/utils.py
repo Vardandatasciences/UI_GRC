@@ -264,7 +264,7 @@ class RBACUtils:
                 
                 # ===== AUDIT MODULE ENDPOINTS =====
                 # Basic audit operations
-                'get_all_audits': 'view_all_audits',
+                'get_all_audits': 'assign_audit',
                 'get_my_audits': 'conduct_audit',
                 'get_my_reviews': 'review_audit',
                 'get_audit_details': 'view_audit_reports',
@@ -334,16 +334,16 @@ class RBACUtils:
                 
                 # Audit dashboard endpoints
                 'get_audit_completion_rate': 'audit_performance_analytics',
-                'get_total_audits': 'view_all_audits',
-                'get_open_audits': 'view_all_audits',
-                'get_completed_audits': 'view_all_audits',
+                'get_total_audits': 'assign_audit',
+                'get_open_audits': 'assign_audit',
+                'get_completed_audits': 'assign_audit',
                 'audit_completion_trend': 'audit_performance_analytics',
                 'audit_compliance_trend': 'audit_performance_analytics',
                 'audit_finding_trend': 'audit_performance_analytics',
                 'framework_performance': 'audit_performance_analytics',
                 'category_performance': 'audit_performance_analytics',
                 'status_distribution': 'audit_performance_analytics',
-                'recent_audit_activities': 'view_all_audits',
+                'recent_audit_activities': 'assign_audit',
                 
                 # Audit maintenance and debug endpoints
                 'add_majorminor_column': 'assign_audit',
@@ -548,7 +548,7 @@ class RBACUtils:
                 'review': 'review_audit',
                 'view_reports': 'view_audit_reports',
                 'analytics': 'audit_performance_analytics',
-                'view_all': 'view_all_audits'
+                'view_all': 'assign_audit' # Changed from 'view_all_audits' to 'assign_audit'
             }
             
             field_name = permission_field_map.get(permission_type)
@@ -694,7 +694,7 @@ class RBACUtils:
             logger.info(f"[RBAC] Conduct Audit: {'YES' if rbac_record.conduct_audit else 'NO'}")
             logger.info(f"[RBAC] Review Audit: {'YES' if rbac_record.review_audit else 'NO'}")
             logger.info(f"[RBAC] View Audit Reports: {'YES' if rbac_record.view_audit_reports else 'NO'}")
-            logger.info(f"[RBAC] View All Audits: {'YES' if rbac_record.view_all_audits else 'NO'}")
+            logger.info(f"[RBAC] View All Audits: {'YES' if rbac_record.assign_audit else 'NO'}") # Changed from 'view_all_audits' to 'assign_audit'
             logger.info(f"[RBAC] Audit Analytics: {'YES' if rbac_record.audit_performance_analytics else 'NO'}")
             
             logger.info(f"[RBAC] === RISK MODULE PERMISSIONS ===")
@@ -758,7 +758,6 @@ class RBACUtils:
                         'conduct': rbac_record.conduct_audit,
                         'review': rbac_record.review_audit,
                         'view_reports': rbac_record.view_audit_reports,
-                        'view_all': rbac_record.view_all_audits,
                         'analytics': rbac_record.audit_performance_analytics,
                     },
                     'risk': {

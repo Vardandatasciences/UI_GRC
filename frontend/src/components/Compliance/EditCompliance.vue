@@ -44,7 +44,7 @@
             <label>
               Compliance Title 
               <span class="required">*</span>
-              <span class="field-requirements">(3-145 characters)</span>
+              <span class="field-requirements">({{ validationRules.minLengths.ComplianceTitle }}-{{ validationRules.maxLengths.ComplianceTitle }} characters)</span>
             </label>
             <div class="input-wrapper">
               <input 
@@ -57,10 +57,11 @@
                 }"
                 placeholder="Enter compliance title"
                 required 
-                @input="validateFieldRealTime('ComplianceTitle')"
+                @input="onFieldChange('ComplianceTitle', $event)"
                 @blur="validateField('ComplianceTitle')"
                 title="Enter the title of the compliance item"
                 :ref="'field_ComplianceTitle'"
+                :maxlength="validationRules.maxLengths.ComplianceTitle"
               />
               <div class="validation-indicator" v-if="compliance.ComplianceTitle">
                 <span v-if="isFieldValid('ComplianceTitle')" class="valid-icon">✓</span>
@@ -68,7 +69,7 @@
               </div>
             </div>
             <div v-if="validationErrors.ComplianceTitle" class="field-error-message">
-              {{ validationErrors.ComplianceTitle }}
+              {{ validationErrors.ComplianceTitle.join(', ') }}
             </div>
           </div>
           
@@ -76,7 +77,7 @@
             <label>
               Compliance Type 
               <span class="required">*</span>
-              <span class="field-requirements">(Required)</span>
+              <span class="field-requirements">({{ validationRules.minLengths.ComplianceType }}-{{ validationRules.maxLengths.ComplianceType }} characters)</span>
             </label>
             <div class="input-wrapper">
               <input 
@@ -87,10 +88,11 @@
                   'valid': isFieldValid('ComplianceType')
                 }"
                 placeholder="Enter compliance type"
-                @input="validateFieldRealTime('ComplianceType')"
+                @input="onFieldChange('ComplianceType', $event)"
                 @blur="validateField('ComplianceType')"
                 title="Type of compliance (e.g. Regulatory, Internal, Security)"
                 :ref="'field_ComplianceType'"
+                :maxlength="validationRules.maxLengths.ComplianceType"
               />
               <div class="validation-indicator" v-if="compliance.ComplianceType">
                 <span v-if="isFieldValid('ComplianceType')" class="valid-icon">✓</span>
@@ -98,7 +100,7 @@
               </div>
             </div>
             <div v-if="validationErrors.ComplianceType" class="field-error-message">
-              {{ validationErrors.ComplianceType }}
+              {{ validationErrors.ComplianceType.join(', ') }}
             </div>
           </div>
         </div>
@@ -107,7 +109,7 @@
           <label>
             Compliance Description 
             <span class="required">*</span>
-            <span class="field-requirements">(Minimum 10 characters)</span>
+            <span class="field-requirements">(Minimum {{ validationRules.minLengths.ComplianceItemDescription }} characters)</span>
           </label>
           <div class="input-wrapper">
             <textarea 
@@ -119,18 +121,19 @@
                 'valid': isFieldValid('ComplianceItemDescription')
               }"
               placeholder="Compliance Description"
-              @input="validateFieldRealTime('ComplianceItemDescription')"
+              @input="onFieldChange('ComplianceItemDescription', $event)"
               @blur="validateField('ComplianceItemDescription')"
               required 
               rows="3"
               title="Detailed description of the compliance requirement"
               :ref="'field_ComplianceItemDescription'"
+              :maxlength="validationRules.maxLengths.ComplianceItemDescription"
             ></textarea>
             <div class="char-count" :class="{ 'error': validationErrors.ComplianceItemDescription }">
-              {{ compliance.ComplianceItemDescription?.length || 0 }}/10 min characters
+              {{ compliance.ComplianceItemDescription?.length || 0 }}/{{ validationRules.minLengths.ComplianceItemDescription }} min characters
             </div>
             <div v-if="validationErrors.ComplianceItemDescription" class="field-error-message">
-              {{ validationErrors.ComplianceItemDescription }}
+              {{ validationErrors.ComplianceItemDescription.join(', ') }}
             </div>
           </div>
           <div class="validation-feedback" v-if="compliance.ComplianceItemDescription">
@@ -162,7 +165,7 @@
           <label>
             Scope
             <span class="required">*</span>
-            <span class="field-requirements">(Minimum 15 characters)</span>
+            <span class="field-requirements">(Minimum {{ validationRules.minLengths.Scope }} characters)</span>
           </label>
           <div class="input-wrapper">
             <textarea 
@@ -174,21 +177,22 @@
                 'valid': isFieldValid('Scope')
               }"
               placeholder="Define the scope of this compliance requirement"
-              @input="validateFieldRealTime('Scope')"
+              @input="onFieldChange('Scope', $event)"
               @blur="validateField('Scope')"
               rows="3"
               data-field="Scope"
               required
               :ref="'field_Scope'"
+              :maxlength="validationRules.maxLengths.Scope"
             ></textarea>
             <div class="char-count" :class="{ 
               'error': validationErrors.Scope,
               'warning': showWarning('Scope')
             }">
-              {{ compliance.Scope?.length || 0 }}/15 min characters
+              {{ compliance.Scope?.length || 0 }}/{{ validationRules.minLengths.Scope }} min characters
             </div>
             <div v-if="validationErrors.Scope" class="field-error-message">
-              {{ validationErrors.Scope }}
+              {{ validationErrors.Scope.join(', ') }}
             </div>
           </div>
           <div class="validation-feedback" v-if="compliance.Scope">
@@ -220,7 +224,7 @@
           <label>
             Objective
             <span class="required">*</span>
-            <span class="field-requirements">(Minimum 15 characters)</span>
+            <span class="field-requirements">(Minimum {{ validationRules.minLengths.Objective }} characters)</span>
           </label>
           <div class="input-wrapper">
             <textarea 
@@ -232,21 +236,22 @@
                 'valid': isFieldValid('Objective')
               }"
               placeholder="Define the objective of this compliance requirement"
-              @input="validateFieldRealTime('Objective')"
+              @input="onFieldChange('Objective', $event)"
               @blur="validateField('Objective')"
               rows="3"
               data-field="Objective"
               required
               :ref="'field_Objective'"
+              :maxlength="validationRules.maxLengths.Objective"
             ></textarea>
             <div class="char-count" :class="{ 
               'error': validationErrors.Objective,
               'warning': showWarning('Objective')
             }">
-              {{ compliance.Objective?.length || 0 }}/15 min characters
+              {{ compliance.Objective?.length || 0 }}/{{ validationRules.minLengths.Objective }} min characters
             </div>
             <div v-if="validationErrors.Objective" class="field-error-message">
-              {{ validationErrors.Objective }}
+              {{ validationErrors.Objective.join(', ') }}
             </div>
           </div>
           <div class="validation-feedback" v-if="compliance.Objective">
@@ -341,7 +346,7 @@
           <label>
             Possible Impact
             <span class="required">*</span>
-            <span class="field-requirements">(Minimum 10 characters)</span>
+            <span class="field-requirements">(Minimum {{ validationRules.minLengths.PossibleDamage }} characters)</span>
           </label>
           <div class="input-wrapper">
             <textarea 
@@ -353,17 +358,18 @@
                 'valid': isFieldValid('PossibleDamage')
               }"
               placeholder="Describe possible damage"
-              @input="validateFieldRealTime('PossibleDamage')"
+              @input="onFieldChange('PossibleDamage', $event)"
               @blur="validateField('PossibleDamage')"
               rows="3"
               :required="compliance.IsRisk"
               :ref="'field_PossibleDamage'"
+              :maxlength="validationRules.maxLengths.PossibleDamage"
             ></textarea>
             <div class="char-count" :class="{ 'error': validationErrors.PossibleDamage }">
-              {{ compliance.PossibleDamage?.length || 0 }}/10 min characters
+              {{ compliance.PossibleDamage?.length || 0 }}/{{ validationRules.minLengths.PossibleDamage }} min characters
             </div>
             <div v-if="validationErrors.PossibleDamage" class="field-error-message">
-              {{ validationErrors.PossibleDamage }}
+              {{ validationErrors.PossibleDamage.join(', ') }}
             </div>
           </div>
         </div>
@@ -393,21 +399,22 @@
                 placeholder="Describe this mitigation step"
                 rows="2"
                 required
+                :maxlength="validationRules.maxLengths.mitigation"
               ></textarea>
             </div>
             <button type="button" class="add-step-btn" @click="addStep" title="Add new mitigation step">
               <i class="fas fa-plus"></i> Add Step
             </button>
           </div>
-          <div v-if="validationErrors.mitigation" class="error-message">
-            {{ validationErrors.mitigation }}
+          <div v-if="validationErrors.mitigation" class="field-error-message">
+            {{ validationErrors.mitigation.join(', ') }}
           </div>
         </div>
         
         <div class="compliance-field full-width">
           <label>
             Potential Risk Scenarios
-            <span class="field-requirements">(Recommended: 20+ characters)</span>
+            <span class="field-requirements">(Recommended: {{ validationRules.minLengths.PotentialRiskScenarios }}+ characters)</span>
           </label>
           <div class="input-wrapper">
             <textarea 
@@ -418,16 +425,17 @@
                 'valid': isFieldValid('PotentialRiskScenarios')
               }"
               placeholder="Describe potential risk scenarios"
-              @input="validateFieldRealTime('PotentialRiskScenarios')"
+              @input="onFieldChange('PotentialRiskScenarios', $event)"
               @blur="validateField('PotentialRiskScenarios')"
               rows="3"
               :ref="'field_PotentialRiskScenarios'"
+              :maxlength="validationRules.maxLengths.PotentialRiskScenarios"
             ></textarea>
             <div class="char-count">
               {{ compliance.PotentialRiskScenarios?.length || 0 }} characters
             </div>
             <div v-if="validationErrors.PotentialRiskScenarios" class="field-error-message">
-              {{ validationErrors.PotentialRiskScenarios }}
+              {{ validationErrors.PotentialRiskScenarios.join(', ') }}
             </div>
           </div>
         </div>
@@ -446,7 +454,7 @@
                   'error': validationErrors.RiskType,
                   'valid': isFieldValid('RiskType')
                 }"
-                @change="validateFieldRealTime('RiskType')"
+                @change="onFieldChange('RiskType', $event)"
                 @blur="validateField('RiskType')"
                 :ref="'field_RiskType'"
               >
@@ -463,7 +471,7 @@
               </div>
             </div>
             <div v-if="validationErrors.RiskType" class="field-error-message">
-              {{ validationErrors.RiskType }}
+              {{ validationErrors.RiskType.join(', ') }}
             </div>
           </div>
           
@@ -516,24 +524,38 @@
               Risk Business Impact
               <span class="required">*</span>
             </label>
-            <div class="input-wrapper">
-              <div class="searchable-dropdown">
-                <input 
-                  v-model="riskBusinessImpactSearch" 
-                  class="compliance-input" 
-                  :class="{
-                    'error': validationErrors.RiskBusinessImpact,
-                    'valid': isFieldValid('RiskBusinessImpact')
-                  }"
-                  placeholder="Search or add business impact"
-                  @input="validateFieldRealTime('RiskBusinessImpact')"
-                  @blur="validateField('RiskBusinessImpact')"
-                  :ref="'field_RiskBusinessImpact'"
-                />
-                <div class="validation-indicator" v-if="compliance.RiskBusinessImpact">
-                  <span v-if="isFieldValid('RiskBusinessImpact')" class="valid-icon">✓</span>
-                  <span v-else class="invalid-icon">!</span>
+            <div class="searchable-dropdown">
+              <input 
+                v-model="riskBusinessImpactSearch" 
+                class="compliance-input" 
+                :class="{
+                  'error': validationErrors.RiskBusinessImpact,
+                  'valid': isFieldValid('RiskBusinessImpact')
+                }"
+                placeholder="Search or add business impact"
+                @focus="showDropdown('RiskBusinessImpact')"
+                @input="filterOptions('RiskBusinessImpact')"
+                :ref="'field_RiskBusinessImpact'"
+              />
+              <div v-show="activeDropdown === 'RiskBusinessImpact'" class="dropdown-options">
+                <div v-if="filteredOptions.RiskBusinessImpact.length === 0 && riskBusinessImpactSearch" class="dropdown-add-option">
+                  <span>No matches found. Add new:</span>
+                  <button @click="addNewOption('RiskBusinessImpact', riskBusinessImpactSearch)" class="dropdown-add-btn">
+                    + Add "{{ riskBusinessImpactSearch }}"
+                  </button>
                 </div>
+                <div 
+                  v-for="option in filteredOptions.RiskBusinessImpact" 
+                  :key="option.id" 
+                  class="dropdown-option"
+                  @click="selectOption('RiskBusinessImpact', option.value)"
+                >
+                  {{ option.value }}
+                </div>
+              </div>
+              <div class="validation-indicator" v-if="compliance.RiskBusinessImpact">
+                <span v-if="isFieldValid('RiskBusinessImpact')" class="valid-icon">✓</span>
+                <span v-else class="invalid-icon">!</span>
               </div>
             </div>
             <div v-if="validationErrors.RiskBusinessImpact" class="field-error-message">
@@ -560,7 +582,7 @@
                   'error': validationErrors.Criticality,
                   'valid': isFieldValid('Criticality')
                 }"
-                @change="validateFieldRealTime('Criticality')"
+                @change="onFieldChange('Criticality', $event)"
                 @blur="validateField('Criticality')"
                 required
                 :ref="'field_Criticality'"
@@ -576,7 +598,7 @@
               </div>
             </div>
             <div v-if="validationErrors.Criticality" class="field-error-message">
-              {{ validationErrors.Criticality }}
+              {{ validationErrors.Criticality.join(', ') }}
             </div>
           </div>
           
@@ -642,7 +664,7 @@
             <label>
               Impact
               <span class="required">*</span>
-              <span class="field-requirements">(0-10)</span>
+              <span class="field-requirements">({{ validationRules.numericRanges.Impact.min }}-{{ validationRules.numericRanges.Impact.max }})</span>
             </label>
             <input 
               type="number" 
@@ -650,15 +672,15 @@
               class="compliance-input"
               :class="{ 'error': validationErrors.Impact }"
               step="0.1"
-              min="0"
+              min="1"
               max="10"
-              @input="validateFieldRealTime('Impact')"
+              @input="onFieldChange('Impact', $event)"
               @blur="validateField('Impact')"
               required
               :ref="'field_Impact'"
             />
             <div v-if="validationErrors.Impact" class="field-error-message">
-              {{ validationErrors.Impact }}
+              {{ validationErrors.Impact.join(', ') }}
             </div>
           </div>
           
@@ -666,7 +688,7 @@
             <label>
               Probability
               <span class="required">*</span>
-              <span class="field-requirements">(0-10)</span>
+              <span class="field-requirements">({{ validationRules.numericRanges.Probability.min }}-{{ validationRules.numericRanges.Probability.max }})</span>
             </label>
             <input 
               type="number" 
@@ -674,15 +696,15 @@
               class="compliance-input"
               :class="{ 'error': validationErrors.Probability }"
               step="0.1"
-              min="0"
+              min="1"
               max="10"
-              @input="validateFieldRealTime('Probability')"
+              @input="onFieldChange('Probability', $event)"
               @blur="validateField('Probability')"
               required
               :ref="'field_Probability'"
             />
             <div v-if="validationErrors.Probability" class="field-error-message">
-              {{ validationErrors.Probability }}
+              {{ validationErrors.Probability.join(', ') }}
             </div>
           </div>
         </div>
@@ -726,6 +748,9 @@
             <div v-if="validationErrors.versionType" class="field-error-message">
               {{ validationErrors.versionType }}
             </div>
+            <div v-if="versionPreview" class="version-preview">
+              {{ versionPreview }}
+            </div>
           </div>
         </div>
       </div>
@@ -742,7 +767,8 @@
               v-model="compliance.reviewer_id" 
               class="compliance-select" 
               :class="{ 'error': validationErrors.reviewer_id }"
-              @change="validateField('reviewer_id')"
+              @change="onFieldChange('reviewer_id', $event)"
+              @blur="validateField('reviewer_id')"
               required
               title="Person responsible for reviewing this compliance item"
               :ref="'field_reviewer_id'"
@@ -753,7 +779,7 @@
               </option>
             </select>
             <div v-if="validationErrors.reviewer_id" class="field-error-message">
-              {{ validationErrors.reviewer_id }}
+              {{ validationErrors.reviewer_id.join(', ') }}
             </div>
           </div>
         </div>
@@ -816,88 +842,61 @@ export default {
       activeDropdown: null,
       validationErrors: {},
       validationRules: {
-        ComplianceTitle: [
-          { required: true, message: 'Compliance Title is required' },
-          { minLength: 3, message: 'Title must be at least 3 characters' },
-          { maxLength: 145, message: 'Title cannot exceed 145 characters' }
-        ],
-        ComplianceType: [
-          { required: true, message: 'Compliance Type is required' }
-        ],
-        ComplianceItemDescription: [
-          { required: true, message: 'Description is required' },
-          { minLength: 10, message: 'Description must be at least 10 characters' }
-        ],
-        Scope: [
-          { required: true, message: 'Scope is required' },
-          { minLength: 15, message: 'Scope must be at least 15 characters' }
-        ],
-        Objective: [
-          { required: true, message: 'Objective is required' },
-          { minLength: 15, message: 'Objective must be at least 15 characters' }
-        ],
-        BusinessUnitsCovered: [
-          { required: true, message: 'Business Units Covered is required' }
-        ],
-        Criticality: [
-          { required: true, message: 'Criticality is required' }
-        ],
-        Impact: [
-          { required: true, message: 'Impact is required' },
-          { min: 0, max: 10, message: 'Impact must be between 0 and 10' }
-        ],
-        Probability: [
-          { required: true, message: 'Probability is required' },
-          { min: 0, max: 10, message: 'Probability must be between 0 and 10' }
-        ],
-        reviewer_id: [
-          { required: true, message: 'Reviewer is required' }
-        ],
-        PossibleDamage: [
-          { required: true, message: 'Possible Damage is required for risks' },
-          { minLength: 10, message: 'Possible Damage must be at least 10 characters' }
-        ],
-        RiskType: [
-          { required: true, message: 'Risk Type is required for risks' }
-        ],
-        RiskCategory: [
-          { required: true, message: 'Risk Category is required for risks' }
-        ],
-        RiskBusinessImpact: [
-          { required: true, message: 'Risk Business Impact is required for risks' }
-        ],
-        mitigation: [
-          { 
-            required: true, 
-            message: 'At least one mitigation step is required for risks',
-            validate: (value) => {
-              // Skip validation if not a risk
-              if (!this.compliance?.IsRisk) {
-                return true;
-              }
-              
-              // Check if we have any valid steps in the mitigationSteps array
-              if (this.mitigationSteps && this.mitigationSteps.length > 0) {
-                const hasValidStep = this.mitigationSteps.some(step => 
-                  step.description && step.description.trim().length > 0
-                );
-                if (hasValidStep) return true;
-              }
-              
-              // If no valid steps in mitigationSteps, check the value object
-              if (!value) return false;
-              
-              if (typeof value === 'object') {
-                return Object.values(value).some(step => step && step.trim().length > 0);
-              }
-              
-              return typeof value === 'string' && value.trim().length > 0;
-            }
-          }
-        ]
+        // Character set patterns
+        textPattern: /^[a-zA-Z0-9\s.,!?\-_()[\]{}:;'"&%$#@+=\n\r\t]*$/,
+        alphanumericPattern: /^[a-zA-Z0-9\s.\-_]*$/,
+        identifierPattern: /^[a-zA-Z0-9\-_]*$/,
+        
+        // Field length limits
+        maxLengths: {
+          ComplianceTitle: 145,
+          ComplianceItemDescription: 5000,
+          ComplianceType: 100,
+          Scope: 5000,
+          Objective: 5000,
+          BusinessUnitsCovered: 225,
+          Identifier: 45,
+          PossibleDamage: 5000,
+          mitigation: 5000,
+          PotentialRiskScenarios: 5000,
+          RiskType: 45,
+          RiskCategory: 45,
+          RiskBusinessImpact: 45,
+          Applicability: 45
+        },
+        
+        // Field minimum length requirements
+        minLengths: {
+          ComplianceTitle: 3,
+          ComplianceItemDescription: 10,
+          ComplianceType: 3,
+          Scope: 15,
+          Objective: 10,
+          BusinessUnitsCovered: 3,
+          mitigation: 10,
+          PossibleDamage: 10,
+          PotentialRiskScenarios: 10,
+          RiskType: 3,
+          RiskCategory: 3,
+          RiskBusinessImpact: 3
+        },
+        
+        // Allowed choice values
+        allowedChoices: {
+          Criticality: ['High', 'Medium', 'Low'],
+          MandatoryOptional: ['Mandatory', 'Optional'],
+          ManualAutomatic: ['Manual', 'Automatic']
+        },
+        
+        // Numeric field ranges
+        numericRanges: {
+          Impact: { min: 1, max: 10 },
+          Probability: { min: 1, max: 10 }
+        }
       },
       fieldStates: {}, // Track real-time validation states
       mitigationSteps: [{ description: '' }],
+      versionPreview: '', // Store version preview for display
     }
   },
   watch: {
@@ -933,62 +932,168 @@ export default {
       const selectedType = event.target.value;
       console.log('Version type changed to:', selectedType);
       this.compliance.versionType = selectedType;
+      
+      // Preview the new version
+      this.previewNewVersion();
+    },
+    
+    // Preview the new version based on current selection
+    previewNewVersion() {
+      if (!this.compliance.versionType) return;
+      
+      const currentVersion = this.validateVersionFormat(this.compliance.ComplianceVersion);
+      const versionParts = currentVersion.split('.');
+      const currentMajor = parseInt(versionParts[0]) || 1;
+      const currentMinor = parseInt(versionParts[1]) || 0;
+      
+      let newVersion;
+      if (this.compliance.versionType === 'Major') {
+        newVersion = `${currentMajor + 1}.0`;
+      } else {
+        newVersion = `${currentMajor}.${currentMinor + 1}`;
+      }
+      
+      console.log(`Version preview: ${currentVersion} -> ${newVersion} (${this.compliance.versionType})`);
+      
+      // Store the preview for potential display
+      this.versionPreview = `New version will be: ${newVersion}`;
+    },
+    // --- Mitigation Steps Logic ---
+    parseMitigationSteps(mitigation) {
+      console.log("[parseMitigationSteps] Input:", mitigation, typeof mitigation);
+      if (!mitigation || (typeof mitigation === 'object' && Object.keys(mitigation).length === 0)) {
+        return [{ description: '' }];
+      }
+      if (typeof mitigation === 'string') {
+        try { 
+          mitigation = JSON.parse(mitigation); 
+        } catch { 
+          return [{ description: '' }]; 
+        }
+      }
+      if (typeof mitigation === 'object') {
+        const sortedKeys = Object.keys(mitigation).sort((a, b) => parseInt(a) - parseInt(b));
+        const steps = sortedKeys.map(key => ({ description: mitigation[key] || '' }));
+        return steps.length ? steps : [{ description: '' }];
+      }
+      return [{ description: '' }];
+    },
+    onMitigationStepChange() {
+      // Always build mitigation JSON from all steps (including empty)
+      const mitigationJson = {};
+      this.mitigationSteps.forEach((step, idx) => {
+        if (step.description && step.description.trim()) {
+          mitigationJson[`${idx + 1}`] = step.description.trim();
+        }
+      });
+      this.compliance.mitigation = mitigationJson;
+      console.log('[onMitigationStepChange] mitigationSteps:', this.mitigationSteps);
+      console.log('[onMitigationStepChange] mitigation JSON:', mitigationJson);
+      this.validateField('mitigation');
     },
     async loadComplianceData(complianceId) {
       try {
         this.loading = true;
         const response = await complianceService.getComplianceById(complianceId);
-        
         if (response.data && response.data.success) {
-          // Initialize compliance data
-          const versionType = response.data.data.versionType || 'Minor';
-          this.compliance = {
-            ...response.data.data,
-            versionType // Use existing version type or default to Minor
-          };
-          console.log('Initialized version type as:', versionType);
-          
-          // Set default reviewer if not present
-          if (!this.compliance.reviewer_id && this.users.length > 0) {
-            this.compliance.reviewer_id = this.users[0].UserId;
-          }
-          
-          // Initialize search fields with current values
-          this.businessUnitSearch = this.compliance.BusinessUnitsCovered || '';
-          this.riskTypeSearch = this.compliance.RiskType || '';
-          this.riskCategorySearch = this.compliance.RiskCategory || '';
-          this.riskBusinessImpactSearch = this.compliance.RiskBusinessImpact || '';
-          
-          // Initialize filtered options
-          this.filteredOptions = {
-            BusinessUnitsCovered: this.categoryOptions.BusinessUnitsCovered || [],
-            RiskType: this.categoryOptions.RiskType || [],
-            RiskCategory: this.categoryOptions.RiskCategory || [],
-            RiskBusinessImpact: this.categoryOptions.RiskBusinessImpact || []
-          };
-          
-          // Log the mitigation data received from the backend
-          console.log("Received mitigation data:", this.compliance.mitigation);
-          
-          // Initialize mitigation steps from loaded compliance data
+          this.compliance = { ...response.data.data };
+          // --- Always parse mitigation steps on load ---
           this.mitigationSteps = this.parseMitigationSteps(this.compliance.mitigation);
-          console.log("Parsed mitigation steps:", this.mitigationSteps);
+          console.log('[loadComplianceData] Loaded mitigation:', this.compliance.mitigation);
+          console.log('[loadComplianceData] Parsed steps:', this.mitigationSteps);
+          
+          // Initialize search fields with existing values
+          this.initializeSearchFields();
+          
+          // Clear version preview initially
+          this.versionPreview = '';
         } else {
           this.error = 'Failed to load compliance data';
         }
       } catch (error) {
-        // Check if it's an access control error
-        if (error.response && [401, 403].includes(error.response.status)) {
-          AccessUtils.showEditComplianceDenied();
-          return;
-        }
-        
-        console.error('Error loading compliance:', error);
         this.error = 'Failed to load compliance data. Please try again.';
       } finally {
         this.loading = false;
       }
     },
+    
+    // Initialize search fields with existing compliance data
+    initializeSearchFields() {
+      if (this.compliance) {
+        // Initialize business unit search
+        if (this.compliance.BusinessUnitsCovered) {
+          this.businessUnitSearch = this.compliance.BusinessUnitsCovered;
+        }
+        
+        // Initialize risk category search
+        if (this.compliance.RiskCategory) {
+          this.riskCategorySearch = this.compliance.RiskCategory;
+        }
+        
+        // Initialize risk business impact search
+        if (this.compliance.RiskBusinessImpact) {
+          this.riskBusinessImpactSearch = this.compliance.RiskBusinessImpact;
+        }
+        
+        // Initialize risk type search
+        if (this.compliance.RiskType) {
+          this.riskTypeSearch = this.compliance.RiskType;
+        }
+        
+        console.log('[initializeSearchFields] Initialized search fields:', {
+          businessUnitSearch: this.businessUnitSearch,
+          riskCategorySearch: this.riskCategorySearch,
+          riskBusinessImpactSearch: this.riskBusinessImpactSearch,
+          riskTypeSearch: this.riskTypeSearch
+        });
+        
+        // Also update the filtered options to show the current values
+        this.updateFilteredOptions();
+      }
+    },
+    
+    // Validate and format version string
+    validateVersionFormat(version) {
+      if (!version) return '1.0';
+      
+      // Ensure version is in X.Y format
+      const parts = version.toString().split('.');
+      const major = parseInt(parts[0]) || 1;
+      const minor = parseInt(parts[1]) || 0;
+      
+      return `${major}.${minor}`;
+    },
+    
+    // Update filtered options to include current values
+    updateFilteredOptions() {
+      // Update filtered options for each field to ensure current values are shown
+      if (this.compliance) {
+        if (this.compliance.BusinessUnitsCovered && this.categoryOptions.BusinessUnitsCovered) {
+          this.filteredOptions.BusinessUnitsCovered = this.categoryOptions.BusinessUnitsCovered.filter(option => 
+            option.value.toLowerCase().includes(this.businessUnitSearch.toLowerCase())
+          );
+        }
+        
+        if (this.compliance.RiskCategory && this.categoryOptions.RiskCategory) {
+          this.filteredOptions.RiskCategory = this.categoryOptions.RiskCategory.filter(option => 
+            option.value.toLowerCase().includes(this.riskCategorySearch.toLowerCase())
+          );
+        }
+        
+        if (this.compliance.RiskBusinessImpact && this.categoryOptions.RiskBusinessImpact) {
+          this.filteredOptions.RiskBusinessImpact = this.categoryOptions.RiskBusinessImpact.filter(option => 
+            option.value.toLowerCase().includes(this.riskBusinessImpactSearch.toLowerCase())
+          );
+        }
+        
+        if (this.compliance.RiskType && this.categoryOptions.RiskType) {
+          this.filteredOptions.RiskType = this.categoryOptions.RiskType.filter(option => 
+            option.value.toLowerCase().includes(this.riskTypeSearch.toLowerCase())
+          );
+        }
+      }
+    },
+    
     async loadUsers() {
       try {
         this.loading = true;
@@ -1026,71 +1131,318 @@ export default {
       date.setDate(date.getDate() + 7);
       return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
     },
+    // Centralized validation methods using allow-list approach
+    sanitizeString(value) {
+      if (typeof value !== 'string') return String(value || '');
+      // Remove control characters except newline, tab, carriage return
+      // eslint-disable-next-line no-control-regex
+      return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+    },
+    
+    sanitizeStringForSubmission(value) {
+      if (typeof value !== 'string') return String(value || '');
+      // Remove control characters and trim for final submission
+      // eslint-disable-next-line no-control-regex
+      return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
+    },
+    
+    validateRequiredString(value, fieldName, maxLength = null, minLength = null, pattern = null) {
+      const sanitized = this.sanitizeString(value);
+      const trimmedValue = sanitized.trim();
+      const errors = [];
+      
+      if (!trimmedValue || trimmedValue.length === 0) {
+        errors.push(`${fieldName} is required and cannot be empty`);
+      }
+      
+      if (minLength && trimmedValue.length > 0 && trimmedValue.length < minLength) {
+        errors.push(`${fieldName} must be at least ${minLength} characters long`);
+      }
+      
+      if (maxLength && sanitized.length > maxLength) {
+        errors.push(`${fieldName} must not exceed ${maxLength} characters`);
+      }
+      
+      if (pattern && sanitized && !pattern.test(sanitized)) {
+        errors.push(`${fieldName} contains invalid characters`);
+      }
+      
+      return { value: sanitized, errors };
+    },
+    
+    validateOptionalString(value, fieldName, maxLength = null, pattern = null) {
+      const sanitized = this.sanitizeString(value);
+      const errors = [];
+      
+      if (maxLength && sanitized.length > maxLength) {
+        errors.push(`${fieldName} must not exceed ${maxLength} characters`);
+      }
+      
+      if (pattern && sanitized && !pattern.test(sanitized)) {
+        errors.push(`${fieldName} contains invalid characters`);
+      }
+      
+      return { value: sanitized, errors };
+    },
+    
+    validateChoiceField(value, fieldName, allowedChoices) {
+      const errors = [];
+      
+      if (!value || value === '') {
+        errors.push(`${fieldName} is required`);
+      } else if (!allowedChoices.includes(value)) {
+        errors.push(`${fieldName} must be one of: ${allowedChoices.join(', ')}`);
+      }
+      
+      return { value, errors };
+    },
+    
+    validateNumericField(value, fieldName, min = null, max = null) {
+      const errors = [];
+      const numValue = parseFloat(value);
+      
+      if (isNaN(numValue)) {
+        errors.push(`${fieldName} must be a valid number`);
+      } else {
+        if (min !== null && numValue < min) {
+          errors.push(`${fieldName} must be at least ${min}`);
+        }
+        if (max !== null && numValue > max) {
+          errors.push(`${fieldName} must not exceed ${max}`);
+        }
+      }
+      
+      return { value: numValue, errors };
+    },
+    
+    validateDateField(value, fieldName) {
+      const errors = [];
+      
+      if (!value || value === '') {
+        errors.push(`${fieldName} is required`);
+      } else {
+        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+        if (!datePattern.test(value)) {
+          errors.push(`${fieldName} must be in YYYY-MM-DD format`);
+        } else {
+          const date = new Date(value);
+          if (isNaN(date.getTime())) {
+            errors.push(`${fieldName} must be a valid date`);
+          } else {
+            // Check if date is in the future (for approval due dates)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time to compare only dates
+            if (date < today) {
+              errors.push(`${fieldName} must be a future date`);
+            }
+          }
+        }
+      }
+      
+      return { value, errors };
+    },
+    
+    validateComplianceField(compliance, fieldName, value) {
+      const rules = this.validationRules;
+      let result = { value, errors: [] };
+      
+      switch (fieldName) {
+        case 'ComplianceTitle':
+          result = this.validateRequiredString(
+            value, 'Compliance Title', 
+            rules.maxLengths.ComplianceTitle,
+            rules.minLengths.ComplianceTitle,
+            rules.textPattern
+          );
+          break;
+          
+        case 'ComplianceItemDescription':
+          result = this.validateRequiredString(
+            value, 'Compliance Description', 
+            rules.maxLengths.ComplianceItemDescription,
+            rules.minLengths.ComplianceItemDescription,
+            rules.textPattern
+          );
+          break;
+          
+        case 'ComplianceType':
+          result = this.validateRequiredString(
+            value, 'Compliance Type', 
+            rules.maxLengths.ComplianceType,
+            rules.minLengths.ComplianceType,
+            rules.textPattern
+          );
+          break;
+          
+        case 'Scope':
+          result = this.validateRequiredString(
+            value, 'Scope', 
+            rules.maxLengths.Scope,
+            rules.minLengths.Scope,
+            rules.textPattern
+          );
+          break;
+          
+        case 'Objective':
+          result = this.validateRequiredString(
+            value, 'Objective', 
+            rules.maxLengths.Objective,
+            rules.minLengths.Objective,
+            rules.textPattern
+          );
+          break;
+          
+        case 'BusinessUnitsCovered':
+          result = this.validateRequiredString(
+            value, 'Business Units Covered', 
+            rules.maxLengths.BusinessUnitsCovered,
+            rules.minLengths.BusinessUnitsCovered,
+            rules.textPattern
+          );
+          break;
+          
+        case 'Identifier':
+          if (value && value.trim()) {
+            result = this.validateOptionalString(
+              value, 'Identifier', 
+              rules.maxLengths.Identifier, 
+              rules.identifierPattern
+            );
+          }
+          break;
+          
+        case 'PossibleDamage':
+          result = this.validateRequiredString(
+            value, 'Possible Damage', 
+            rules.maxLengths.PossibleDamage,
+            rules.minLengths.PossibleDamage,
+            rules.textPattern
+          );
+          break;
+          
+        case 'PotentialRiskScenarios':
+          result = this.validateRequiredString(
+            value, 'Potential Risk Scenarios', 
+            rules.maxLengths.PotentialRiskScenarios,
+            rules.minLengths.PotentialRiskScenarios,
+            rules.textPattern
+          );
+          break;
+          
+        case 'RiskType':
+          result = this.validateRequiredString(
+            value, 'Risk Type', 
+            rules.maxLengths.RiskType,
+            rules.minLengths.RiskType,
+            rules.textPattern
+          );
+          break;
+          
+        case 'RiskCategory':
+          result = this.validateRequiredString(
+            value, 'Risk Category', 
+            rules.maxLengths.RiskCategory,
+            rules.minLengths.RiskCategory,
+            rules.textPattern
+          );
+          break;
+          
+        case 'RiskBusinessImpact':
+          result = this.validateRequiredString(
+            value, 'Risk Business Impact', 
+            rules.maxLengths.RiskBusinessImpact,
+            rules.minLengths.RiskBusinessImpact,
+            rules.textPattern
+          );
+          break;
+          
+        case 'mitigation':
+          // Always validate mitigation steps regardless of IsRisk status
+          if (!this.mitigationSteps || this.mitigationSteps.length === 0) {
+            result.errors.push('At least one mitigation step is required');
+          } else {
+            // Check if all steps have descriptions and meet minimum length
+            const invalidSteps = this.mitigationSteps.filter(step => {
+              const description = step.description ? step.description.trim() : '';
+              return !description || description.length < 10;
+            });
+            
+            if (invalidSteps.length > 0) {
+              result.errors.push('Each mitigation step must have at least 10 characters');
+            }
+          }
+          break;
+          
+        case 'Applicability':
+          result = this.validateOptionalString(
+            value, 'Applicability', 
+            rules.maxLengths.Applicability, 
+            rules.textPattern
+          );
+          break;
+          
+        case 'Criticality':
+          result = this.validateChoiceField(
+            value, 'Criticality', 
+            rules.allowedChoices.Criticality
+          );
+          break;
+          
+        case 'MandatoryOptional':
+          result = this.validateChoiceField(
+            value, 'Mandatory/Optional', 
+            rules.allowedChoices.MandatoryOptional
+          );
+          break;
+          
+        case 'ManualAutomatic':
+          result = this.validateChoiceField(
+            value, 'Manual/Automatic', 
+            rules.allowedChoices.ManualAutomatic
+          );
+          break;
+          
+        case 'Impact':
+          result = this.validateNumericField(
+            value, 'Severity Rating', 
+            rules.numericRanges.Impact.min, 
+            rules.numericRanges.Impact.max
+          );
+          break;
+          
+        case 'Probability':
+          result = this.validateNumericField(
+            value, 'Probability', 
+            rules.numericRanges.Probability.min, 
+            rules.numericRanges.Probability.max
+          );
+          break;
+      }
+      
+      // Update validation errors for the field
+      if (!this.validationErrors) {
+        this.validationErrors = {};
+      }
+      
+      if (result.errors.length > 0) {
+        this.validationErrors[fieldName] = result.errors;
+      } else {
+        delete this.validationErrors[fieldName];
+      }
+      
+      return result;
+    },
+
     validateField(fieldName) {
       // Skip validation if compliance data is not yet loaded
       if (!this.compliance) {
-        return true;
+      return true;
       }
 
       const value = this.compliance[fieldName];
-      const rules = this.validationRules[fieldName];
+      const result = this.validateComplianceField(this.compliance, fieldName, value);
       
-      // If no validation rules exist for this field, consider it valid
-      if (!rules || !Array.isArray(rules)) {
-        return true;
-      }
-      
-      // Reset error for this field
-      this.validationErrors[fieldName] = '';
-      
-      // Skip validation if field is not required and empty
-      if (!rules.find(rule => rule.required) && !value) {
-        return true;
-      }
-      
-      // Skip PossibleDamage validation if IsRisk is false
-      if (fieldName === 'PossibleDamage' && !this.compliance.IsRisk) {
-        return true;
-      }
-      
-      for (const rule of rules) {
-        // Custom validation function
-        if (rule.validate && typeof rule.validate === 'function') {
-          if (!rule.validate(value)) {
-            this.validationErrors[fieldName] = rule.message;
-            return false;
-          }
-        }
-        
-        // Required validation
-        if (rule.required && (!value || value.toString().trim() === '')) {
-          this.validationErrors[fieldName] = rule.message;
-          return false;
-        }
-        
-        // Min length validation
-        if (rule.minLength && value && value.length < rule.minLength) {
-          this.validationErrors[fieldName] = rule.message;
-          return false;
-        }
-        
-        // Max length validation
-        if (rule.maxLength && value && value.length > rule.maxLength) {
-          this.validationErrors[fieldName] = rule.message;
-          return false;
-        }
-        
-        // Min/Max number validation
-        if ((rule.min !== undefined || rule.max !== undefined) && value) {
-          const numValue = parseFloat(value);
-          if (isNaN(numValue) || numValue < rule.min || numValue > rule.max) {
-            this.validationErrors[fieldName] = rule.message;
-            return false;
-          }
-        }
-      }
-      
-      return true;
+      return result.errors.length === 0;
     },
 
     validateAllFields() {
@@ -1098,14 +1450,58 @@ export default {
       let firstErrorField = null;
       
       // Validate all fields
-      for (const fieldName in this.validationRules) {
+      const requiredFields = [
+        'ComplianceTitle',
+        'ComplianceItemDescription', 
+        'ComplianceType',
+        'Scope',
+        'Objective',
+        'BusinessUnitsCovered',
+        'mitigation',
+        'PossibleDamage',
+        'PotentialRiskScenarios',
+        'RiskType',
+        'RiskCategory',
+        'RiskBusinessImpact',
+        'Criticality',
+        'MandatoryOptional',
+        'ManualAutomatic',
+        'Impact',
+        'Probability',
+        'reviewer_id'
+      ];
+      
+      // Validate reviewer selection
+      if (!this.compliance.reviewer_id || this.compliance.reviewer_id === '') {
+        this.validationErrors.reviewer_id = ['Please select a reviewer'];
+        isValid = false;
+        if (!firstErrorField) {
+          firstErrorField = 'reviewer_id';
+        }
+      }
+      
+      // Validate all required fields
+      requiredFields.forEach(fieldName => {
         if (!this.validateField(fieldName)) {
           isValid = false;
           if (!firstErrorField) {
             firstErrorField = fieldName;
           }
         }
-      }
+      });
+      
+      // Validate optional fields that have values
+      const optionalFields = ['Identifier', 'Applicability'];
+      optionalFields.forEach(fieldName => {
+        if (this.compliance[fieldName] && this.compliance[fieldName].trim()) {
+          if (!this.validateField(fieldName)) {
+            isValid = false;
+            if (!firstErrorField) {
+              firstErrorField = fieldName;
+            }
+          }
+        }
+      });
 
       // If validation failed, scroll to the first error
       if (firstErrorField) {
@@ -1141,35 +1537,64 @@ export default {
           return;
         }
         
-        // Calculate new version based on version type
-        const currentVersion = this.compliance.ComplianceVersion || '1.0';
-        let newVersion;
-        
-        if (versionType === 'Major') {
-          // For major version, increment the major number and reset minor to 0
-          const [major] = currentVersion.split('.');
-          newVersion = `${parseInt(major) + 1}.0`;
-        } else {
-          // For minor version, keep major number and increment minor
-          const [major, minor] = currentVersion.split('.');
-          newVersion = `${major}.${(parseInt(minor) || 0) + 1}`;
+        // Validate that the current version is in the correct format
+        if (!this.compliance.ComplianceVersion) {
+          this.compliance.ComplianceVersion = '1.0';
         }
         
-        console.log('Current version:', currentVersion);
-        console.log('New version:', newVersion);
+        // Calculate new version based on version type
+        const currentVersion = this.validateVersionFormat(this.compliance.ComplianceVersion);
+        let newVersion;
         
-        // Process mitigation steps properly
-        let mitigationData = {};
-        if (this.compliance.IsRisk && this.mitigationSteps && this.mitigationSteps.length > 0) {
-          this.mitigationSteps.forEach((step, index) => {
-            if (step.description && step.description.trim()) {
-              mitigationData[`${index + 1}`] = step.description.trim();
-            }
-          });
+        // Parse the current version to handle edge cases
+        const versionParts = currentVersion.split('.');
+        const currentMajor = parseInt(versionParts[0]) || 1;
+        const currentMinor = parseInt(versionParts[1]) || 0;
+        
+        if (versionType === 'Major') {
+          // For major version: increment the major number and reset minor to 0
+          // Example: 1.0 -> 2.0, 2.3 -> 3.0, 1.5 -> 2.0
+          newVersion = `${currentMajor + 1}.0`;
+        } else {
+          // For minor version: keep major number and increment minor
+          // Example: 1.0 -> 1.1, 2.3 -> 2.4, 1.5 -> 1.6
+          newVersion = `${currentMajor}.${currentMinor + 1}`;
+        }
+        
+        console.log('Version calculation details:');
+        console.log('  Current version:', currentVersion);
+        console.log('  Version type:', versionType);
+        console.log('  Parsed major:', currentMajor);
+        console.log('  Parsed minor:', currentMinor);
+        console.log('  New version:', newVersion);
+        
+        // Validate the new version format
+        const versionPattern = /^\d+\.\d+$/;
+        if (!versionPattern.test(newVersion)) {
+          this.error = 'Invalid version format. Version must be in X.Y format (e.g., 2.4, 3.0)';
+          return;
+        }
+        
+        // Process mitigation steps properly - use the already processed data from compliance.mitigation
+        let mitigationData = this.compliance.mitigation || {};
+        
+        // If no mitigation data exists, create it from mitigationSteps
+        if (!mitigationData || Object.keys(mitigationData).length === 0) {
+          if (this.compliance.IsRisk && this.mitigationSteps && this.mitigationSteps.length > 0) {
+            mitigationData = {};
+            this.mitigationSteps.forEach((step, index) => {
+              if (step.description && step.description.trim()) {
+                mitigationData[`${index + 1}`] = step.description.trim();
+              }
+            });
+          }
         }
         
         console.log("DEBUG: Mitigation steps array:", this.mitigationSteps);
         console.log("DEBUG: Processed mitigation data for submission:", mitigationData);
+        console.log("DEBUG: mitigationData type:", typeof mitigationData);
+        console.log("DEBUG: mitigationData keys:", Object.keys(mitigationData));
+        console.log("DEBUG: mitigationData stringified:", JSON.stringify(mitigationData, null, 2));
         
         // Prepare submission data
         const editData = {
@@ -1184,7 +1609,11 @@ export default {
         };
 
         console.log("DEBUG: Complete edit data being sent:", editData);
+        console.log("DEBUG: Version being sent:", editData.ComplianceVersion);
+        console.log("DEBUG: Version type being sent:", editData.versionType);
         console.log("DEBUG: Mitigation in edit data:", editData.mitigation);
+        console.log("DEBUG: Mitigation in edit data type:", typeof editData.mitigation);
+        console.log("DEBUG: Mitigation in edit data stringified:", JSON.stringify(editData.mitigation, null, 2));
 
         // Use the complianceService to save the edit
         const response = await complianceService.updateCompliance(this.originalComplianceId, editData);
@@ -1225,27 +1654,202 @@ export default {
         
         // Load business units
         const buResponse = await complianceService.getCategoryBusinessUnits('BusinessUnitsCovered');
-        if (buResponse.data.success) {
+        console.log('BusinessUnitsCovered API response:', buResponse);
+        if (buResponse.data.success && buResponse.data.data && buResponse.data.data.length > 0) {
           this.categoryOptions.BusinessUnitsCovered = buResponse.data.data;
+          this.filteredOptions.BusinessUnitsCovered = [...buResponse.data.data];
+          console.log('Loaded BusinessUnitsCovered options:', this.categoryOptions.BusinessUnitsCovered);
+        } else {
+          console.log('No BusinessUnitsCovered data found, attempting to initialize default categories...');
+          try {
+            // Try to initialize default categories
+            const initResponse = await complianceService.initializeDefaultCategories();
+            console.log('Initialize categories response:', initResponse);
+            
+            if (initResponse.data.success) {
+              // Retry loading business units after initialization
+              const retryResponse = await complianceService.getCategoryBusinessUnits('BusinessUnitsCovered');
+              console.log('Retry BusinessUnitsCovered API response:', retryResponse);
+              if (retryResponse.data.success && retryResponse.data.data) {
+                this.categoryOptions.BusinessUnitsCovered = retryResponse.data.data;
+                this.filteredOptions.BusinessUnitsCovered = [...retryResponse.data.data];
+                console.log('Loaded BusinessUnitsCovered options after initialization:', this.categoryOptions.BusinessUnitsCovered);
+              } else {
+                throw new Error('Failed to load business units after initialization');
+              }
+            } else {
+              throw new Error('Failed to initialize default categories');
+            }
+          } catch (initError) {
+            console.error('Failed to initialize categories:', initError);
+            // Fallback to default values
+            this.categoryOptions.BusinessUnitsCovered = [
+              { id: 1, value: 'Sales & Marketing' },
+              { id: 2, value: 'Finance & Accounting' },
+              { id: 3, value: 'Human Resources' },
+              { id: 4, value: 'Information Technology' },
+              { id: 5, value: 'Operations' },
+              { id: 6, value: 'Legal & Compliance' },
+              { id: 7, value: 'Customer Service' },
+              { id: 8, value: 'Research & Development' },
+              { id: 9, value: 'Procurement' },
+              { id: 10, value: 'Risk Management' }
+            ];
+            this.filteredOptions.BusinessUnitsCovered = [...this.categoryOptions.BusinessUnitsCovered];
+            console.log('Using fallback BusinessUnitsCovered options:', this.categoryOptions.BusinessUnitsCovered);
+          }
         }
         
         // Load risk types
         const rtResponse = await complianceService.getCategoryBusinessUnits('RiskType');
-        if (rtResponse.data.success) {
+        console.log('RiskType API response:', rtResponse);
+        if (rtResponse.data.success && rtResponse.data.data && rtResponse.data.data.length > 0) {
           this.categoryOptions.RiskType = rtResponse.data.data;
+          this.filteredOptions.RiskType = [...rtResponse.data.data];
+          console.log('Loaded RiskType options:', this.categoryOptions.RiskType);
+        } else {
+          console.log('No RiskType data found, attempting to initialize default categories...');
+          try {
+            // Try to initialize default categories
+            const initResponse = await complianceService.initializeDefaultCategories();
+            console.log('Initialize categories response:', initResponse);
+            
+            if (initResponse.data.success) {
+              // Retry loading risk types after initialization
+              const retryResponse = await complianceService.getCategoryBusinessUnits('RiskType');
+              console.log('Retry RiskType API response:', retryResponse);
+              if (retryResponse.data.success && retryResponse.data.data) {
+                this.categoryOptions.RiskType = retryResponse.data.data;
+                this.filteredOptions.RiskType = [...retryResponse.data.data];
+                console.log('Loaded RiskType options after initialization:', this.categoryOptions.RiskType);
+              } else {
+                throw new Error('Failed to load risk types after initialization');
+              }
+            } else {
+              throw new Error('Failed to initialize default categories');
+            }
+          } catch (initError) {
+            console.error('Failed to initialize categories:', initError);
+            // Fallback to default values
+            this.categoryOptions.RiskType = [
+              { id: 1, value: 'Operational Risk' },
+              { id: 2, value: 'Financial Risk' },
+              { id: 3, value: 'Strategic Risk' },
+              { id: 4, value: 'Compliance Risk' },
+              { id: 5, value: 'Reputational Risk' },
+              { id: 6, value: 'Technology Risk' },
+              { id: 7, value: 'Market Risk' },
+              { id: 8, value: 'Credit Risk' },
+              { id: 9, value: 'Legal Risk' },
+              { id: 10, value: 'Environmental Risk' }
+            ];
+            this.filteredOptions.RiskType = [...this.categoryOptions.RiskType];
+            console.log('Using fallback RiskType options:', this.categoryOptions.RiskType);
+          }
         }
         
         // Load risk categories
         const rcResponse = await complianceService.getCategoryBusinessUnits('RiskCategory');
-        if (rcResponse.data.success) {
+        console.log('RiskCategory API response:', rcResponse);
+        if (rcResponse.data.success && rcResponse.data.data && rcResponse.data.data.length > 0) {
           this.categoryOptions.RiskCategory = rcResponse.data.data;
+          this.filteredOptions.RiskCategory = [...rcResponse.data.data];
+          console.log('Loaded RiskCategory options:', this.categoryOptions.RiskCategory);
+        } else {
+          console.log('No RiskCategory data found, attempting to initialize default categories...');
+          try {
+            // Try to initialize default categories
+            const initResponse = await complianceService.initializeDefaultCategories();
+            console.log('Initialize categories response:', initResponse);
+            
+            if (initResponse.data.success) {
+              // Retry loading risk categories after initialization
+              const retryResponse = await complianceService.getCategoryBusinessUnits('RiskCategory');
+              console.log('Retry RiskCategory API response:', retryResponse);
+              if (retryResponse.data.success && retryResponse.data.data) {
+                this.categoryOptions.RiskCategory = retryResponse.data.data;
+                this.filteredOptions.RiskCategory = [...retryResponse.data.data];
+                console.log('Loaded RiskCategory options after initialization:', this.categoryOptions.RiskCategory);
+              } else {
+                throw new Error('Failed to load categories after initialization');
+              }
+            } else {
+              throw new Error('Failed to initialize default categories');
+            }
+          } catch (initError) {
+            console.error('Failed to initialize categories:', initError);
+            // Fallback to default values
+            this.categoryOptions.RiskCategory = [
+              { id: 1, value: 'People Risk' },
+              { id: 2, value: 'Process Risk' },
+              { id: 3, value: 'Technology Risk' },
+              { id: 4, value: 'External Risk' },
+              { id: 5, value: 'Information Risk' },
+              { id: 6, value: 'Physical Risk' },
+              { id: 7, value: 'Systems Risk' },
+              { id: 8, value: 'Vendor Risk' },
+              { id: 9, value: 'Regulatory Risk' },
+              { id: 10, value: 'Fraud Risk' }
+            ];
+            this.filteredOptions.RiskCategory = [...this.categoryOptions.RiskCategory];
+            console.log('Using fallback RiskCategory options:', this.categoryOptions.RiskCategory);
+          }
         }
         
         // Load risk business impacts
+        console.log('Loading RiskBusinessImpact data...');
         const rbiResponse = await complianceService.getCategoryBusinessUnits('RiskBusinessImpact');
-        if (rbiResponse.data.success) {
+        console.log('RiskBusinessImpact response:', rbiResponse);
+        if (rbiResponse.data.success && rbiResponse.data.data && rbiResponse.data.data.length > 0) {
           this.categoryOptions.RiskBusinessImpact = rbiResponse.data.data;
+          this.filteredOptions.RiskBusinessImpact = [...rbiResponse.data.data];
+          console.log('Loaded RiskBusinessImpact options:', this.categoryOptions.RiskBusinessImpact);
+        } else {
+          console.log('No RiskBusinessImpact data found, attempting to initialize default categories...');
+          try {
+            // Try to initialize default categories
+            const initResponse = await complianceService.initializeDefaultCategories();
+            console.log('Initialize categories response:', initResponse);
+            
+            if (initResponse.data.success) {
+              // Retry loading risk business impacts after initialization
+              const retryResponse = await complianceService.getCategoryBusinessUnits('RiskBusinessImpact');
+              console.log('Retry RiskBusinessImpact API response:', retryResponse);
+              if (retryResponse.data.success && retryResponse.data.data) {
+                this.categoryOptions.RiskBusinessImpact = retryResponse.data.data;
+                this.filteredOptions.RiskBusinessImpact = [...retryResponse.data.data];
+                console.log('Loaded RiskBusinessImpact options after initialization:', this.categoryOptions.RiskBusinessImpact);
+              } else {
+                throw new Error('Failed to load business impacts after initialization');
+              }
+            } else {
+              throw new Error('Failed to initialize default categories');
+            }
+          } catch (initError) {
+            console.error('Failed to initialize categories:', initError);
+            // Fallback to default values
+            this.categoryOptions.RiskBusinessImpact = [
+              { id: 1, value: 'Revenue Loss' },
+              { id: 2, value: 'Customer Impact' },
+              { id: 3, value: 'Operational Disruption' },
+              { id: 4, value: 'Brand Damage' },
+              { id: 5, value: 'Regulatory Penalties' },
+              { id: 6, value: 'Legal Costs' },
+              { id: 7, value: 'Data Loss' },
+              { id: 8, value: 'Service Downtime' },
+              { id: 9, value: 'Productivity Loss' },
+              { id: 10, value: 'Compliance Violations' }
+            ];
+            this.filteredOptions.RiskBusinessImpact = [...this.categoryOptions.RiskBusinessImpact];
+            console.log('Using fallback RiskBusinessImpact options:', this.categoryOptions.RiskBusinessImpact);
+          }
         }
+        
+        console.log('All category options loaded successfully');
+        
+        // Re-initialize search fields after loading category options
+        // This ensures search fields are properly set even if compliance data was loaded first
+        this.initializeSearchFields();
       } catch (error) {
         console.error('Failed to load category options:', error);
         this.error = 'Failed to load dropdown options. Some features may be limited.';
@@ -1256,6 +1860,9 @@ export default {
     
     // Show dropdown for a specific field
     showDropdown(field) {
+      console.log(`Showing dropdown for field: ${field}`);
+      console.log(`Available options for ${field}:`, this.categoryOptions[field]);
+      
       // Close any open dropdown
       this.activeDropdown = field;
       
@@ -1302,11 +1909,19 @@ export default {
           break;
       }
       
+      console.log(`Filtering ${field} options:`, {
+        searchTerm,
+        availableOptions: this.categoryOptions[field],
+        searchField: field
+      });
+      
       // Filter options based on search term (case-insensitive)
       const lowerSearchTerm = searchTerm.toLowerCase();
       this.filteredOptions[field] = this.categoryOptions[field].filter(option => 
         option.value.toLowerCase().includes(lowerSearchTerm)
       );
+      
+      console.log(`Filtered ${field} options:`, this.filteredOptions[field]);
     },
     
     // Select an option from the dropdown
@@ -1376,9 +1991,7 @@ export default {
       }
 
       const value = this.compliance[fieldName];
-      const rules = this.validationRules[fieldName];
-      
-      if (!rules || !Array.isArray(rules)) return true;
+      const result = this.validateComplianceField(this.compliance, fieldName, value);
 
       // Initialize field state if not exists
       if (!this.fieldStates[fieldName]) {
@@ -1390,65 +2003,31 @@ export default {
       }
       
       this.fieldStates[fieldName].dirty = true;
-      
-      // Skip validation if field is not required and empty
-      if (!rules.find(rule => rule.required) && !value) {
-        this.validationErrors[fieldName] = '';
-        this.fieldStates[fieldName].valid = true;
+      this.fieldStates[fieldName].valid = result.errors.length === 0;
         this.fieldStates[fieldName].warning = false;
-        return true;
+      
+      return result.errors.length === 0;
+    },
+
+    // Real-time validation on input
+    onFieldChange(fieldName, event) {
+      let value;
+      
+      // Handle different input types
+      if (fieldName === 'IsRisk') {
+        value = event.target.checked;
+        this.compliance[fieldName] = value;
+      } else {
+        value = event.target.value;
+        // Update the field value directly without sanitization during typing
+        this.compliance[fieldName] = value;
+        
+        // Only validate for error display, don't replace the value
+        this.validateComplianceField(this.compliance, fieldName, value);
       }
       
-      let isValid = true;
-      let showWarning = false;
-      
-      for (const rule of rules) {
-        // Custom validation function
-        if (rule.validate && typeof rule.validate === 'function') {
-          if (!rule.validate(value)) {
-            isValid = false;
-            this.validationErrors[fieldName] = rule.message;
-            break;
-          }
-        }
-        
-        if (rule.required && (!value || value.toString().trim() === '')) {
-          isValid = false;
-          this.validationErrors[fieldName] = rule.message;
-          break;
-        }
-        
-        if (rule.minLength && value) {
-          if (value.length < rule.minLength) {
-            isValid = false;
-            if (value.length > 0) {
-              showWarning = true;
-              this.validationErrors[fieldName] = `Need ${rule.minLength - value.length} more characters`;
-            }
-          }
-        }
-        
-        // Numeric validation for Impact and Probability
-        if ((fieldName === 'Impact' || fieldName === 'Probability') && value !== '') {
-          const numValue = parseFloat(value);
-          if (isNaN(numValue)) {
-            isValid = false;
-            this.validationErrors[fieldName] = 'Must be a valid number';
-          } else if (numValue < rule.min || numValue > rule.max) {
-            isValid = false;
-            this.validationErrors[fieldName] = `Must be between ${rule.min} and ${rule.max}`;
-          }
-        }
-      }
-      
-      this.fieldStates[fieldName].valid = isValid;
-      this.fieldStates[fieldName].warning = showWarning;
-      
-      if (isValid) {
-        this.validationErrors[fieldName] = '';
-      }
-      
-      return isValid;
+      // Force reactivity update
+      this.$forceUpdate();
     },
 
     isFieldValid(fieldName) {
@@ -1575,11 +2154,9 @@ export default {
       let isValid = true;
 
       // Validate all fields
-      Object.keys(this.validationRules).forEach(field => {
-        if (!this.validateField(field)) {
+      if (!this.validateAllFields()) {
           isValid = false;
         }
-      });
 
       if (!isValid) {
         // Scroll to the first error
@@ -1594,32 +2171,16 @@ export default {
     },
 
     submitForm() {
-      // Ensure mitigation data is properly formatted before submission
-      if (this.compliance.IsRisk && this.mitigationSteps.length > 0) {
-        // Create mitigation data in the required format
-        const mitigationJson = {};
-        this.mitigationSteps.forEach((step, index) => {
-          if (step.description && step.description.trim()) {
-            mitigationJson[`${index + 1}`] = step.description.trim();
-          }
-        });
-        
-        // Only update mitigation if we have valid steps
-        if (Object.keys(mitigationJson).length > 0) {
-          this.compliance.mitigation = mitigationJson;
-        } else {
-          this.compliance.mitigation = { "1": "No mitigation steps provided" };
+      // Always build mitigation JSON from all steps (including empty)
+      const mitigationJson = {};
+      this.mitigationSteps.forEach((step, idx) => {
+        if (step.description && step.description.trim()) {
+          mitigationJson[`${idx + 1}`] = step.description.trim();
         }
-        
-        // Debug output
-        console.log("submitForm - Mitigation steps:", this.mitigationSteps);
-        console.log("submitForm - Submitting mitigation data:", JSON.stringify(this.compliance.mitigation, null, 2));
-      } else if (!this.compliance.IsRisk) {
-        // Ensure mitigation is at least an empty object for non-risk items
-        this.compliance.mitigation = {};
-        console.log("submitForm - Not a risk, setting empty mitigation");
-      }
-      
+      });
+      this.compliance.mitigation = mitigationJson;
+      console.log('[submitForm] mitigationSteps:', this.mitigationSteps);
+      console.log('[submitForm] mitigation JSON:', mitigationJson);
       this.submitEdit();
     },
 
@@ -1634,65 +2195,6 @@ export default {
         console.log("removeStep - Removed step at index", index, ", remaining steps:", this.mitigationSteps.length);
         this.onMitigationStepChange();
       }
-    },
-    onMitigationStepChange() {
-      // Convert mitigation steps to the format expected by the backend: {"1": "First step", "2": "Second step"}
-      const mitigationJson = {};
-      
-      this.mitigationSteps.forEach((step, index) => {
-        if (step.description && step.description.trim()) {
-          mitigationJson[`${index + 1}`] = step.description.trim();
-        }
-      });
-      
-      // Store the formatted JSON in the compliance object
-      this.compliance.mitigation = mitigationJson;
-      
-      // Debug output to console
-      console.log("onMitigationStepChange - Current mitigation steps:", this.mitigationSteps);
-      console.log("onMitigationStepChange - Formatted mitigation JSON:", JSON.stringify(mitigationJson, null, 2));
-      console.log("onMitigationStepChange - Compliance.mitigation:", this.compliance.mitigation);
-      
-      // Validate mitigation field
-      this.validateField('mitigation');
-    },
-    parseMitigationSteps(mitigation) {
-      console.log("Parsing mitigation steps from:", mitigation, "Type:", typeof mitigation);
-      
-      // Handle null, undefined, or empty object
-      if (!mitigation || Object.keys(mitigation).length === 0) {
-        return [{ description: '' }];
-      }
-      
-      try {
-        // Handle string format (could be JSON string)
-        if (typeof mitigation === 'string') {
-          try {
-            mitigation = JSON.parse(mitigation);
-          } catch (e) {
-            console.error('Error parsing mitigation JSON:', e);
-            return [{ description: '' }];
-          }
-        }
-        
-        // Handle object format (expected format: {"1": "Step 1", "2": "Step 2"})
-        if (typeof mitigation === 'object' && !Array.isArray(mitigation)) {
-          // Sort keys numerically to maintain step order
-          const steps = Object.entries(mitigation)
-            .sort(([a], [b]) => parseInt(a) - parseInt(b))
-            .map(([,value]) => ({  // Skip the key using array destructuring
-              description: value && typeof value === 'string' ? value.trim() : ''
-            }))
-            .filter(step => step.description);
-          
-          return steps.length > 0 ? steps : [{ description: '' }];
-        }
-      } catch (error) {
-        console.error('Error parsing mitigation steps:', error);
-      }
-      
-      // Default fallback
-      return [{ description: '' }];
     },
   }
 }
@@ -1896,6 +2398,17 @@ export default {
 .compliance-input.valid:focus {
   border-color: #10b981;
   box-shadow: 0 0 0 1px #10b981;
+}
+
+.version-preview {
+  font-size: 0.75rem;
+  color: #059669;
+  margin-top: 0.25rem;
+  font-weight: 500;
+  background-color: #ecfdf5;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  border-left: 3px solid #10b981;
 }
 
 .searchable-dropdown {

@@ -481,12 +481,10 @@ export default {
       return date.toISOString().split('T')[0];
     },
     navigateToEdit(compliance) {
-      // Initialize the mitigation steps before navigation
+      // Initialize the mitigation steps before navigation using the same parsing logic
       if (compliance.mitigation) {
         console.log('Original mitigation data:', compliance.mitigation);
-        compliance.mitigationSteps = Object.entries(compliance.mitigation).map(entry => ({
-          description: entry[1]
-        }));
+        compliance.mitigationSteps = this.parseMitigationSteps(compliance.mitigation);
       } else {
         compliance.mitigationSteps = [{ description: '' }];
       }
@@ -505,9 +503,10 @@ export default {
             description: typeof step === 'string' ? step : step.description || ''
           }));
         } else if (typeof mitigation === 'object') {
-          // Convert numbered object format to array of descriptions
-          return Object.values(mitigation).map(step => ({
-            description: typeof step === 'string' ? step : step.description || ''
+          // Handle numbered object format: {"1": "Step 1", "2": "Step 2"}
+          const sortedKeys = Object.keys(mitigation).sort((a, b) => parseInt(a) - parseInt(b));
+          return sortedKeys.map(key => ({
+            description: mitigation[key] && typeof mitigation[key] === 'string' ? mitigation[key].trim() : ''
           }));
         }
       } catch (error) {
@@ -536,32 +535,16 @@ export default {
       console.log('Mitigation step change triggered for row:', row);
       console.log('Current mitigation steps:', row.mitigationSteps);
       
-      // Validate each mitigation step
-      const isValid = row.mitigationSteps.every(step => step.description.length >= 10);
-      if (!isValid) {
-        CompliancePopups.error({
-          message: 'Each mitigation step must be at least 10 characters long'
-        });
-        return; // Don't proceed if validation fails
-      }
-      
       // Format mitigation steps into the required structure with numeric keys
       const formattedSteps = {};
       row.mitigationSteps.forEach((step, index) => {
-        const description = step.description.trim();
-        if (description) {  // Only add non-empty steps
-          formattedSteps[`${index + 1}`] = description;  // Convert number to string key
-        }
+        // Include all steps, including empty ones, to maintain step order
+        formattedSteps[`${index + 1}`] = step.description ? step.description.trim() : '';
       });
       
       // Update the mitigation property with formatted steps
-      if (Object.keys(formattedSteps).length > 0) {
-        row.mitigation = formattedSteps;
-        console.log('Updated mitigation data:', row.mitigation);
-      } else {
-        row.mitigation = null;
-        console.log('No valid mitigation steps found, setting to null');
-      }
+      row.mitigation = formattedSteps;
+      console.log('Updated mitigation data:', row.mitigation);
     },
     startCopy(compliance) {
       // Navigate to the copy compliance page with the compliance ID and current context
@@ -599,13 +582,10 @@ export default {
         if (formData.mitigationSteps && formData.mitigationSteps.length > 0) {
           const formattedMitigation = {};
           formData.mitigationSteps.forEach((step, index) => {
-            if (step.description.trim()) {
-              formattedMitigation[`${index + 1}`] = step.description.trim();
-            }
+            // Include all steps, including empty ones, to maintain step order
+            formattedMitigation[`${index + 1}`] = step.description ? step.description.trim() : '';
           });
-          if (Object.keys(formattedMitigation).length > 0) {
-            formData.mitigation = formattedMitigation;
-          }
+          formData.mitigation = formattedMitigation;
         }
         
         console.log('Submitting form data with mitigation:', formData.mitigation);

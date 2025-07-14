@@ -180,149 +180,8 @@
                 <i class="fas fa-plus"></i> Add Mitigation Step
               </button>
             </div>
-            <!-- Due Date Input -->
-            <div class="risk-resolution-due-date-section">
-              <h4>Due Date for Mitigation Completion</h4>
-              <input 
-                type="date" 
-                v-model="mitigationDueDate" 
-                class="risk-resolution-due-date-input" 
-                :readonly="viewOnlyMitigationModal"
-                :min="getTodayDate()"
-              />
-            </div>
-            <!-- Risk Form Section -->
-            <div class="risk-resolution-form-section" style="display: none;">
-              <h4>Risk Mitigation Questionnaire</h4>
-              <p class="risk-resolution-form-note">Please complete these details about the risk mitigation:</p>
-              <div class="risk-resolution-form-field horizontal">
-                <label for="cost-input">1. What is the cost for this mitigation?</label>
-                <input 
-                  id="cost-input" 
-                  v-model="riskFormDetails.cost" 
-                  type="number"
-                  :readonly="viewOnlyMitigationModal"
-                  min="0"
-                  placeholder="Enter the cost..."
-                  class="risk-resolution-form-textarea"
-                />
-              </div>
-              <div class="risk-resolution-form-field horizontal">
-                <label for="impact-input">2. What is the impact for this mitigation?</label>
-                <input 
-                  id="impact-input" 
-                  v-model="riskFormDetails.impact" 
-                  type="number"
-                  :readonly="viewOnlyMitigationModal"
-                  min="0"
-                  placeholder="Enter the impact..."
-                  class="risk-resolution-form-textarea"
-                />
-              </div>
-              <div class="risk-resolution-form-field horizontal">
-                <label for="financial-impact-input">3. What is the financial impact for this mitigation?</label>
-                <input 
-                  id="financial-impact-input" 
-                  v-model="riskFormDetails.financialImpact" 
-                  type="number"
-                  :readonly="viewOnlyMitigationModal"
-                  min="0"
-                  placeholder="Enter the financial impact..."
-                  class="risk-resolution-form-textarea"
-                />
-              </div>
-              <div class="risk-resolution-form-field horizontal">
-                <label for="reputational-impact-input">4. What is the reputational impact for this mitigation?</label>
-                <textarea 
-                  id="reputational-impact-input" 
-                  v-model="riskFormDetails.reputationalImpact" 
-                  :readonly="viewOnlyMitigationModal"
-                  placeholder="Describe the reputational impact..."
-                  class="risk-resolution-form-textarea"
-                ></textarea>
-              </div>
-              <div class="risk-resolution-form-field horizontal">
-                <label for="operational-impact-input">5. What is the Operational Impact for this mitigation?</label>
-                <input 
-                  id="operational-impact-input" 
-                  v-model="riskFormDetails.operationalImpact" 
-                  type="number"
-                  :readonly="viewOnlyMitigationModal"
-                  min="0"
-                  placeholder="Enter the operational impact..."
-                  class="risk-resolution-form-textarea"
-                />
-              </div>
-              <div class="risk-resolution-form-field horizontal">
-                <label for="financial-loss-input">6. What is the Financial Loss for this mitigation?</label>
-                <input 
-                  id="financial-loss-input" 
-                  v-model="riskFormDetails.financialLoss" 
-                  type="number"
-                  :readonly="viewOnlyMitigationModal"
-                  min="0"
-                  placeholder="Enter the financial loss..."
-                  class="risk-resolution-form-textarea"
-                />
-              </div>
-              <div class="risk-resolution-form-field horizontal">
-                <label for="system-downtime-input">7. What is the expected system downtime (hrs) if this risk occurs?</label>
-                <input 
-                  id="system-downtime-input" 
-                  v-model="riskFormDetails.systemDowntime" 
-                  type="number"
-                  :readonly="viewOnlyMitigationModal"
-                  min="0"
-                  placeholder="Enter expected downtime in hours..."
-                  class="risk-resolution-form-textarea"
-                />
-              </div>
-              <div class="risk-resolution-form-field horizontal">
-                <label for="recovery-time-input">8. How long did it take to recover last time (hrs)?</label>
-                <input 
-                  id="recovery-time-input" 
-                  v-model="riskFormDetails.recoveryTime" 
-                  type="number"
-                  :readonly="viewOnlyMitigationModal"
-                  min="0"
-                  placeholder="Enter recovery time in hours..."
-                  class="risk-resolution-form-textarea"
-                />
-              </div>
-              <div class="risk-resolution-form-field horizontal">
-                <label for="recurrence-possible-input">9. Is it possible that this risk will recur again?</label>
-                <select 
-                  id="recurrence-possible-input" 
-                  v-model="riskFormDetails.recurrencePossible" 
-                  :disabled="viewOnlyMitigationModal"
-                  class="risk-resolution-form-textarea"
-                >
-                  <option value="">Select</option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                  <option value="Unknown">Unknown</option>
-                </select>
-              </div>
-              <div class="risk-resolution-form-field horizontal">
-                <label for="improvement-initiative-input">10. Is this an Improvement Initiative which will prevent the future recurrence of said risk?</label>
-                <select 
-                  id="improvement-initiative-input" 
-                  v-model="riskFormDetails.improvementInitiative" 
-                  :disabled="viewOnlyMitigationModal"
-                  class="risk-resolution-form-textarea"
-                >
-                  <option value="">Select</option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                  <option value="Unknown">Unknown</option>
-                </select>
-              </div>
-            </div>
             <!-- Submit Section -->
             <div class="risk-resolution-mitigation-actions">
-              <div v-if="viewOnlyMitigationModal && !isFormComplete()" class="risk-resolution-form-warning" style="display: none;">
-                <i class="fas fa-exclamation-circle"></i> Please complete all questionnaire fields
-              </div>
               <button 
                 @click="assignRiskWithMitigations" 
                 class="risk-resolution-submit-mitigations-btn"
@@ -332,29 +191,6 @@
               </button>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Questionnaire Modal -->
-    <div v-if="showQuestionnaireModal" class="risk-resolution-questionnaire-modal-overlay">
-      <div class="risk-resolution-questionnaire-modal-content">
-        <button class="risk-resolution-close-modal-btn" @click="closeQuestionnaireModal"><i class="fas fa-times"></i></button>
-        <h3>Risk Mitigation Questionnaire (View Only)</h3>
-        <div v-if="selectedQuestionnaire">
-          <div class="risk-resolution-questionnaire-field"><strong>1. Cost:</strong> {{ selectedQuestionnaire.cost }}</div>
-          <div class="risk-resolution-questionnaire-field"><strong>2. Impact:</strong> {{ selectedQuestionnaire.impact }}</div>
-          <div class="risk-resolution-questionnaire-field"><strong>3. Financial Impact:</strong> {{ selectedQuestionnaire.financialImpact }}</div>
-          <div class="risk-resolution-questionnaire-field"><strong>4. Reputational Impact:</strong> {{ selectedQuestionnaire.reputationalImpact }}</div>
-          <div class="risk-resolution-questionnaire-field"><strong>5. Operational Impact:</strong> {{ selectedQuestionnaire.operationalImpact }}</div>
-          <div class="risk-resolution-questionnaire-field"><strong>6. Financial Loss:</strong> {{ selectedQuestionnaire.financialLoss }}</div>
-          <div class="risk-resolution-questionnaire-field"><strong>7. System Downtime (hrs):</strong> {{ selectedQuestionnaire.systemDowntime }}</div>
-          <div class="risk-resolution-questionnaire-field"><strong>8. Recovery Time (hrs):</strong> {{ selectedQuestionnaire.recoveryTime }}</div>
-          <div class="risk-resolution-questionnaire-field"><strong>9. Recurrence Possible:</strong> {{ selectedQuestionnaire.recurrencePossible }}</div>
-          <div class="risk-resolution-questionnaire-field"><strong>10. Improvement Initiative:</strong> {{ selectedQuestionnaire.improvementInitiative }}</div>
-        </div>
-        <div v-else>
-          <p>No questionnaire data found for this risk.</p>
         </div>
       </div>
     </div>
@@ -392,20 +228,6 @@ export default {
       newMitigationStep: '',
       loadingMitigations: false,
       mitigationDueDate: '',
-      riskFormDetails: {
-        cost: '',
-        impact: '',
-        financialImpact: '',
-        reputationalImpact: '',
-        operationalImpact: '',
-        financialLoss: '',
-        systemDowntime: '',
-        recoveryTime: '',
-        recurrencePossible: '',
-        improvementInitiative: ''
-      },
-      showQuestionnaireModal: false,
-      selectedQuestionnaire: null,
       viewOnlyMitigationModal: false,
       // New properties for search and filtering
       searchQuery: '',
@@ -805,18 +627,6 @@ export default {
       this.mitigationSteps = [];
       this.newMitigationStep = '';
       this.mitigationDueDate = '';
-      this.riskFormDetails = {
-        cost: '',
-        impact: '',
-        financialImpact: '',
-        reputationalImpact: '',
-        operationalImpact: '',
-        financialLoss: '',
-        systemDowntime: '',
-        recoveryTime: '',
-        recurrencePossible: '',
-        improvementInitiative: ''
-      };
       this.viewOnlyMitigationModal = false;
     },
     parseMitigations(data) {
@@ -896,12 +706,6 @@ export default {
         this.loading = false;
         return;
       }
-      
-      // if (!reviewerId) {
-      //   this.$popup.warning('No reviewer selected. Please select a reviewer for this risk.');
-      //   this.loading = false;
-      //   return;
-      // }
       
       const userIdNum = parseInt(userId, 10);
       const reviewerIdNum = parseInt(reviewerId, 10);
@@ -1124,10 +928,6 @@ export default {
       const day = String(today.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     },
-    isFormComplete() {
-      // Always return true since we're not requiring questionnaire completion here anymore
-      return true;
-    },
     isRiskRejected(risk) {
       // Helper method to check if a risk is rejected
       // Used in filtering risks for the resolution screen
@@ -1151,101 +951,6 @@ export default {
         risk.RiskExposureRating !== undefined && 
         risk.RiskExposureRating !== null
       );
-    },
-    viewQuestionnaire(risk) {
-      console.log("Viewing mitigation steps for risk:", risk.RiskInstanceId);
-      
-      axios.get(`http://localhost:8000/api/risk-instances/${risk.RiskInstanceId}/`)
-        .then(response => {
-          const data = response.data;
-          this.selectedRisk = data;
-          
-          // Fetch mitigation steps
-          axios.get(`http://localhost:8000/api/risk-mitigations/${risk.RiskInstanceId}/`)
-            .then(mitResp => {
-              console.log("Mitigation steps:", mitResp.data);
-              this.mitigationSteps = this.parseMitigations(mitResp.data);
-              
-              // Show the mitigation modal in view-only mode
-              this.showMitigationModal = true;
-              this.viewOnlyMitigationModal = true;
-              this.mitigationDueDate = data.MitigationDueDate || '';
-              
-              // --- Parse RiskFormDetails if it's a string ---
-              let formDetails = data.RiskFormDetails;
-              if (typeof formDetails === 'string') {
-                try {
-                  formDetails = JSON.parse(formDetails);
-                } catch (e) {
-                  formDetails = {};
-                }
-              }
-              this.riskFormDetails = this.mapRiskFormDetails(formDetails);
-            })
-            .catch(error => {
-              console.error("Error fetching mitigation steps:", error);
-              // Fallback to risk mitigation data from risk object
-              this.mitigationSteps = this.parseMitigations(data.RiskMitigation || {});
-              
-              // Show the mitigation modal in view-only mode
-              this.showMitigationModal = true;
-              this.viewOnlyMitigationModal = true;
-              this.mitigationDueDate = data.MitigationDueDate || '';
-              
-              // --- Parse RiskFormDetails if it's a string ---
-              let formDetails = data.RiskFormDetails;
-              if (typeof formDetails === 'string') {
-                try {
-                  formDetails = JSON.parse(formDetails);
-                } catch (e) {
-                  formDetails = {};
-                }
-              }
-              this.riskFormDetails = this.mapRiskFormDetails(formDetails);
-            });
-        })
-        .catch(error => {
-          console.error("Error fetching risk details:", error);
-          this.$popup.error('Failed to fetch risk details');
-          this.sendPushNotification({
-            title: 'Risk Details Fetch Failed',
-            message: 'Failed to fetch risk details for viewing questionnaire.',
-            category: 'risk',
-            priority: 'medium',
-            user_id: 'default_user'
-          });
-        });
-    },
-    closeQuestionnaireModal() {
-      this.showQuestionnaireModal = false;
-      this.selectedQuestionnaire = null;
-    },
-    mapRiskFormDetails(details) {
-      if (!details) return {
-        cost: '', impact: '', financialImpact: '', reputationalImpact: '', operationalImpact: '', financialLoss: '', systemDowntime: '', recoveryTime: '', recurrencePossible: '', improvementInitiative: ''
-      };
-      // Normalize Yes/No/Unknown for selects
-      function normalizeYN(val) {
-        if (!val) return '';
-        if (typeof val === 'string') {
-          if (val.toLowerCase() === 'yes') return 'Yes';
-          if (val.toLowerCase() === 'no') return 'No';
-          if (val.toLowerCase() === 'unknown') return 'Unknown';
-        }
-        return val;
-      }
-      return {
-        cost: details.cost ?? '',
-        impact: details.impact ?? '',
-        financialImpact: details.financialImpact ?? details.financialimpact ?? '',
-        reputationalImpact: details.reputationalImpact ?? details.reputationalimpact ?? '',
-        operationalImpact: details.operationalImpact ?? details.operationalimpact ?? '',
-        financialLoss: details.financialLoss ?? details.financialloss ?? '',
-        systemDowntime: details.systemDowntime ?? details.expecteddowntime ?? '',
-        recoveryTime: details.recoveryTime ?? details.recoverytime ?? '',
-        recurrencePossible: normalizeYN(details.recurrencePossible ?? details.riskrecurrence),
-        improvementInitiative: normalizeYN(details.improvementInitiative ?? details.improvementinitiative)
-      };
     },
     
     // Helper methods to handle different user data structures

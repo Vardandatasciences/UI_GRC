@@ -42,6 +42,7 @@
                 :aria-invalid="!!validationErrors.Description"
                 :class="{ 'error': validationErrors.Description }"
                 required
+                style="min-height: 120px; height: 120px; resize: vertical; padding: 12px; line-height: 1.5; font-size: 14px;"
               ></textarea>
               <div class="field-helper-tip">
                 Describe what happened in detail: What was the nature of the incident? How was it discovered? What systems or processes were affected? Include timeline if known...
@@ -199,6 +200,7 @@
             v-model="formData.PossibleDamage"
             @input="validatePossibleDamage"
             @blur="validatePossibleDamage"
+            style="min-height: 150px; height: 150px; resize: vertical; padding: 10px; line-height: 1.4; font-size: 14px;"
           ></textarea>
           <div class="field-helper-tip">
             Describe potential damage that could result from this incident (e.g., Data loss, customer trust impact, regulatory fines, business disruption, reputation damage...)
@@ -300,6 +302,7 @@
             v-model="formData.InitialImpactAssessment"
             @input="validateInitialImpact"
             @blur="validateInitialImpact"
+            style="min-height: 150px; height: 150px; resize: vertical; padding: 10px; line-height: 1.4; font-size: 14px;"
           ></textarea>
           <div class="field-helper-tip">
             Describe the immediate and potential impacts: operational disruption, customer impact, data exposure, service availability, compliance implications...
@@ -313,6 +316,7 @@
             v-model="formData.Mitigation"
             @input="validateMitigation"
             @blur="validateMitigation"
+            style="min-height: 150px; height: 150px; resize: vertical; padding: 10px; line-height: 1.4; font-size: 14px;"
           ></textarea>
           <div class="field-helper-tip">
             Detail the immediate actions taken and planned mitigation steps: containment measures, system isolation, patches applied, temporary workarounds...
@@ -326,6 +330,7 @@
             v-model="formData.Comments"
             @input="validateComments"
             @blur="validateComments"
+            style="min-height: 150px; height: 150px; resize: vertical; padding: 10px; line-height: 1.4; font-size: 14px;"
           ></textarea>
           <div class="field-helper-tip">
             Additional observations, context, or relevant information not covered elsewhere...
@@ -339,6 +344,7 @@
             v-model="formData.InternalContacts"
             @input="validateInternalContacts"
             @blur="validateInternalContacts"
+            style="min-height: 80px; height: 80px; resize: vertical; padding: 10px; line-height: 1.4; font-size: 14px;"
           ></textarea>
           <div class="field-helper-tip">
             Names and roles of internal staff involved (e.g., John Smith (IT Manager), Sarah Jones (Security Lead)...)
@@ -352,6 +358,7 @@
             v-model="formData.ExternalPartiesInvolved"
             @input="validateExternalParties"
             @blur="validateExternalParties"
+            style="min-height: 80px; height: 80px; resize: vertical; padding: 10px; line-height: 1.4; font-size: 14px;"
           ></textarea>
           <div class="field-helper-tip">
             External organizations, vendors, customers, or partners affected (e.g., ABC Vendor, Customer Portal Users, Third-party Service Provider...)
@@ -365,6 +372,7 @@
             v-model="formData.RegulatoryBodies"
             @input="validateRegulatoryBodies"
             @blur="validateRegulatoryBodies"
+            style="min-height: 80px; height: 80px; resize: vertical; padding: 10px; line-height: 1.4; font-size: 14px;"
           ></textarea>
           <div class="field-helper-tip">
             Relevant regulatory authorities (e.g., SEC, GDPR Authority, FINRA, HIPAA, PCI DSS Council...)
@@ -379,6 +387,7 @@
             v-model="formData.RelevantPoliciesProceduresViolated"
             @input="validateViolatedPolicies"
             @blur="validateViolatedPolicies"
+            style="min-height: 150px; height: 150px; resize: vertical; padding: 10px; line-height: 1.4; font-size: 14px;"
           ></textarea>
           <div class="field-helper-tip">
             List specific policies, procedures, or standards that were violated (e.g., Data Protection Policy section 3.2, Access Control Procedure, Change Management Process...)
@@ -392,6 +401,7 @@
             v-model="formData.ControlFailures"
             @input="validateControlFailures"
             @blur="validateControlFailures"
+            style="min-height: 150px; height: 150px; resize: vertical; padding: 10px; line-height: 1.4; font-size: 14px;"
           ></textarea>
           <div class="field-helper-tip">
             Identify failed controls (e.g., firewall misconfiguration, inadequate access controls, missing monitoring, failed backup procedures...)
@@ -404,6 +414,7 @@
           <textarea 
             v-model="formData.LessonsLearned"
             title="Document key insights and lessons learned from this incident for future prevention"
+            style="min-height: 150px; height: 150px; resize: vertical; padding: 10px; line-height: 1.4; font-size: 14px;"
           ></textarea>
           <div class="field-helper-tip">
             What can be learned from this incident? What should be done differently next time? What processes need improvement? What preventive measures can be implemented...
@@ -583,7 +594,7 @@ export default {
       Mitigation: '',
       Date: '',
       Time: '',
-      Origin: 'Manual', // Set default value to avoid backend validation issues
+      Origin: '',
       Comments: '',
       RiskCategory: '',
       RiskPriority: '',
@@ -676,63 +687,127 @@ export default {
     })
 
     const isReadyToSubmit = computed(() => {
-      // Simplified form validation - only check truly required fields
+      // Basic form validation - check required fields
       const hasRequiredFields = formData.value.IncidentTitle && 
                                formData.value.Description && 
                                formData.value.Date && 
                                formData.value.Time &&
                                formData.value.RiskPriority &&
-                               selectedCategories.value.length > 0
+                               selectedCategories.value.length > 0 // At least one category required
       
       // Check for validation errors
       const hasNoErrors = Object.keys(validationErrors.value).length === 0
       
-      return hasRequiredFields && hasNoErrors
+      const isReady = hasRequiredFields && hasNoErrors
+      
+      // Only log when form is not ready to help debug
+      if (!isReady) {
+        console.log('=== FORM NOT READY - DEBUG INFO ===')
+        console.log('Missing required fields:', {
+          IncidentTitle: !formData.value.IncidentTitle,
+          Description: !formData.value.Description,
+          Date: !formData.value.Date,
+          Time: !formData.value.Time,
+          RiskPriority: !formData.value.RiskPriority,
+          Categories: selectedCategories.value.length === 0
+        })
+        console.log('Validation errors:', validationErrors.value)
+        console.log('Has required fields:', hasRequiredFields)
+        console.log('Has no errors:', hasNoErrors)
+      }
+      
+      return isReady
     })
 
     // Enhanced validation methods with security patterns
-    // const BUSINESS_TEXT_PATTERN = /^[a-zA-Z0-9\s\-_.,!?():;/\\@#$%&*+=<>[\]{}|~`"']*$/
-    // const ALPHANUMERIC_WITH_SPACES = /^[a-zA-Z0-9\s\-_.,!?()]*$/
+    const BUSINESS_TEXT_PATTERN = /^[a-zA-Z0-9\s\-_.,!?():;/\\@#$%&*+=<>[\]{}|~`"']*$/
+    const ALPHANUMERIC_WITH_SPACES = /^[a-zA-Z0-9\s\-_.,!?()]*$/
     // More permissive pattern for categories
-    // const CATEGORY_PATTERN = /^[a-zA-Z0-9\s\-_.,!?()&]*$/
-    //const CURRENCY_PATTERN = /^[$£€]?[0-9]+(\.[0-9]{1,2})?$/
+    const CATEGORY_PATTERN = /^[a-zA-Z0-9\s\-_.,!?()&]*$/
+    const CURRENCY_PATTERN = /^[$£€]?[0-9]+(\.[0-9]{1,2})?$/
 
-    // const validateField = (value, fieldName, options = {}) => {
-    //   // Temporarily disable strict validation - just check if required fields exist
-    //   const { required = false } = options
+    const validateField = (value, fieldName, options = {}) => {
+      const { required = false, minLength = 0, maxLength = 255, pattern = null } = options
       
-    //   if (required && (!value || value.toString().trim() === '')) {
-    //     return `${fieldName} is required`
-    //   }
+      // Check if required
+      if (required && (!value || value.trim() === '')) {
+        return `${fieldName} is required`
+      }
       
-    //   return null
-    // }
-
-    const validateCost = () => {
-      // Temporarily disable cost validation
-      delete validationErrors.value.CostOfIncident
+      // Skip further validation if not required and empty
+      if (!required && (!value || value.trim() === '')) {
+        return null
+      }
+      
+      // Check length
+      const trimmedValue = value.trim()
+      if (trimmedValue.length < minLength) {
+        return `${fieldName} must be at least ${minLength} characters`
+      }
+      
+      if (trimmedValue.length > maxLength) {
+        return `${fieldName} must be no more than ${maxLength} characters`
+      }
+      
+      // Check pattern
+      if (pattern && !pattern.test(trimmedValue)) {
+        return `${fieldName} contains invalid characters`
+      }
+      
+      return null
     }
 
-    // Individual field validation functions - simplified
+    const validateCost = () => {
+      const cost = formData.value.CostOfIncident
+      if (cost && !CURRENCY_PATTERN.test(cost.toString().trim())) {
+        validationErrors.value.CostOfIncident = "Must be a valid currency amount (e.g., $100.50, 250.75)"
+      } else {
+        delete validationErrors.value.CostOfIncident
+      }
+    }
+
+    // Individual field validation functions
     const validateIncidentTitle = () => {
-      if (!formData.value.IncidentTitle || formData.value.IncidentTitle.trim() === '') {
-        validationErrors.value.IncidentTitle = 'Incident Title is required'
+      const titleError = validateField(formData.value.IncidentTitle, 'Incident Title', {
+        required: true,
+        minLength: 3,
+        maxLength: 255,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (titleError) {
+        validationErrors.value.IncidentTitle = titleError
       } else {
         delete validationErrors.value.IncidentTitle
       }
     }
 
     const validateDescription = () => {
-      if (!formData.value.Description || formData.value.Description.trim() === '') {
-        validationErrors.value.Description = 'Description is required'
+      const descError = validateField(formData.value.Description, 'Description', {
+        required: true,
+        minLength: 10,
+        maxLength: 2000,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (descError) {
+        validationErrors.value.Description = descError
       } else {
         delete validationErrors.value.Description
       }
     }
 
     const validateOrigin = () => {
-      // Origin is optional - clear any errors
-      delete validationErrors.value.Origin
+      const allowedOrigins = ['Manual', 'Audit Finding', 'System Generated']
+      // Origin is optional, so only validate if it has a value
+      if (formData.value.Origin) {
+        if (!allowedOrigins.includes(formData.value.Origin)) {
+          validationErrors.value.Origin = 'Must be one of: Manual, Audit Finding, System Generated'
+        } else {
+          delete validationErrors.value.Origin
+        }
+      } else {
+        // Clear any existing error if field is empty (since it's optional)
+        delete validationErrors.value.Origin
+      }
     }
 
     const validateDate = () => {
@@ -752,118 +827,213 @@ export default {
     }
     
     const validateRiskPriority = () => {
+      const allowedPriorities = ['High', 'Medium', 'Low']
       if (!formData.value.RiskPriority) {
         validationErrors.value.RiskPriority = "Risk priority is required"
+      } else if (!allowedPriorities.includes(formData.value.RiskPriority)) {
+        validationErrors.value.RiskPriority = 'Must be one of: High, Medium, Low'
       } else {
         delete validationErrors.value.RiskPriority
       }
     }
 
     const validateRiskCategory = () => {
+      // For multi-select, check if at least one category is selected
       if (selectedCategories.value.length === 0) {
         validationErrors.value.RiskCategory = 'At least one risk category is required'
       } else {
-        delete validationErrors.value.RiskCategory
+        // Validate each selected category
+        const invalidCategories = selectedCategories.value.filter(category => {
+          const isValid = category && category.length <= 100 && CATEGORY_PATTERN.test(category)
+          return !isValid
+        })
+        
+        if (invalidCategories.length > 0) {
+          validationErrors.value.RiskCategory = 'One or more categories contain invalid characters or are too long'
+        } else {
+          delete validationErrors.value.RiskCategory
+        }
       }
     }
 
     const validateCriticality = () => {
-      // Remove strict validation - accept any value
-      delete validationErrors.value.Criticality
+      const allowedCriticality = ['Critical', 'High', 'Medium', 'Low']
+      if (formData.value.Criticality && !allowedCriticality.includes(formData.value.Criticality)) {
+        validationErrors.value.Criticality = 'Must be one of: Critical, High, Medium, Low'
+      } else {
+        delete validationErrors.value.Criticality
+      }
     }
 
     const validatePossibleDamage = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.PossibleDamage
+      const damageError = validateField(formData.value.PossibleDamage, 'Possible Damage', {
+        maxLength: 1000,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (damageError) {
+        validationErrors.value.PossibleDamage = damageError
+      } else {
+        delete validationErrors.value.PossibleDamage
+      }
     }
 
     const validateBusinessUnit = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.AffectedBusinessUnit
+      // Business units are optional, so only validate if some are selected
+      if (selectedBusinessUnits.value.length > 0) {
+        // Validate each selected business unit
+        const invalidUnits = selectedBusinessUnits.value.filter(unit => {
+          return !unit || unit.length > 100 || !ALPHANUMERIC_WITH_SPACES.test(unit)
+        })
+        
+        if (invalidUnits.length > 0) {
+          validationErrors.value.AffectedBusinessUnit = 'One or more business units contain invalid characters or are too long'
+        } else {
+          delete validationErrors.value.AffectedBusinessUnit
+        }
+      } else {
+        delete validationErrors.value.AffectedBusinessUnit
+      }
     }
 
     const validateGeographicLocation = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.GeographicLocation
+      const locationError = validateField(formData.value.GeographicLocation, 'Geographic Location', {
+        maxLength: 100,
+        pattern: ALPHANUMERIC_WITH_SPACES
+      })
+      if (locationError) {
+        validationErrors.value.GeographicLocation = locationError
+      } else {
+        delete validationErrors.value.GeographicLocation
+      }
     }
 
     const validateSystemsInvolved = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.SystemsAssetsInvolved
+      const systemsError = validateField(formData.value.SystemsAssetsInvolved, 'Systems Involved', {
+        maxLength: 500,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (systemsError) {
+        validationErrors.value.SystemsAssetsInvolved = systemsError
+      } else {
+        delete validationErrors.value.SystemsAssetsInvolved
+      }
     }
 
     const validateInitialImpact = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.InitialImpactAssessment
+      const impactError = validateField(formData.value.InitialImpactAssessment, 'Initial Impact Assessment', {
+        maxLength: 2000,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (impactError) {
+        validationErrors.value.InitialImpactAssessment = impactError
+      } else {
+        delete validationErrors.value.InitialImpactAssessment
+      }
     }
 
     const validateMitigation = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.Mitigation
+      const mitigationError = validateField(formData.value.Mitigation, 'Mitigation Steps', {
+        maxLength: 2000,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (mitigationError) {
+        validationErrors.value.Mitigation = mitigationError
+      } else {
+        delete validationErrors.value.Mitigation
+      }
     }
 
     const validateComments = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.Comments
+      const commentsError = validateField(formData.value.Comments, 'Comments', {
+        maxLength: 1000,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (commentsError) {
+        validationErrors.value.Comments = commentsError
+      } else {
+        delete validationErrors.value.Comments
+      }
     }
 
     const validateInternalContacts = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.InternalContacts
+      const contactsError = validateField(formData.value.InternalContacts, 'Internal Contacts', {
+        maxLength: 500,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (contactsError) {
+        validationErrors.value.InternalContacts = contactsError
+      } else {
+        delete validationErrors.value.InternalContacts
+      }
     }
 
     const validateExternalParties = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.ExternalPartiesInvolved
+      const partiesError = validateField(formData.value.ExternalPartiesInvolved, 'External Parties', {
+        maxLength: 500,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (partiesError) {
+        validationErrors.value.ExternalPartiesInvolved = partiesError
+      } else {
+        delete validationErrors.value.ExternalPartiesInvolved
+      }
     }
 
     const validateRegulatoryBodies = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.RegulatoryBodies
+      const bodiesError = validateField(formData.value.RegulatoryBodies, 'Regulatory Bodies', {
+        maxLength: 500,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (bodiesError) {
+        validationErrors.value.RegulatoryBodies = bodiesError
+      } else {
+        delete validationErrors.value.RegulatoryBodies
+      }
     }
 
     const validateViolatedPolicies = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.RelevantPoliciesProceduresViolated
+      const policiesError = validateField(formData.value.RelevantPoliciesProceduresViolated, 'Violated Policies/Procedures', {
+        maxLength: 1000,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (policiesError) {
+        validationErrors.value.RelevantPoliciesProceduresViolated = policiesError
+      } else {
+        delete validationErrors.value.RelevantPoliciesProceduresViolated
+      }
     }
 
     const validateControlFailures = () => {
-      // Remove validation - accept any value
-      delete validationErrors.value.ControlFailures
+      const failuresError = validateField(formData.value.ControlFailures, 'Control Failures', {
+        maxLength: 1000,
+        pattern: BUSINESS_TEXT_PATTERN
+      })
+      if (failuresError) {
+        validationErrors.value.ControlFailures = failuresError
+      } else {
+        delete validationErrors.value.ControlFailures
+      }
     }
 
     const validateForm = () => {
-      // Simplified form validation - only check truly required fields
+      // Reset validation errors
       validationErrors.value = {}
+      
+      // Required fields (actual form fields)
+      const requiredFields = [
+        'IncidentTitle', 'Description', 'Origin', 'Date', 'Time', 'RiskPriority'
+      ]
       
       let isValid = true
       
-      // Check only the most essential fields
-      if (!formData.value.IncidentTitle || formData.value.IncidentTitle.trim() === '') {
-        validationErrors.value.IncidentTitle = 'Incident Title is required'
-        isValid = false
+      // Check required fields
+      for (const field of requiredFields) {
+        if (!formData.value[field] || (typeof formData.value[field] === 'string' && !formData.value[field].trim())) {
+          validationErrors.value[field] = `${field.replace(/([A-Z])/g, ' $1').trim()} is required`
+          isValid = false
+        }
       }
-      
-      if (!formData.value.Description || formData.value.Description.trim() === '') {
-        validationErrors.value.Description = 'Description is required'
-        isValid = false
-      }
-      
-      if (!formData.value.Date) {
-        validationErrors.value.Date = 'Date is required'
-        isValid = false
-      }
-      
-      if (!formData.value.Time) {
-        validationErrors.value.Time = 'Time is required'
-        isValid = false
-      }
-      
-      if (!formData.value.RiskPriority) {
-        validationErrors.value.RiskPriority = 'Risk Priority is required'
-        isValid = false
-      }
-      
+      // Check at least one risk category selected
       if (selectedCategories.value.length === 0) {
         validationErrors.value.RiskCategory = 'At least one risk category is required'
         isValid = false
@@ -883,25 +1053,6 @@ export default {
     }
 
     // Methods
-    const sendPushNotification = async (notificationData) => {
-      try {
-        const response = await fetch('http://localhost:8000/api/push-notification/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(notificationData)
-        });
-        if (response.ok) {
-          console.log('Push notification sent successfully');
-        } else {
-          console.error('Failed to send push notification');
-        }
-      } catch (error) {
-        console.error('Error sending push notification:', error);
-      }
-    }
-
     const fetchCompliances = async () => {
       if (compliances.value.length > 0) return // Already loaded
 
@@ -932,15 +1083,6 @@ export default {
         if (!AccessUtils.handleApiError(error, 'view compliances')) {
           // Only show generic error if it's not an access denied error
           PopupService.error('Failed to load compliances. Please try again.')
-          
-          // Send push notification for compliance loading failure
-          sendPushNotification({
-            title: 'Compliance Loading Failed',
-            message: 'Failed to load compliances for incident creation. Please try again.',
-            category: 'incident',
-            priority: 'medium',
-            user_id: 'default_user'
-          });
         }
       } finally {
         loadingCompliances.value = false
@@ -1011,15 +1153,6 @@ export default {
         console.log('Form validation failed')
         showValidationSummary()
         PopupService.error('Please correct the validation errors before submitting. Check the console for details.')
-        
-        // Send push notification for validation failure
-        sendPushNotification({
-          title: 'Incident Creation Validation Failed',
-          message: 'Please correct the validation errors before submitting the incident.',
-          category: 'incident',
-          priority: 'medium',
-          user_id: 'default_user'
-        });
         return
       }
       
@@ -1047,15 +1180,6 @@ export default {
           // Show success message and redirect
           PopupService.success('Incident created successfully! It has been saved to the incidents table and will be escalated to risk management when needed.')
           
-          // Send push notification for successful incident creation
-          sendPushNotification({
-            title: 'New Incident Created',
-            message: `A new incident "${submissionData.IncidentTitle || 'Untitled Incident'}" has been created in the Incident module.`,
-            category: 'incident',
-            priority: 'high',
-            user_id: 'default_user'
-          });
-          
           // Navigate to incidents list after a short delay to allow user to see success message
           setTimeout(() => {
             router.push('/incident/incident')
@@ -1076,26 +1200,8 @@ export default {
                 : serverErrors[field]
             })
             PopupService.error('Please correct the validation errors and try again.')
-            
-            // Send push notification for server validation errors
-            sendPushNotification({
-              title: 'Incident Creation Failed - Validation Errors',
-              message: 'Please correct the validation errors and try again.',
-              category: 'incident',
-              priority: 'medium',
-              user_id: 'default_user'
-            });
           } else {
             PopupService.error('Error creating incident. Please try again.')
-            
-            // Send push notification for general creation error
-            sendPushNotification({
-              title: 'Incident Creation Failed',
-              message: 'Error creating incident. Please try again.',
-              category: 'incident',
-              priority: 'high',
-              user_id: 'default_user'
-            });
           }
         }
       }
@@ -1110,43 +1216,16 @@ export default {
       // Validate that we have title and description
       if (!formData.value.IncidentTitle || !formData.value.Description) {
         PopupService.error('Please enter both incident title and description before generating analysis.')
-        
-        // Send push notification for missing required fields
-        sendPushNotification({
-          title: 'Analysis Generation Failed',
-          message: 'Please enter both incident title and description before generating analysis.',
-          category: 'incident',
-          priority: 'medium',
-          user_id: 'default_user'
-        });
         return
       }
 
       if (formData.value.IncidentTitle.trim().length < 3) {
         PopupService.error('Incident title must be at least 3 characters long.')
-        
-        // Send push notification for short title
-        sendPushNotification({
-          title: 'Analysis Generation Failed',
-          message: 'Incident title must be at least 3 characters long.',
-          category: 'incident',
-          priority: 'medium',
-          user_id: 'default_user'
-        });
         return
       }
 
       if (formData.value.Description.trim().length < 10) {
         PopupService.error('Incident description must be at least 10 characters long.')
-        
-        // Send push notification for short description
-        sendPushNotification({
-          title: 'Analysis Generation Failed',
-          message: 'Incident description must be at least 10 characters long.',
-          category: 'incident',
-          priority: 'medium',
-          user_id: 'default_user'
-        });
         return
       }
 
@@ -1160,12 +1239,18 @@ export default {
           title: formData.value.IncidentTitle.trim(),
           description: formData.value.Description.trim()
         }, {
-          timeout: 6000000 // Increase timeout to 60 seconds
+          timeout: 60000 // Increase timeout to 60 seconds
         })
 
         if (response.data.success && response.data.analysis) {
           const analysis = response.data.analysis
           console.log('Analysis received:', analysis)
+          
+          // Debug: Log the structure of key fields
+          console.log('possibleDamage type:', typeof analysis.possibleDamage, 'value:', analysis.possibleDamage)
+          console.log('initialImpactAssessment type:', typeof analysis.initialImpactAssessment, 'value:', analysis.initialImpactAssessment)
+          console.log('mitigationSteps type:', typeof analysis.mitigationSteps, 'value:', analysis.mitigationSteps)
+          console.log('systemsInvolved type:', typeof analysis.systemsInvolved, 'value:', analysis.systemsInvolved)
 
           // Map the analysis results to form fields
           if (analysis.riskPriority) {
@@ -1187,36 +1272,83 @@ export default {
             formData.value.CostOfIncident = analysis.costOfIncident
           }
 
+          // Handle possibleDamage - could be string or object
           if (analysis.possibleDamage) {
-            formData.value.PossibleDamage = analysis.possibleDamage
+            if (typeof analysis.possibleDamage === 'string') {
+              formData.value.PossibleDamage = analysis.possibleDamage
+            } else if (typeof analysis.possibleDamage === 'object') {
+              // Convert object to formatted string
+              const damageEntries = Object.entries(analysis.possibleDamage)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n')
+              formData.value.PossibleDamage = damageEntries
+            }
           }
 
-          if (analysis.systemsInvolved && Array.isArray(analysis.systemsInvolved)) {
-            formData.value.SystemsAssetsInvolved = analysis.systemsInvolved.join(', ')
+          // Handle systemsInvolved - could be array or string
+          if (analysis.systemsInvolved) {
+            if (Array.isArray(analysis.systemsInvolved)) {
+              formData.value.SystemsAssetsInvolved = analysis.systemsInvolved.join(', ')
+            } else if (typeof analysis.systemsInvolved === 'string') {
+              formData.value.SystemsAssetsInvolved = analysis.systemsInvolved
+            }
           }
 
+          // Handle initialImpactAssessment - could be string or object
           if (analysis.initialImpactAssessment) {
-            formData.value.InitialImpactAssessment = analysis.initialImpactAssessment
+            if (typeof analysis.initialImpactAssessment === 'string') {
+              formData.value.InitialImpactAssessment = analysis.initialImpactAssessment
+            } else if (typeof analysis.initialImpactAssessment === 'object') {
+              // Convert object to formatted string
+              const impactEntries = Object.entries(analysis.initialImpactAssessment)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n')
+              formData.value.InitialImpactAssessment = impactEntries
+            }
           }
 
-          if (analysis.mitigationSteps && Array.isArray(analysis.mitigationSteps)) {
-            formData.value.Mitigation = analysis.mitigationSteps.join('\n')
+          // Handle mitigationSteps - could be array or object
+          if (analysis.mitigationSteps) {
+            if (Array.isArray(analysis.mitigationSteps)) {
+              formData.value.Mitigation = analysis.mitigationSteps.join('\n')
+            } else if (typeof analysis.mitigationSteps === 'object') {
+              // Convert object to formatted string
+              const mitigationEntries = Object.entries(analysis.mitigationSteps)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n')
+              formData.value.Mitigation = mitigationEntries
+            }
           }
 
           if (analysis.comments) {
             formData.value.Comments = analysis.comments
           }
 
-          if (analysis.violatedPolicies && Array.isArray(analysis.violatedPolicies)) {
-            formData.value.RelevantPoliciesProceduresViolated = analysis.violatedPolicies.join('\n')
+          // Handle violatedPolicies - could be array or string
+          if (analysis.violatedPolicies) {
+            if (Array.isArray(analysis.violatedPolicies)) {
+              formData.value.RelevantPoliciesProceduresViolated = analysis.violatedPolicies.join('\n')
+            } else if (typeof analysis.violatedPolicies === 'string') {
+              formData.value.RelevantPoliciesProceduresViolated = analysis.violatedPolicies
+            }
           }
 
-          if (analysis.procedureControlFailures && Array.isArray(analysis.procedureControlFailures)) {
-            formData.value.ControlFailures = analysis.procedureControlFailures.join('\n')
+          // Handle procedureControlFailures - could be array or string
+          if (analysis.procedureControlFailures) {
+            if (Array.isArray(analysis.procedureControlFailures)) {
+              formData.value.ControlFailures = analysis.procedureControlFailures.join('\n')
+            } else if (typeof analysis.procedureControlFailures === 'string') {
+              formData.value.ControlFailures = analysis.procedureControlFailures
+            }
           }
 
-          if (analysis.lessonsLearned && Array.isArray(analysis.lessonsLearned)) {
-            formData.value.LessonsLearned = analysis.lessonsLearned.join('\n')
+          // Handle lessonsLearned - could be array or string
+          if (analysis.lessonsLearned) {
+            if (Array.isArray(analysis.lessonsLearned)) {
+              formData.value.LessonsLearned = analysis.lessonsLearned.join('\n')
+            } else if (typeof analysis.lessonsLearned === 'string') {
+              formData.value.LessonsLearned = analysis.lessonsLearned
+            }
           }
 
           // Handle risk categories - try to extract categories from the analysis
@@ -1245,6 +1377,16 @@ export default {
             }
           }
 
+          // Debug: Log the final form values after processing
+          console.log('Final form values after analysis:')
+          console.log('PossibleDamage:', formData.value.PossibleDamage)
+          console.log('InitialImpactAssessment:', formData.value.InitialImpactAssessment)
+          console.log('Mitigation:', formData.value.Mitigation)
+          console.log('SystemsAssetsInvolved:', formData.value.SystemsAssetsInvolved)
+          console.log('RelevantPoliciesProceduresViolated:', formData.value.RelevantPoliciesProceduresViolated)
+          console.log('ControlFailures:', formData.value.ControlFailures)
+          console.log('LessonsLearned:', formData.value.LessonsLearned)
+
           // Clear any validation errors for fields that were populated
           Object.keys(validationErrors.value).forEach(field => {
             if (formData.value[field] && formData.value[field].toString().trim()) {
@@ -1253,15 +1395,6 @@ export default {
           })
 
           PopupService.success('Analysis completed! Form fields have been populated with AI-generated insights. Please review and modify as needed before saving.')
-          
-          // Send push notification for successful analysis
-          sendPushNotification({
-            title: 'Incident Analysis Completed',
-            message: `Analysis completed for incident "${formData.value.IncidentTitle}". Form fields have been populated with AI-generated insights.`,
-            category: 'incident',
-            priority: 'medium',
-            user_id: 'default_user'
-          });
           
         } else {
           throw new Error(response.data.error || 'Analysis failed')
@@ -1286,15 +1419,6 @@ export default {
           }
           
           PopupService.error(errorMessage)
-          
-          // Send push notification for analysis failure
-          sendPushNotification({
-            title: 'Incident Analysis Failed',
-            message: errorMessage,
-            category: 'incident',
-            priority: 'high',
-            user_id: 'default_user'
-          });
         }
       } finally {
         isGeneratingAnalysis.value = false
@@ -1313,15 +1437,6 @@ export default {
         if (!AccessUtils.handleApiError(error, 'view categories')) {
           // Only show generic error if it's not an access denied error
           PopupService.error('Failed to load categories. Please try again.')
-          
-          // Send push notification for category loading failure
-          sendPushNotification({
-            title: 'Category Loading Failed',
-            message: 'Failed to load categories for incident creation. Please try again.',
-            category: 'incident',
-            priority: 'medium',
-            user_id: 'default_user'
-          });
         }
       }
     }
@@ -1394,15 +1509,6 @@ export default {
           }, 100)
           
           PopupService.success(`Category "${addedCategory}" added successfully!`)
-          
-          // Send push notification for successful category addition
-          sendPushNotification({
-            title: 'Category Added Successfully',
-            message: `Category "${addedCategory}" has been added successfully to the incident form.`,
-            category: 'incident',
-            priority: 'low',
-            user_id: 'default_user'
-          });
         } catch (error) {
           console.error('Error adding category:', error)
           
@@ -1410,15 +1516,6 @@ export default {
           if (!AccessUtils.handleApiError(error, 'add categories')) {
             // Only show generic error if it's not an access denied error
             PopupService.error('Failed to add category. Please try again.')
-            
-            // Send push notification for category addition failure
-            sendPushNotification({
-              title: 'Category Addition Failed',
-              message: 'Failed to add category. Please try again.',
-              category: 'incident',
-              priority: 'medium',
-              user_id: 'default_user'
-            });
           }
         }
       } else if (newCategory && availableCategories.value.some(cat => cat.toLowerCase() === newCategory.toLowerCase())) {
@@ -1456,15 +1553,6 @@ export default {
         if (!AccessUtils.handleApiError(error, 'view business units')) {
           // Only show generic error if it's not an access denied error
           PopupService.error('Failed to load business units. Please try again.')
-          
-          // Send push notification for business unit loading failure
-          sendPushNotification({
-            title: 'Business Unit Loading Failed',
-            message: 'Failed to load business units for incident creation. Please try again.',
-            category: 'incident',
-            priority: 'medium',
-            user_id: 'default_user'
-          });
         }
       }
     }
@@ -1535,15 +1623,6 @@ export default {
           }, 100)
           
           PopupService.success(`Business unit "${addedUnit}" added successfully!`)
-          
-          // Send push notification for successful business unit addition
-          sendPushNotification({
-            title: 'Business Unit Added Successfully',
-            message: `Business unit "${addedUnit}" has been added successfully to the incident form.`,
-            category: 'incident',
-            priority: 'low',
-            user_id: 'default_user'
-          });
         } catch (error) {
           console.error('Error adding business unit:', error)
           
@@ -1551,15 +1630,6 @@ export default {
           if (!AccessUtils.handleApiError(error, 'add business units')) {
             // Only show generic error if it's not an access denied error
             PopupService.error('Failed to add business unit. Please try again.')
-            
-            // Send push notification for business unit addition failure
-            sendPushNotification({
-              title: 'Business Unit Addition Failed',
-              message: 'Failed to add business unit. Please try again.',
-              category: 'incident',
-              priority: 'medium',
-              user_id: 'default_user'
-            });
           }
         }
       } else if (newUnit && availableBusinessUnits.value.some(unit => unit.toLowerCase() === newUnit.toLowerCase())) {
@@ -1655,7 +1725,6 @@ export default {
       // Utility methods
       safeSubstring,
       // Methods
-      sendPushNotification,
       onClassificationChange,
       selectCompliance,
       clearCompliance,
@@ -1744,6 +1813,7 @@ select[aria-invalid="true"] {
   background-color: rgba(231, 76, 60, 0.05) !important;
   box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
 }
+
 
 /* Multi-select dropdown error styling */
 .multi-select-dropdown.error {

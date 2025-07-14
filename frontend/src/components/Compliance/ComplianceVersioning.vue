@@ -100,6 +100,14 @@
             {{ affectedPoliciesCount || 0 }} policies will be affected
           </div>
         </div>
+        <div class="deactivation-options">
+          <label for="reviewer-dropdown">Select Reviewer:</label>
+          <CustomDropdown
+            :config="reviewerDropdownConfig"
+            v-model="selectedReviewer"
+            id="reviewer-dropdown"
+          />
+        </div>
         <div class="deactivation-actions">
           <button @click="cancelDeactivation" class="cancel-btn">Cancel</button>
           <button @click="submitDeactivation" class="submit-btn">OK</button>
@@ -171,6 +179,13 @@ export default {
         defaultLabel: 'Select Sub Policy',
         name: 'Sub Policy'
       },
+      reviewerDropdownConfig: {
+        values: [],
+        defaultLabel: 'Select Reviewer',
+        name: 'Reviewer'
+      },
+      selectedReviewer: '',
+      users: [],
       tableColumns: [
         { key: 'ComplianceVersion', label: 'Version' },
         { key: 'Status', label: 'Status' },
@@ -209,16 +224,17 @@ export default {
     }
   },
   mounted() {
-    // Check if user has access to compliance versioning
     try {
       this.loadFrameworks();
+      this.loadUsers();
+      // Set selectedReviewer to empty on mount
+      this.selectedReviewer = '';
     } catch (error) {
-      // If there's an immediate error accessing the module, show access denied
       if (error.response && [401, 403].includes(error.response.status)) {
         AccessUtils.showComplianceVersioningDenied();
         return;
       }
-      throw error; // Re-throw if it's not an access error
+      throw error;
     }
   },
   methods: {
@@ -567,50 +583,48 @@ export default {
     },
     async submitDeactivation() {
       if (!this.complianceToDeactivate) return;
-      
       if (!this.deactivationReason.trim()) {
         alert('Please provide a reason for deactivation');
         return;
       }
-      
+      if (!this.selectedReviewer) {
+        alert('Please select a reviewer');
+        return;
+      }
+      // Get logged-in user_id from localStorage
+      const userId = localStorage.getItem('user_id');
+      if (!userId) {
+        alert('User not logged in. Please log in again.');
+        return;
+      }
       try {
         this.loading = true;
         console.log('Submitting deactivation request for compliance:', this.complianceToDeactivate.ComplianceId);
-        
         const response = await complianceService.deactivateCompliance(
           this.complianceToDeactivate.ComplianceId, 
           {
             reason: this.deactivationReason,
             cascade_to_policies: this.cascadeToPolicies,
-            user_id: 1, // Default to admin user - in a real app, get from auth context
-            reviewer_id: 2 // Default reviewer ID - should be configurable in a real app
+            user_id: userId,
+            reviewer_id: this.selectedReviewer
           }
         );
-        
         if (response.data.success) {
           this.showDeactivationDialog = false;
-          
-          // Show the confirmation dialog with enhanced information
           this.showDeactivationConfirmation = true;
-          
-          // Refresh the data to show pending status
           await this.loadCompliances();
-          
           console.log('Deactivation request submitted successfully with approval ID:', response.data.approval_id);
         } else {
           alert(response.data.message || 'Error submitting deactivation request');
         }
       } catch (error) {
         console.error('Error submitting deactivation request:', error);
-        
-        // Check if it's an access control error
         if (error.response && [401, 403].includes(error.response.status)) {
           AccessUtils.showComplianceDeactivateDenied();
           this.showDeactivationDialog = false;
           this.complianceToDeactivate = null;
           return;
         }
-        
         const errorMessage = error.response?.data?.message || error.message || 'Error submitting deactivation request';
         alert(`Error: ${errorMessage}`);
       } finally {
@@ -669,6 +683,25 @@ export default {
     onSubPolicyChange(option) {
       this.selectedSubPolicy = option.value;
       this.loadCompliances();
+    },
+    async loadUsers() {
+      try {
+        const response = await complianceService.getUsers();
+        if (response.data.success && Array.isArray(response.data.users)) {
+          this.users = response.data.users;
+          this.reviewerDropdownConfig.values = this.users.map(u => ({
+            value: u.UserId,
+            label: u.UserName
+          }));
+        } else {
+          this.users = [];
+          this.reviewerDropdownConfig.values = [];
+        }
+      } catch (error) {
+        console.error('Error loading users:', error);
+        this.users = [];
+        this.reviewerDropdownConfig.values = [];
+      }
     }
   }
 }

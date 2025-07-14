@@ -30,6 +30,7 @@ from .rbac.decorators import (
 # Load environment variables
 load_dotenv()
 
+
 def upload_to_s3(file_path: str, bucket_name: str, s3_file_name: str) -> Optional[str]:
     """
     Upload a file to S3 and return the URL
@@ -39,7 +40,7 @@ def upload_to_s3(file_path: str, bucket_name: str, s3_file_name: str) -> Optiona
         aws_access_key = os.getenv('AWS_ACCESS_KEY_ID')
         aws_secret_key = os.getenv('AWS_SECRET_ACCESS_KEY')
         aws_region = os.getenv('AWS_REGION', 'us-east-1')
-        aws_bucket = os.getenv('AWS_STORAGE_BUCKET_NAME',"orcashoimages")
+        aws_bucket = "orcashoimages"
 
         if not all([aws_access_key, aws_secret_key, aws_bucket]):
             print("ERROR: Missing required AWS credentials in .env file")
@@ -57,6 +58,7 @@ def upload_to_s3(file_path: str, bucket_name: str, s3_file_name: str) -> Optiona
         
         # Generate URL
         url = f"https://{aws_bucket}.s3.{aws_region}.amazonaws.com/{s3_file_name}"
+        print(f"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++URL: {url}")
         return url
     except Exception as e:
         print(f"Error uploading to S3: {str(e)}")
@@ -880,10 +882,21 @@ def update_audit_review_status(request, audit_id):
             
             # Update lastchecklistitemverified table
             try:
-                print(f"DEBUG: Updating lastchecklistitemverified table for audit {audit_id}")
+                print(f"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++DEBUG: Updating lastchecklistitemverified table for audit {audit_id}")
+                print(f"DEBUG: ==========================================")
+                print(f"DEBUG: About to call update_lastchecklistitem_verified for audit_id: {audit_id}")
+                print(f"DEBUG: ==========================================")
+                
                 update_result = update_lastchecklistitem_verified(audit_id)
+                
+                print(f"DEBUG: ==========================================")
+                print(f"DEBUG: update_lastchecklistitem_verified returned: {update_result}")
+                print(f"DEBUG: ==========================================")
+                
                 if not update_result:
                     print(f"WARNING: Failed to update lastchecklistitemverified table for audit {audit_id}")
+                else:
+                    print(f"DEBUG: SUCCESS: lastchecklistitemverified table updated successfully for audit {audit_id}")
                 
                 # Create incidents for non-compliant and partially compliant findings
                 print(f"DEBUG: Creating incidents for non-compliant findings in audit {audit_id}")
@@ -891,6 +904,14 @@ def update_audit_review_status(request, audit_id):
                 
             except Exception as e:
                 print(f"ERROR: Exception while updating lastchecklistitemverified table: {str(e)}")
+                print(f"DEBUG: ==========================================")
+                print(f"DEBUG: ERROR in update_lastchecklistitem_verified call:")
+                print(f"DEBUG: Error type: {type(e).__name__}")
+                print(f"DEBUG: Error message: {str(e)}")
+                import traceback
+                print(f"DEBUG: Full traceback:")
+                traceback.print_exc()
+                print(f"DEBUG: ==========================================")
             
             # Send acceptance notification
             try:

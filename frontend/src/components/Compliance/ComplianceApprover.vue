@@ -4,6 +4,19 @@
     <div class="dashboard-header">
       <h2 class="dashboard-heading">Compliance Approver</h2>
       <div class="dashboard-actions">
+        <!-- User dropdown for GRC Administrator -->
+        <div v-if="isAdministrator" class="user-selection-dropdown">
+          <label for="userSelect">Select User to View Tasks:</label>
+          <select id="userSelect" v-model="selectedUserId" @change="onUserChange" class="form-control">
+            <option value="">-- Select a User to View Their Tasks --</option>
+            <option v-for="user in availableUsers" :key="user.UserId" :value="user.UserId">
+              {{ user.UserName }} ({{ user.Role }}) - ID: {{ user.UserId }}
+            </option>
+          </select>
+          <small v-if="!selectedUserId" class="user-help-text">
+            Please select a user to view their "My Tasks" and "Reviewer Tasks"
+          </small>
+        </div>
         <button class="action-btn" @click="refreshData" :disabled="isLoading">
           <i class="fas fa-sync-alt" :class="{ 'fa-spin': isLoading }"></i>
         </button>
@@ -44,98 +57,163 @@
         </div>
       </div>
     </div>
-    
-    <!-- Loading state -->
-    <div v-if="isLoading && !approvals.length" class="loading-state">
-      <i class="fas fa-spinner fa-spin"></i> Loading approvals...
+
+    <!-- Tabs for My Tasks and Reviewer Tasks -->
+    <div class="tabs-container">
+      <div class="tabs">
+        <button 
+          class="tab-button"
+          :class="{ active: activeTab === 'myTasks' }"
+          @click="switchTab('myTasks')"
+        >
+          My Tasks
+          <span class="tab-count">{{ myTasksCount }}</span>
+        </button>
+        <button 
+          class="tab-button"
+          :class="{ active: activeTab === 'reviewerTasks' }"
+          @click="switchTab('reviewerTasks')"
+        >
+          Reviewer Tasks
+          <span class="tab-count">{{ reviewerTasksCount }}</span>
+        </button>
+      </div>
     </div>
-    
-    <!-- No data state -->
-    <div v-else-if="!isLoading && complianceApprovals.length === 0" class="no-data-state">
-      <i class="fas fa-inbox"></i>
-      <p>No pending approvals found.</p>
-      <small>Any compliance items with "Under Review" status will appear here.</small>
+
+    <!-- Render My Tasks or Reviewer Tasks based on activeTab -->
+    <div v-if="activeTab === 'myTasks'">
+      <div class="compliance-approval-container">
+        <h2 class="compliance-approval-title">My Compliance Approval Tasks</h2>
+        <CollapsibleTable
+          v-if="myTasksPending.length"
+          :sectionConfig="{ name: 'Pending', statusClass: 'pending', tasks: myTasksPendingPaged.map(mapApprovalToRow) }"
+          :tableHeaders="approvalTableHeaders"
+          :isExpanded="myTasksCollapsible.Pending"
+          @toggle="() => myTasksCollapsible.Pending = !myTasksCollapsible.Pending"
+          @taskClick="handleApprovalAction"
+          :pagination="{
+            currentPage: myTasksPagination.Pending.currentPage,
+            totalPages: Math.ceil(myTasksPending.length / myTasksPagination.Pending.pageSize),
+            pageSize: myTasksPagination.Pending.pageSize,
+            totalCount: myTasksPending.length,
+            pageSizeOptions: [10],
+            onPageSizeChange: () => {},
+            onPageChange: page => handleMyTasksPageChange('Pending', page)
+          }"
+        />
+        <CollapsibleTable
+          v-if="myTasksApproved.length"
+          :sectionConfig="{ name: 'Approved', statusClass: 'approved', tasks: myTasksApprovedPaged.map(mapApprovalToRow) }"
+          :tableHeaders="approvalTableHeaders"
+          :isExpanded="myTasksCollapsible.Approved"
+          @toggle="() => myTasksCollapsible.Approved = !myTasksCollapsible.Approved"
+          @taskClick="handleApprovalAction"
+          :pagination="{
+            currentPage: myTasksPagination.Approved.currentPage,
+            totalPages: Math.ceil(myTasksApproved.length / myTasksPagination.Approved.pageSize),
+            pageSize: myTasksPagination.Approved.pageSize,
+            totalCount: myTasksApproved.length,
+            pageSizeOptions: [10],
+            onPageSizeChange: () => {},
+            onPageChange: page => handleMyTasksPageChange('Approved', page)
+          }"
+        />
+        <CollapsibleTable
+          v-if="myTasksRejected.length"
+          :sectionConfig="{ name: 'Rejected', statusClass: 'rejected', tasks: myTasksRejectedPaged.map(mapApprovalToRow) }"
+          :tableHeaders="approvalTableHeaders"
+          :isExpanded="myTasksCollapsible.Rejected"
+          @toggle="() => myTasksCollapsible.Rejected = !myTasksCollapsible.Rejected"
+          @taskClick="handleApprovalAction"
+          :pagination="{
+            currentPage: myTasksPagination.Rejected.currentPage,
+            totalPages: Math.ceil(myTasksRejected.length / myTasksPagination.Rejected.pageSize),
+            pageSize: myTasksPagination.Rejected.pageSize,
+            totalCount: myTasksRejected.length,
+            pageSizeOptions: [10],
+            onPageSizeChange: () => {},
+            onPageChange: page => handleMyTasksPageChange('Rejected', page)
+          }"
+        />
+        <div v-if="!myTasksPending.length && !myTasksApproved.length && !myTasksRejected.length" class="no-tasks-message">
+          <div class="no-tasks-icon">
+            <i class="fas fa-clipboard-check"></i>
+          </div>
+          <h4>No My Tasks</h4>
+          <p>{{ selectedUserInfo && isAdministrator ? `${selectedUserInfo.UserName} doesn't have` : 'You don\'t have' }} any tasks at the moment.</p>
+        </div>
+      </div>
     </div>
-    
-    <!-- Add container and title for compliance approval tasks -->
+    <div v-if="activeTab === 'reviewerTasks'">
+      <div class="compliance-approval-container">
+        <h2 class="compliance-approval-title">Reviewer Tasks</h2>
+        <CollapsibleTable
+          v-if="reviewerTasksPending.length"
+          :sectionConfig="{ name: 'Pending', statusClass: 'pending', tasks: reviewerTasksPendingPaged.map(mapApprovalToRow) }"
+          :tableHeaders="approvalTableHeaders"
+          :isExpanded="reviewerTasksCollapsible.Pending"
+          @toggle="() => reviewerTasksCollapsible.Pending = !reviewerTasksCollapsible.Pending"
+          @taskClick="handleApprovalAction"
+          :pagination="{
+            currentPage: reviewerTasksPagination.Pending.currentPage,
+            totalPages: Math.ceil(reviewerTasksPending.length / reviewerTasksPagination.Pending.pageSize),
+            pageSize: reviewerTasksPagination.Pending.pageSize,
+            totalCount: reviewerTasksPending.length,
+            pageSizeOptions: [10],
+            onPageSizeChange: () => {},
+            onPageChange: page => handleReviewerTasksPageChange('Pending', page)
+          }"
+        />
+        <CollapsibleTable
+          v-if="reviewerTasksApproved.length"
+          :sectionConfig="{ name: 'Approved', statusClass: 'approved', tasks: reviewerTasksApprovedPaged.map(mapApprovalToRow) }"
+          :tableHeaders="approvalTableHeaders"
+          :isExpanded="reviewerTasksCollapsible.Approved"
+          @toggle="() => reviewerTasksCollapsible.Approved = !reviewerTasksCollapsible.Approved"
+          @taskClick="handleApprovalAction"
+          :pagination="{
+            currentPage: reviewerTasksPagination.Approved.currentPage,
+            totalPages: Math.ceil(reviewerTasksApproved.length / reviewerTasksPagination.Approved.pageSize),
+            pageSize: reviewerTasksPagination.Approved.pageSize,
+            totalCount: reviewerTasksApproved.length,
+            pageSizeOptions: [10],
+            onPageSizeChange: () => {},
+            onPageChange: page => handleReviewerTasksPageChange('Approved', page)
+          }"
+        />
+        <CollapsibleTable
+          v-if="reviewerTasksRejected.length"
+          :sectionConfig="{ name: 'Rejected', statusClass: 'rejected', tasks: reviewerTasksRejectedPaged.map(mapApprovalToRow) }"
+          :tableHeaders="approvalTableHeaders"
+          :isExpanded="reviewerTasksCollapsible.Rejected"
+          @toggle="() => reviewerTasksCollapsible.Rejected = !reviewerTasksCollapsible.Rejected"
+          @taskClick="handleApprovalAction"
+          :pagination="{
+            currentPage: reviewerTasksPagination.Rejected.currentPage,
+            totalPages: Math.ceil(reviewerTasksRejected.length / reviewerTasksPagination.Rejected.pageSize),
+            pageSize: reviewerTasksPagination.Rejected.pageSize,
+            totalCount: reviewerTasksRejected.length,
+            pageSizeOptions: [10],
+            onPageSizeChange: () => {},
+            onPageChange: page => handleReviewerTasksPageChange('Rejected', page)
+          }"
+        />
+        <div v-if="!reviewerTasksPending.length && !reviewerTasksApproved.length && !reviewerTasksRejected.length" class="no-tasks-message">
+          <div class="no-tasks-icon">
+            <i class="fas fa-clipboard-check"></i>
+          </div>
+          <h4>No Reviewer Tasks</h4>
+          <p>{{ selectedUserInfo && isAdministrator ? `${selectedUserInfo.UserName} doesn't have` : 'You don\'t have' }} any reviewer tasks at the moment.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- (Comment out or remove the old groupedApprovals rendering) -->
+    <!--
     <div class="compliance-approval-container">
-      <h2 class="compliance-approval-title">My Compliance Approval Tasks</h2>
-      <!-- Compliance Approvals List -->
-      <div>
-        <CollapsibleTable
-          v-for="(tasks, status) in groupedApprovals"
-          :key="status"
-          :sectionConfig="{
-            name: status,
-            statusClass: status.toLowerCase().replace(' ', '-'),
-            tasks: getPaginatedTasks(tasks.map(mapApprovalToRow), status)
-          }"
-          :tableHeaders="approvalTableHeaders"
-          :isExpanded="collapsibleStates[status]"
-          @toggle="toggleSection(status)"
-          @taskClick="handleApprovalAction"
-          :pagination="{
-            currentPage: pagination[status].currentPage,
-            totalPages: Math.ceil(pagination[status].totalCount / pagination[status].pageSize),
-            pageSize: pagination[status].pageSize,
-            totalCount: pagination[status].totalCount,
-            pageSizeOptions: [6, 15, 30, 50],
-            onPageSizeChange: (size) => handlePaginationChange(status, { ...pagination[status], pageSize: size, currentPage: 1 })
-          }"
-          :onNextPage="() => handlePaginationChange(status, { ...pagination[status], currentPage: pagination[status].currentPage + 1 })"
-          :onPrevPage="() => handlePaginationChange(status, { ...pagination[status], currentPage: pagination[status].currentPage - 1 })"
-        />
-      </div>
-      <!-- Recently Approved Compliances -->
-      <div v-if="approvedComplianceItems.length > 0">
-        <CollapsibleTable
-          :sectionConfig="{
-            name: 'Recently Approved',
-            statusClass: 'approved',
-            tasks: getPaginatedTasks(approvedComplianceItems.map(mapApprovalToRow), 'Recently Approved')
-          }"
-          :tableHeaders="approvalTableHeaders"
-          :isExpanded="collapsibleStates['Recently Approved']"
-          @toggle="toggleSection('Recently Approved')"
-          @taskClick="handleApprovalAction"
-          :pagination="{
-            currentPage: pagination['Recently Approved'].currentPage,
-            totalPages: Math.ceil(pagination['Recently Approved'].totalCount / pagination['Recently Approved'].pageSize),
-            pageSize: pagination['Recently Approved'].pageSize,
-            totalCount: pagination['Recently Approved'].totalCount,
-            pageSizeOptions: [6, 15, 30, 50],
-            onPageSizeChange: (size) => handlePaginationChange('Recently Approved', { ...pagination['Recently Approved'], pageSize: size, currentPage: 1 })
-          }"
-          :onNextPage="() => handlePaginationChange('Recently Approved', { ...pagination['Recently Approved'], currentPage: pagination['Recently Approved'].currentPage + 1 })"
-          :onPrevPage="() => handlePaginationChange('Recently Approved', { ...pagination['Recently Approved'], currentPage: pagination['Recently Approved'].currentPage - 1 })"
-        />
-      </div>
-      <!-- Rejected Compliances List -->
-      <div v-if="rejectedCompliances.length">
-        <CollapsibleTable
-          :sectionConfig="{
-            name: 'Rejected',
-            statusClass: 'rejected',
-            tasks: getPaginatedTasks(rejectedCompliances.map(mapRejectedToRow), 'Rejected')
-          }"
-          :tableHeaders="rejectedTableHeaders"
-          :isExpanded="collapsibleStates['Rejected']"
-          @toggle="toggleSection('Rejected')"
-          @taskClick="handleRejectedAction"
-          :pagination="{
-            currentPage: pagination['Rejected'].currentPage,
-            totalPages: Math.ceil(pagination['Rejected'].totalCount / pagination['Rejected'].pageSize),
-            pageSize: pagination['Rejected'].pageSize,
-            totalCount: pagination['Rejected'].totalCount,
-            pageSizeOptions: [6, 15, 30, 50],
-            onPageSizeChange: (size) => handlePaginationChange('Rejected', { ...pagination['Rejected'], pageSize: size, currentPage: 1 })
-          }"
-          :onNextPage="() => handlePaginationChange('Rejected', { ...pagination['Rejected'], currentPage: pagination['Rejected'].currentPage + 1 })"
-          :onPrevPage="() => handlePaginationChange('Rejected', { ...pagination['Rejected'], currentPage: pagination['Rejected'].currentPage - 1 })"
-        />
-      </div>
+      ... (old groupedApprovals code) ...
     </div>
-    <!-- End container -->
+    -->
     
     <!-- Edit Modal for Rejected Compliance -->
     <div v-if="showEditComplianceModal && editingCompliance" class="edit-policy-modal">
@@ -165,14 +243,17 @@
         </div>
         <div>
           <label>Mitigation:</label>
-          <textarea v-model="editingCompliance.ExtractedData.mitigation"></textarea>
+          <textarea v-model="mitigationString"></textarea>
+          <div v-if="isMitigationObject">
+            <small>Mitigation (JSON): {{ formatMitigation(editingCompliance.ExtractedData.mitigation) }}</small>
+          </div>
         </div>
         <!-- Show rejection reason -->
         <div>
           <label>Rejection Reason:</label>
-          <div class="rejection-reason">{{ editingCompliance.ExtractedData.compliance_approval?.remarks }}</div>
+          <div class="rejection-reason">{{ rejectionReason }}</div>
         </div>
-        <button class="resubmit-btn" @click="resubmitCompliance(editingCompliance)">Resubmit for Review</button>
+        <button class="resubmit-btn" @click="resubmitCompliance(editingCompliance)" :disabled="isLoading">Resubmit for Review</button>
       </div>
     </div>
     
@@ -352,7 +433,7 @@
                   <i class="fas fa-shield-alt"></i>
                   Mitigation:
                 </strong>
-                <span>{{ selectedApproval.ExtractedData.mitigation }}</span>
+                <span>{{ formatMitigation(selectedApproval.ExtractedData.mitigation) }}</span>
               </div>
             </div>
             
@@ -403,6 +484,52 @@
     <!-- Add PopupModal component -->
     <PopupModal />
   </div>
+
+  <!-- Rejected Compliances (Edit & Resubmit) Section -->
+  <div class="rejected-approvals-section">
+    <h3>Rejected Compliances (Edit & Resubmit)</h3>
+    <div class="table-container">
+      <table class="frameworks-table">
+        <thead>
+          <tr>
+            <th>COMPLIANCE ID</th>
+            <th>NAME / DESCRIPTION</th>
+            <th>CRITICALITY</th>
+            <th>CREATED BY</th>
+            <th>CREATED DATE</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="!rejectedCompliances.length">
+            <td colspan="7" style="text-align:center; color:#888;">No rejected compliances to edit or resubmit.</td>
+          </tr>
+          <tr v-for="item in rejectedCompliances" :key="item.ApprovalId">
+            <td>
+              <a href="#" class="framework-id-link" @click.prevent="handleApprovalAction(item)">
+                {{ item.Identifier }}
+              </a>
+            </td>
+            <td>{{ item.ExtractedData?.ComplianceItemDescription || 'No Description' }}</td>
+            <td>{{ item.ExtractedData?.Criticality || 'N/A' }}</td>
+            <td>{{ item.ExtractedData?.CreatedByName || 'System' }}</td>
+            <td>{{ formatDate(item.ExtractedData?.CreatedByDate) }}</td>
+            <td>
+              <span class="status-badge rejected">REJECTED</span>
+              <div v-if="item.ExtractedData && item.ExtractedData.compliance_approval && item.ExtractedData.compliance_approval.remarks" class="rejection-reason">
+                {{ item.ExtractedData.compliance_approval.remarks }}
+              </div>
+            </td>
+            <td class="actions-cell">
+              <button class="view-btn" @click="handleApprovalAction(item)"><i class="fas fa-eye"></i> VIEW</button>
+              <button class="edit-btn" @click="openRejectedItem(item)"><i class="fas fa-edit"></i> Edit</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </template>
  
 <script>
@@ -412,6 +539,7 @@ import PopupMixin from './mixins/PopupMixin';
 import { CompliancePopups } from './utils/popupUtils';
 import CollapsibleTable from '../CollapsibleTable.vue';
 import AccessUtils from '@/utils/accessUtils';
+import axios from 'axios';
  
 export default {
   name: 'ComplianceApprover',
@@ -426,7 +554,6 @@ export default {
       selectedApproval: null,
       showRejectModal: false,
       rejectionComment: '',
-      rejectedCompliances: [],
       showEditComplianceModal: false,
       editingCompliance: null,
       userId: 2, // Default user id
@@ -454,11 +581,41 @@ export default {
         'Recently Approved': { currentPage: 1, pageSize: 10, totalCount: 0 }
       },
       showDetailsModal: false, // New state for details modal
+      activeTab: 'myTasks', // Default to 'myTasks'
+      selectedUserId: '', // To hold the selected user ID
+      availableUsers: [], // To store available users for dropdown
+      myTasks: [],
+      reviewerTasks: [],
+      isAdministrator: false,
+      selectedUserInfo: null,
+      currentUserId: null,
+      myTasksCollapsible: {
+        Pending: true,
+        Approved: false,
+        Rejected: false,
+      },
+      reviewerTasksCollapsible: {
+        Pending: true,
+        Approved: false,
+        Rejected: false,
+      },
+      myTasksPagination: {
+        Pending: { currentPage: 1, pageSize: 10 },
+        Approved: { currentPage: 1, pageSize: 10 },
+        Rejected: { currentPage: 1, pageSize: 10 },
+      },
+      reviewerTasksPagination: {
+        Pending: { currentPage: 1, pageSize: 10 },
+        Approved: { currentPage: 1, pageSize: 10 },
+        Rejected: { currentPage: 1, pageSize: 10 },
+      },
+      mitigationString: '',
     }
   },
   async mounted() {
     console.log('ComplianceApprover mounted');
     await this.refreshData();
+    await this.initializeUser();
     
     // Set up auto-refresh every 30 seconds
     this.refreshInterval = setInterval(() => {
@@ -491,12 +648,28 @@ export default {
       },
       deep: true
     },
-    rejectedCompliances: {
-      handler() {
-        this.updatePaginationCounts();
+    editingCompliance: {
+      handler(newVal) {
+        if (newVal && newVal.ExtractedData && newVal.ExtractedData.mitigation) {
+          if (typeof newVal.ExtractedData.mitigation === 'object') {
+            this.mitigationString = JSON.stringify(newVal.ExtractedData.mitigation, null, 2);
+          } else {
+            this.mitigationString = newVal.ExtractedData.mitigation;
+          }
+        }
       },
       deep: true
-    }
+    },
+    mitigationString(newVal) {
+      if (this.editingCompliance && this.editingCompliance.ExtractedData) {
+        try {
+          // Try to parse as JSON, fallback to string
+          this.editingCompliance.ExtractedData.mitigation = JSON.parse(newVal);
+        } catch {
+          this.editingCompliance.ExtractedData.mitigation = newVal;
+        }
+      }
+    },
   },
   methods: {
   async sendPushNotification(notificationData) {
@@ -780,20 +953,8 @@ export default {
        
         console.log('Approval response:', response?.data);
        
-        // Remove from rejected list if it was previously rejected
-        if (this.selectedApproval.Identifier) {
-          console.log(`Checking if identifier ${this.selectedApproval.Identifier} exists in rejected list...`);
-          const beforeCount = this.rejectedCompliances.length;
-          
-          this.rejectedCompliances = this.rejectedCompliances.filter(item =>
-            item.Identifier !== this.selectedApproval.Identifier
-          );
-          
-          const afterCount = this.rejectedCompliances.length;
-          if (beforeCount > afterCount) {
-            console.log(`Removed ${beforeCount - afterCount} item(s) with identifier ${this.selectedApproval.Identifier} from rejected list`);
-          }
-        }
+        // Note: rejectedCompliances is now a computed property, so it updates automatically
+        // when the underlying data changes
        
         // Replace alert with popup
         this.showSuccessPopup(
@@ -862,10 +1023,11 @@ export default {
           if (this.selectedApproval.ExtractedData) {
             // Ensure compliance status remains Active in the local data
             this.selectedApproval.ExtractedData.current_status = 'Active';
-            if (this.selectedApproval.ExtractedData.compliance_approval) {
-              this.selectedApproval.ExtractedData.compliance_approval.approved = false;
-              this.selectedApproval.ExtractedData.compliance_approval.remarks = this.rejectionComment;
+            if (!this.selectedApproval.ExtractedData.compliance_approval) {
+              this.selectedApproval.ExtractedData.compliance_approval = {};
             }
+            this.selectedApproval.ExtractedData.compliance_approval.approved = false;
+            this.selectedApproval.ExtractedData.compliance_approval.remarks = this.rejectionComment;
           }
         } else {
           // This is a regular compliance rejection
@@ -873,25 +1035,29 @@ export default {
           if (!this.selectedApproval.ExtractedData.compliance_approval) {
             this.selectedApproval.ExtractedData.compliance_approval = {};
           }
-          
           // Set the approval status to rejected and add remarks
           this.selectedApproval.ExtractedData.compliance_approval.approved = false;
           this.selectedApproval.ExtractedData.compliance_approval.remarks = this.rejectionComment;
           this.selectedApproval.ApprovedNot = false;
-          
           // Update status in ExtractedData - IMPORTANT for update after rejection
           this.selectedApproval.ExtractedData.Status = 'Rejected';
           this.selectedApproval.ExtractedData.ActiveInactive = 'Inactive';
-          
-          console.log('Rejecting compliance with data:', JSON.stringify(this.selectedApproval.ExtractedData));
-          
+          // --- Ensure remarks are included in the payload sent to backend ---
+          const payload = {
+            ExtractedData: {
+              ...this.selectedApproval.ExtractedData,
+              compliance_approval: {
+                ...this.selectedApproval.ExtractedData.compliance_approval,
+                remarks: this.rejectionComment,
+                approved: false
+              }
+            },
+            ApprovedNot: false
+          };
           // Submit the review with the updated data
           response = await complianceService.submitComplianceReview(
             this.selectedApproval.ApprovalId,
-            {
-              ExtractedData: this.selectedApproval.ExtractedData,
-              ApprovedNot: false
-            }
+            payload
           );
         }
         
@@ -977,10 +1143,8 @@ export default {
         console.log("Resubmission response:", response);
         
         if (response.data && (response.data.ApprovalId || response.data.success)) {
-          // Remove the resubmitted item from the rejected list immediately
-          this.rejectedCompliances = this.rejectedCompliances.filter(item => 
-            item.ApprovalId !== compliance.ApprovalId
-          );
+          // Note: rejectedCompliances is now a computed property, so it updates automatically
+          // when the underlying data changes
           
           this.showEditComplianceModal = false;
           this.editingCompliance = null;
@@ -1040,21 +1204,9 @@ export default {
       }
     },
     async checkForApprovedIdentifiers() {
-      // This is a manual check to see if any items in rejectedCompliances should be removed
-      // because they have been approved
-      if (this.rejectedCompliances.length === 0) return;
-      
-      const identifiersToCheck = this.rejectedCompliances.map(item => item.Identifier);
-      console.log('Checking rejected identifiers for approved status:', identifiersToCheck);
-      
-      // Filter out any identifiers that appear in the approved list
-      this.rejectedCompliances = this.rejectedCompliances.filter(item => {
-        const isApproved = this.isCompliantIdentifierApproved(item.Identifier);
-        if (isApproved) {
-          console.log(`Found approved item with identifier ${item.Identifier}, removing from rejected list`);
-        }
-        return !isApproved;
-      });
+      // Note: rejectedCompliances is now a computed property, so it updates automatically
+      // when the underlying data changes. No need to manually filter.
+      console.log('Rejected compliances computed automatically:', this.rejectedCompliances);
     },
     isCompliantIdentifierApproved(identifier) {
       // Check if any approval with this identifier exists and is approved
@@ -1066,48 +1218,11 @@ export default {
     async loadRejectedCompliances() {
       try {
         this.isLoadingRejected = true;
-        console.log(`Loading rejected compliances for reviewer_id: ${this.userId}`);
-        const response = await complianceService.getComplianceRejectedApprovals(this.userId);
-        console.log('Rejected compliances response:', response);
-
-        if (response.data) {
-          // Process the rejected items, excluding any that have been approved
-          let filteredRejected = response.data
-            .filter(item => 
-              item.ApprovedNot === false && 
-              item.Identifier &&
-              !item.ExtractedData?.compliance_approval?.inResubmission
-            )
-            .sort((a, b) => {
-              // Sort by ApprovalId (descending) so newest items appear first
-              if (a.ApprovalId && b.ApprovalId) {
-                return b.ApprovalId - a.ApprovalId;
-              }
-              return 0;
-            });
-          
-          console.log('Filtered rejected compliances:', filteredRejected);
-          
-          // Get unique items (latest version only for each identifier)
-          const uniqueIdentifiers = new Set();
-          this.rejectedCompliances = filteredRejected.filter(item => {
-            if (!uniqueIdentifiers.has(item.Identifier)) {
-              uniqueIdentifiers.add(item.Identifier);
-              // IMPORTANT: Check if any approval with this identifier exists and is approved
-              const isApproved = this.approvals.some(approval => 
-                approval.Identifier === item.Identifier && approval.ApprovedNot === true
-              );
-              
-              // Only include if not approved
-              return !isApproved;
-            }
-            return false;
-          });
-         
-          console.log('Final rejected compliances list:', this.rejectedCompliances);
-        }
+        // The rejectedCompliances computed property now handles this automatically
+        // No need to manually populate the array since it's computed from myTasksRejected and reviewerTasksRejected
+        console.log('Rejected compliances computed automatically:', this.rejectedCompliances);
       } catch (error) {
-        console.error('Error fetching rejected compliances:', error);
+        console.error('Error loading rejected compliances:', error);
       } finally {
         this.isLoadingRejected = false;
         // Update pagination counts after loading rejected compliances
@@ -1117,7 +1232,7 @@ export default {
     mapApprovalToRow(approval) {
       return {
         ...approval,
-        Identifier: approval.Identifier,
+        Identifier: approval.Identifier || (approval.ExtractedData && approval.ExtractedData.Identifier) || 'N/A',
         Description: approval.ExtractedData?.ComplianceItemDescription || approval.ExtractedData?.reason || 'No Description',
         Criticality: approval.ExtractedData?.Criticality || 'N/A',
         CreatedBy: approval.ExtractedData?.CreatedByName || 'System',
@@ -1128,7 +1243,7 @@ export default {
     mapRejectedToRow(compliance) {
       return {
         ...compliance,
-        Identifier: compliance.Identifier,
+        Identifier: compliance.Identifier || (compliance.ExtractedData && compliance.ExtractedData.Identifier) || 'N/A',
         Description: compliance.ExtractedData?.ComplianceItemDescription || 'No Description',
         Criticality: compliance.ExtractedData?.Criticality || 'N/A',
         CreatedBy: compliance.ExtractedData?.CreatedByName || 'System',
@@ -1215,7 +1330,126 @@ export default {
        if (event.key === 'Escape' && this.showDetailsModal) {
          this.closeDetailsModal();
        }
-     }
+     },
+     async initializeUser() {
+      try {
+        // Get current user role
+        const response = await axios.get('http://localhost:8000/api/user-role/');
+        if (response.data.success) {
+          this.currentUserId = response.data.user_id;
+          const userRole = response.data.role;
+          this.isAdministrator = userRole === 'GRC Administrator';
+          if (this.isAdministrator) {
+            await this.fetchUsers();
+            this.selectedUserId = null;
+          } else {
+            this.selectedUserId = this.currentUserId;
+            await this.loadUserTasks();
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing user:', error);
+      }
+    },
+    async fetchUsers() {
+      try {
+        const response = await axios.get('http://localhost:8000/api/users-for-dropdown/');
+        if (Array.isArray(response.data)) {
+          this.availableUsers = response.data;
+        } else if (response.data && response.data.success && Array.isArray(response.data.data)) {
+          this.availableUsers = response.data.data;
+        } else {
+          this.availableUsers = response.data || [];
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        this.availableUsers = [];
+      }
+    },
+    async onUserChange() {
+      if (this.selectedUserId) {
+        this.selectedUserInfo = this.availableUsers.find(u => u.UserId == this.selectedUserId);
+        await this.loadUserTasks();
+      } else {
+        this.selectedUserInfo = null;
+        this.myTasks = [];
+        this.reviewerTasks = [];
+      }
+    },
+    switchTab(tab) {
+      this.activeTab = tab;
+    },
+    async loadUserTasks() {
+      const targetUserId = this.selectedUserId || this.currentUserId;
+      if (this.isAdministrator && !this.selectedUserId) {
+        this.myTasks = [];
+        this.reviewerTasks = [];
+        return;
+      }
+      await this.fetchMyTasks(targetUserId);
+      await this.fetchReviewerTasks(targetUserId);
+    },
+    async fetchMyTasks(userId) {
+      try {
+        const response = await axios.get(`http://localhost:8000/api/compliance-approvals/user/${userId}/`);
+        if (Array.isArray(response.data)) {
+          this.myTasks = response.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          this.myTasks = response.data.data;
+        } else if (response.data && Array.isArray(response.data.results)) {
+          this.myTasks = response.data.results;
+        } else {
+          this.myTasks = [];
+        }
+      } catch (error) {
+        this.myTasks = [];
+      }
+    },
+    async fetchReviewerTasks(userId) {
+      try {
+        const response = await axios.get(`http://localhost:8000/api/compliance-approvals/reviewer/${userId}/`);
+        if (Array.isArray(response.data)) {
+          this.reviewerTasks = response.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          this.reviewerTasks = response.data.data;
+        } else if (response.data && Array.isArray(response.data.results)) {
+          this.reviewerTasks = response.data.results;
+        } else {
+          this.reviewerTasks = [];
+        }
+      } catch (error) {
+        this.reviewerTasks = [];
+      }
+    },
+    handleMyTasksPageChange(section, page) {
+      this.myTasksPagination[section].currentPage = page;
+    },
+    handleReviewerTasksPageChange(section, page) {
+      this.reviewerTasksPagination[section].currentPage = page;
+    },
+    formatMitigation(mitigation) {
+      if (!mitigation) return '';
+      if (typeof mitigation === 'string') return mitigation;
+      if (typeof mitigation === 'object') {
+        try {
+          // If it's a simple object, join values; otherwise, pretty print
+          if (Array.isArray(mitigation)) {
+            return mitigation.join(', ');
+          } else {
+            // Join values if all are strings, else pretty print
+            const values = Object.values(mitigation);
+            if (values.every(v => typeof v === 'string')) {
+              return values.join(', ');
+            } else {
+              return JSON.stringify(mitigation, null, 2);
+            }
+          }
+        } catch (e) {
+          return String(mitigation);
+        }
+      }
+      return String(mitigation);
+    },
   },
   computed: {
     pendingApprovalsCount() {
@@ -1400,6 +1634,84 @@ export default {
         { key: 'Version', label: 'Version' },
         { key: 'actions', label: 'Actions' }
       ];
+    },
+    myTasksCount() {
+      return this.myTasks ? this.myTasks.length : 0;
+    },
+    reviewerTasksCount() {
+      return this.reviewerTasks ? this.reviewerTasks.length : 0;
+    },
+    myTasksPending() {
+      return this.myTasks.filter(t => t.ApprovedNot === null);
+    },
+    myTasksApproved() {
+      return this.myTasks.filter(t => t.ApprovedNot === true);
+    },
+    myTasksRejected() {
+      return this.myTasks.filter(t => t.ApprovedNot === false);
+    },
+    reviewerTasksPending() {
+      return this.reviewerTasks.filter(t => t.ApprovedNot === null);
+    },
+    reviewerTasksApproved() {
+      return this.reviewerTasks.filter(t => t.ApprovedNot === true);
+    },
+    reviewerTasksRejected() {
+      return this.reviewerTasks.filter(t => t.ApprovedNot === false);
+    },
+    myTasksPendingPaged() {
+      const { currentPage, pageSize } = this.myTasksPagination.Pending;
+      const start = (currentPage - 1) * pageSize;
+      return this.myTasksPending.slice(start, start + pageSize);
+    },
+    myTasksApprovedPaged() {
+      const { currentPage, pageSize } = this.myTasksPagination.Approved;
+      const start = (currentPage - 1) * pageSize;
+      return this.myTasksApproved.slice(start, start + pageSize);
+    },
+    myTasksRejectedPaged() {
+      const { currentPage, pageSize } = this.myTasksPagination.Rejected;
+      const start = (currentPage - 1) * pageSize;
+      return this.myTasksRejected.slice(start, start + pageSize);
+    },
+    reviewerTasksPendingPaged() {
+      const { currentPage, pageSize } = this.reviewerTasksPagination.Pending;
+      const start = (currentPage - 1) * pageSize;
+      return this.reviewerTasksPending.slice(start, start + pageSize);
+    },
+    reviewerTasksApprovedPaged() {
+      const { currentPage, pageSize } = this.reviewerTasksPagination.Approved;
+      const start = (currentPage - 1) * pageSize;
+      return this.reviewerTasksApproved.slice(start, start + pageSize);
+    },
+    reviewerTasksRejectedPaged() {
+      const { currentPage, pageSize } = this.reviewerTasksPagination.Rejected;
+      const start = (currentPage - 1) * pageSize;
+      return this.reviewerTasksRejected.slice(start, start + pageSize);
+    },
+    rejectedCompliances() {
+      // Combine all rejected items
+      const allRejected = [...this.myTasksRejected, ...this.reviewerTasksRejected];
+      const seen = new Set();
+      return allRejected.filter(item => {
+        // Normalize Identifier and ApprovalId
+        const identifier = (item.Identifier || '').toString().trim().toLowerCase();
+        const approvalId = (item.ApprovalId || '').toString().trim().toLowerCase();
+        const key = `${identifier}__${approvalId}`;
+        // Debug: log the key
+        console.log('Rejected key:', key, item);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    },
+    isMitigationObject() {
+      return this.editingCompliance && this.editingCompliance.ExtractedData && typeof this.editingCompliance.ExtractedData.mitigation === 'object';
+    },
+    rejectionReason() {
+      if (!this.editingCompliance || !this.editingCompliance.ExtractedData) return '';
+      const ca = this.editingCompliance.ExtractedData.compliance_approval || {};
+      return ca.remarks || ca.rejection_reason || ca.reason || '';
     },
   }
 }
@@ -1742,5 +2054,68 @@ export default {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(30px);}
   to { opacity: 1; transform: translateY(0);}
+}
+
+.rejected-table-wrapper {
+  overflow-x: auto;
+}
+
+.rejected-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rejected-table th, .rejected-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.rejected-table th {
+  background-color: #f8f9fa;
+}
+
+.badge-rejected {
+  background-color: #ffdddd;
+  color: #d32f2f;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.action-btn {
+  margin-right: 10px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.view-btn {
+  background-color: #d3d3d3;
+}
+
+.edit-btn {
+  background-color: #ffdddd;
+}
+
+.status-badge.rejected {
+  background-color: #ffdddd;
+  color: #d32f2f;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 10px;
 }
 </style>

@@ -60,213 +60,15 @@
             </button>
           </div>
           
-          <!-- Approved Section -->
-          <div class="approved-section">
-            <div class="status-header approved" @click="toggleSection('approved')">
-              <span class="status-icon"><i class="fas fa-check-circle"></i></span>
-              <span class="status-title">Approved ({{ approvedIncidents.length }})</span>
-              <span class="arrow-indicator" :class="{ 'expanded': expandedSections.approved }">
-                <i class="fas fa-chevron-down"></i>
-              </span>
-            </div>
-            <div class="collapsible-content" :class="{ 'expanded': expandedSections.approved }">
-              <div v-if="approvedIncidents.length > 0" class="user-tasks-table-responsive">
-                <table class="user-tasks-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 8%">ID</th>
-                      <th style="width: 30%">Title</th>
-                      <th style="width: 15%">Origin</th>
-                      <th style="width: 15%">Priority</th>
-                      <th style="width: 15%">Due Date</th>
-                      <th style="width: 17%">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="incident in approvedIncidents" :key="incident.id" class="status-approved">
-                      <td class="id-column">{{ incident.id }}</td>
-                      <td class="title-column">
-                        <span class="status-dot approved"></span>
-                        <span class="title-text">{{ incident.Title }}</span>
-                      </td>
-                      <td class="origin-column">{{ incident.Origin || 'MANUAL' }}</td>
-                      <td class="priority-column">
-                        <span class="priority-badge" :class="incident.Priority?.toLowerCase()">
-                          {{ incident.Priority }}
-                        </span>
-                      </td>
-                      <td class="date-column">{{ formatDate(incident.MitigationDueDate) }}</td>
-                      <td class="actions-column">
-                        <button @click="viewMitigations(incident.id)" class="view-btn approved-incident">
-                          <i class="fas fa-check-circle"></i> View
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-else class="no-data">
-                <p>No approved tasks found.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Rejected Section -->
-          <div class="rejected-section">
-            <div class="status-header rejected" @click="toggleSection('rejected')">
-              <span class="status-icon"><i class="fas fa-times-circle"></i></span>
-              <span class="status-title">Rejected ({{ rejectedIncidents.length }})</span>
-              <span class="arrow-indicator" :class="{ 'expanded': expandedSections.rejected }">
-                <i class="fas fa-chevron-down"></i>
-              </span>
-            </div>
-            <div class="collapsible-content" :class="{ 'expanded': expandedSections.rejected }">
-              <div v-if="rejectedIncidents.length > 0">
-                <div class="user-tasks-table-responsive">
-                  <table class="user-tasks-table">
-                    <thead>
-                      <tr>
-                        <th style="width: 8%">ID</th>
-                        <th style="width: 30%">Title</th>
-                        <th style="width: 15%">Origin</th>
-                        <th style="width: 15%">Priority</th>
-                        <th style="width: 15%">Due Date</th>
-                        <th style="width: 17%">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="incident in rejectedIncidents" :key="incident.id" class="status-rejected">
-                        <td class="id-column">{{ incident.id }}</td>
-                        <td class="title-column">
-                          <span class="status-dot rejected"></span>
-                          <span class="title-text">{{ incident.Title }}</span>
-                        </td>
-                        <td class="origin-column">{{ incident.Origin || 'MANUAL' }}</td>
-                        <td class="priority-column">
-                          <span class="priority-badge" :class="incident.Priority?.toLowerCase()">
-                            {{ incident.Priority }}
-                          </span>
-                        </td>
-                        <td class="date-column">{{ formatDate(incident.MitigationDueDate) }}</td>
-                        <td class="actions-column">
-                          <button @click="viewMitigations(incident.id)" class="view-btn rejected-incident">
-                            <i class="fas fa-redo"></i> Resubmit
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div v-else class="no-data">
-                <p>No rejected tasks found.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Pending Review Section -->
-          <div class="pending-review-section">
-            <div class="status-header pending-review" @click="toggleSection('pendingReview')">
-              <span class="status-icon"><i class="fas fa-clock"></i></span>
-              <span class="status-title">Pending Review ({{ pendingReviewIncidents.length }})</span>
-              <span class="arrow-indicator" :class="{ 'expanded': expandedSections.pendingReview }">
-                <i class="fas fa-chevron-down"></i>
-              </span>
-            </div>
-            <div class="collapsible-content" :class="{ 'expanded': expandedSections.pendingReview }">
-              <div v-if="pendingReviewIncidents.length > 0">
-                <div class="user-tasks-table-responsive">
-                  <table class="user-tasks-table">
-                    <thead>
-                      <tr>
-                        <th style="width: 8%">ID</th>
-                        <th style="width: 30%">Title</th>
-                        <th style="width: 15%">Origin</th>
-                        <th style="width: 15%">Priority</th>
-                        <th style="width: 15%">Due Date</th>
-                        <th style="width: 17%">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="incident in pendingReviewIncidents" :key="incident.id" class="status-pending-review">
-                        <td class="id-column">{{ incident.id }}</td>
-                        <td class="title-column">
-                          <span class="status-dot pending-review"></span>
-                          <span class="title-text">{{ incident.Title }}</span>
-                        </td>
-                        <td class="origin-column">{{ incident.Origin || 'MANUAL' }}</td>
-                        <td class="priority-column">
-                          <span class="priority-badge" :class="incident.Priority?.toLowerCase()">
-                            {{ incident.Priority }}
-                          </span>
-                        </td>
-                        <td class="date-column">{{ formatDate(incident.MitigationDueDate) }}</td>
-                        <td class="actions-column">
-                          <button @click="viewMitigations(incident.id)" class="view-btn">
-                            <i class="fas fa-eye"></i> View
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div v-else class="no-data">
-                <p>No tasks pending review found.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Assigned Section -->
-          <div class="assigned-section">
-            <div class="status-header assigned" @click="toggleSection('assigned')">
-              <span class="status-icon"><i class="fas fa-tasks"></i></span>
-              <span class="status-title">Assigned ({{ assignedIncidents.length }})</span>
-              <span class="arrow-indicator" :class="{ 'expanded': expandedSections.assigned }">
-                <i class="fas fa-chevron-down"></i>
-              </span>
-            </div>
-            <div class="collapsible-content" :class="{ 'expanded': expandedSections.assigned }">
-              <div class="user-tasks-table-responsive" v-if="assignedIncidents.length > 0">
-                <table class="user-tasks-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 8%">ID</th>
-                      <th style="width: 30%">Title</th>
-                      <th style="width: 15%">Origin</th>
-                      <th style="width: 15%">Priority</th>
-                      <th style="width: 15%">Due Date</th>
-                      <th style="width: 17%">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="incident in assignedIncidents" :key="incident.id" class="status-assigned">
-                      <td class="id-column">{{ incident.id }}</td>
-                      <td class="title-column">
-                        <span class="status-dot assigned"></span>
-                        <span class="title-text">{{ incident.Title }}</span>
-                      </td>
-                      <td class="origin-column">{{ incident.Origin || 'MANUAL' }}</td>
-                      <td class="priority-column">
-                        <span class="priority-badge" :class="incident.Priority?.toLowerCase()">
-                          {{ incident.Priority }}
-                        </span>
-                      </td>
-                      <td class="date-column">{{ formatDate(incident.MitigationDueDate) }}</td>
-                      <td class="actions-column">
-                        <button @click="viewMitigations(incident.id)" class="view-btn">
-                          <i class="fas fa-eye"></i> View
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-else class="no-data">
-                <p>No assigned tasks found.</p>
-              </div>
-            </div>
-          </div>
+          <CollapsibleTable
+            v-for="section in userTaskSections"
+            :key="section.name"
+            :section-config="section"
+            :table-headers="userTaskTableHeaders"
+            :is-expanded="expandedSections[section.statusKey]"
+            @toggle="toggleSection(section.statusKey)"
+            @taskClick="handleUserTaskClick"
+          />
         </div>
       </div>
       
@@ -279,107 +81,15 @@
           <p>No review tasks assigned to this user.</p>
         </div>
         <div v-else>
-          <!-- Pending Review Section -->
-          <div class="pending-review-section">
-            <div class="status-header pending-review" @click="toggleSection('reviewerPending')">
-              <span class="status-icon"><i class="fas fa-clock"></i></span>
-              <span class="status-title">Pending Review ({{ pendingReviewerTasks.length }})</span>
-              <span class="arrow-indicator" :class="{ 'expanded': expandedSections.reviewerPending }">
-                <i class="fas fa-chevron-down"></i>
-              </span>
-            </div>
-            <div class="collapsible-content" :class="{ 'expanded': expandedSections.reviewerPending }">
-              <div class="user-tasks-table-responsive" v-if="pendingReviewerTasks.length > 0">
-                <table class="user-tasks-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 8%">ID</th>
-                      <th style="width: 30%">Title</th>
-                      <th style="width: 15%">Origin</th>
-                      <th style="width: 15%">Priority</th>
-                      <th style="width: 15%">Assigned By</th>
-                      <th style="width: 17%">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="task in pendingReviewerTasks" :key="task.id" class="status-pending-review">
-                      <td class="id-column">{{ task.id }}</td>
-                      <td class="title-column">
-                        <span class="status-dot pending-review"></span>
-                        <span class="title-text">{{ task.Title }}</span>
-                      </td>
-                      <td class="origin-column">{{ task.Origin || 'MANUAL' }}</td>
-                      <td class="priority-column">
-                        <span class="priority-badge" :class="task.Priority?.toLowerCase() || 'unknown'">
-                          {{ task.Priority || 'Unknown' }}
-                        </span>
-                      </td>
-                      <td class="date-column">{{ getUserName(task.AssignerId) }}</td>
-                      <td class="actions-column">
-                        <button @click="reviewMitigations(task)" class="review-btn">
-                          <i class="fas fa-tasks"></i> Review
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-else class="no-data">
-                <p>No pending review tasks found.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Approved Section -->
-          <div class="approved-section">
-            <div class="status-header approved" @click="toggleSection('reviewerApproved')">
-              <span class="status-icon"><i class="fas fa-check-circle"></i></span>
-              <span class="status-title">Approved ({{ approvedReviewerTasks.length }})</span>
-              <span class="arrow-indicator" :class="{ 'expanded': expandedSections.reviewerApproved }">
-                <i class="fas fa-chevron-down"></i>
-              </span>
-            </div>
-            <div class="collapsible-content" :class="{ 'expanded': expandedSections.reviewerApproved }">
-              <div class="user-tasks-table-responsive" v-if="approvedReviewerTasks.length > 0">
-                <table class="user-tasks-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 8%">ID</th>
-                      <th style="width: 30%">Title</th>
-                      <th style="width: 15%">Origin</th>
-                      <th style="width: 15%">Priority</th>
-                      <th style="width: 15%">Assigned By</th>
-                      <th style="width: 17%">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="task in approvedReviewerTasks" :key="task.id" class="status-approved">
-                      <td class="id-column">{{ task.id }}</td>
-                      <td class="title-column">
-                        <span class="status-dot approved"></span>
-                        <span class="title-text">{{ task.Title }}</span>
-                      </td>
-                      <td class="origin-column">{{ task.Origin || 'MANUAL' }}</td>
-                      <td class="priority-column">
-                        <span class="priority-badge" :class="task.Priority?.toLowerCase() || 'unknown'">
-                          {{ task.Priority || 'Unknown' }}
-                        </span>
-                      </td>
-                      <td class="date-column">{{ getUserName(task.AssignerId) }}</td>
-                      <td class="actions-column">
-                        <button @click="reviewMitigations(task)" class="review-btn approved">
-                          <i class="fas fa-eye"></i> View
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-else class="no-data">
-                <p>No approved review tasks found.</p>
-              </div>
-            </div>
-          </div>
+          <CollapsibleTable
+            v-for="section in reviewerTaskSections"
+            :key="section.name"
+            :section-config="section"
+            :table-headers="reviewerTaskTableHeaders"
+            :is-expanded="expandedSections[section.statusKey]"
+            @toggle="toggleSection(section.statusKey)"
+            @taskClick="handleReviewerTaskClick"
+          />
         </div>
       </div>
     </div>
@@ -1078,13 +788,15 @@
 import axios from 'axios';
 import { PopupService, PopupModal } from '@/modules/popup';
 import CustomDropdown from '@/components/CustomDropdown.vue';
+import CollapsibleTable from '@/components/CollapsibleTable.vue';
 import './IncidentUserTask.css'; // Import the CSS file
 
 export default {
   name: 'IncidentUserTasks',
   components: {
     PopupModal,
-    CustomDropdown
+    CustomDropdown,
+    CollapsibleTable
   },
   data() {
     return {
@@ -1183,6 +895,70 @@ export default {
     },
     currentIncidentDetails() {
       return this.userIncidents.find(t => t.id === this.selectedIncidentId) || {};
+    },
+    userTaskTableHeaders() {
+      return [
+        { key: 'id', label: 'ID', sortable: true, width: '8%' },
+        { key: 'Title', label: 'Title', sortable: true, width: '30%' },
+        { key: 'Origin', label: 'Origin', sortable: true, width: '15%' },
+        { key: 'Priority', label: 'Priority', sortable: true, width: '15%' },
+        { key: 'MitigationDueDate', label: 'Due Date', sortable: true, width: '15%' },
+        { key: 'actions', label: 'Actions', sortable: false, width: '17%' }
+      ];
+    },
+    reviewerTaskTableHeaders() {
+      return [
+        { key: 'id', label: 'ID', sortable: true, width: '8%' },
+        { key: 'Title', label: 'Title', sortable: true, width: '30%' },
+        { key: 'Origin', label: 'Origin', sortable: true, width: '15%' },
+        { key: 'Priority', label: 'Priority', sortable: true, width: '15%' },
+        { key: 'AssignerId', label: 'Assigned By', sortable: true, width: '15%' },
+        { key: 'actions', label: 'Actions', sortable: false, width: '17%' }
+      ];
+    },
+    userTaskSections() {
+      return [
+        {
+          name: 'Approved',
+          statusKey: 'approved',
+          statusClass: 'approved',
+          tasks: this.approvedIncidents.map(i => ({ ...i, actions: 'view' }))
+        },
+        {
+          name: 'Rejected',
+          statusKey: 'rejected',
+          statusClass: 'rejected',
+          tasks: this.rejectedIncidents.map(i => ({ ...i, actions: 'resubmit' }))
+        },
+        {
+          name: 'Pending Review',
+          statusKey: 'pendingReview',
+          statusClass: 'pending-review',
+          tasks: this.pendingReviewIncidents.map(i => ({ ...i, actions: 'view' }))
+        },
+        {
+          name: 'Assigned',
+          statusKey: 'assigned',
+          statusClass: 'assigned',
+          tasks: this.assignedIncidents.map(i => ({ ...i, actions: 'view' }))
+        }
+      ];
+    },
+    reviewerTaskSections() {
+      return [
+        {
+          name: 'Pending Review',
+          statusKey: 'reviewerPending',
+          statusClass: 'pending-review',
+          tasks: this.pendingReviewerTasks.map(i => ({ ...i, actions: 'review' }))
+        },
+        {
+          name: 'Approved',
+          statusKey: 'reviewerApproved',
+          statusClass: 'approved',
+          tasks: this.approvedReviewerTasks.map(i => ({ ...i, actions: 'view' }))
+        }
+      ];
     }
   },
   mounted() {
@@ -1190,24 +966,6 @@ export default {
     this.initializeFromQuery();
   },
   methods: {
-    async sendPushNotification(notificationData) {
-      try {
-        const response = await fetch('http://localhost:8000/api/push-notification/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(notificationData)
-        });
-        if (response.ok) {
-          console.log('Push notification sent successfully');
-        } else {
-          console.error('Failed to send push notification');
-        }
-      } catch (error) {
-        console.error('Error sending push notification:', error);
-      }
-    },
     fetchUsers() {
       axios.get('http://localhost:8000/api/custom-users/')
         .then(response => {
@@ -1351,13 +1109,6 @@ export default {
       if (!task) {
         console.error('Task not found for ID:', id);
         PopupService.error(`Error: Task not found for ID ${id}`);
-        this.sendPushNotification({
-          title: 'Task Not Found',
-          message: `Error: Task not found for ID ${id}`,
-          category: 'incident',
-          priority: 'high',
-          user_id: this.selectedUserId || 'default_user'
-        });
         return;
       }
       
@@ -1433,13 +1184,6 @@ export default {
             console.error('Response status:', error.response.status);
           }
           PopupService.error(`Error loading data: ${error.message}`);
-          this.sendPushNotification({
-            title: 'Data Loading Error',
-            message: `Error loading ${isAuditFinding ? 'audit finding' : 'incident'} data: ${error.message}`,
-            category: 'incident',
-            priority: 'high',
-            user_id: this.selectedUserId || 'default_user'
-          });
           this.mitigationSteps = [];
           this.assessmentFeedbackForUser = null;
           this.loadingMitigations = false;
@@ -1568,13 +1312,6 @@ export default {
       // Prevent editing of approved steps
       if (this.mitigationSteps[index].approved === true) {
         PopupService.warning('This mitigation step has been approved by the reviewer and cannot be modified.');
-        this.sendPushNotification({
-          title: 'Mitigation Step Locked',
-          message: 'This mitigation step has been approved by the reviewer and cannot be modified.',
-          category: 'incident',
-          priority: 'medium',
-          user_id: this.selectedUserId || 'default_user'
-        });
         return;
       }
       
@@ -1650,13 +1387,6 @@ export default {
         this.loading = false;
         this.closeMitigationModal();
         PopupService.success(`${isAuditFinding ? 'Audit finding' : 'Incident'} assessment submitted for review successfully!`);
-        this.sendPushNotification({
-          title: `${isAuditFinding ? 'Audit Finding' : 'Incident'} Assessment Submitted`,
-          message: `${isAuditFinding ? 'Audit finding' : 'Incident'} assessment submitted for review successfully!`,
-          category: 'incident',
-          priority: 'high',
-          user_id: this.selectedUserId || 'default_user'
-        });
         
         // Refresh the tasks list
         this.fetchData();
@@ -1665,13 +1395,6 @@ export default {
         console.error(`Error submitting ${isAuditFinding ? 'audit finding' : 'incident'} assessment:`, error);
         this.loading = false;
         PopupService.error('Failed to submit assessment. Please try again.');
-        this.sendPushNotification({
-          title: 'Assessment Submission Failed',
-          message: `Failed to submit ${isAuditFinding ? 'audit finding' : 'incident'} assessment. Please try again.`,
-          category: 'incident',
-          priority: 'high',
-          user_id: this.selectedUserId || 'default_user'
-        });
       });
     },
     closeReviewerModal() {
@@ -1709,13 +1432,6 @@ export default {
     submitReview(approved) {
       if (!this.canSubmitReview) {
         PopupService.warning('Please complete the review of all mitigations');
-        this.sendPushNotification({
-          title: 'Review Incomplete',
-          message: 'Please complete the review of all mitigations before submitting.',
-          category: 'incident',
-          priority: 'medium',
-          user_id: this.selectedUserId || 'default_user'
-        });
         return;
       }
       
@@ -1767,13 +1483,6 @@ export default {
           this.reviewApproved = approved;
           
           PopupService.success(`${isAuditFinding ? 'Audit finding' : 'Incident'} ${approved ? 'approved' : 'rejected'} successfully!`);
-          this.sendPushNotification({
-            title: `${isAuditFinding ? 'Audit Finding' : 'Incident'} Review Completed`,
-            message: `${isAuditFinding ? 'Audit finding' : 'Incident'} ${approved ? 'approved' : 'rejected'} successfully!`,
-            category: 'incident',
-            priority: 'high',
-            user_id: this.selectedUserId || 'default_user'
-          });
           
           setTimeout(() => {
             this.closeReviewerModal();
@@ -1783,25 +1492,11 @@ export default {
           console.error(`Error completing ${isAuditFinding ? 'audit finding' : 'incident'} review:`, error);
           this.loading = false;
           PopupService.error('Failed to submit review. Please try again.');
-          this.sendPushNotification({
-            title: 'Review Submission Failed',
-            message: `Failed to submit ${isAuditFinding ? 'audit finding' : 'incident'} review. Please try again.`,
-            category: 'incident',
-            priority: 'high',
-            user_id: this.selectedUserId || 'default_user'
-          });
         });
     },
     updateRemarks(id) {
       if (!this.mitigationReviewData[id].remarks.trim()) {
         PopupService.warning('Please provide remarks for rejection');
-        this.sendPushNotification({
-          title: 'Remarks Required',
-          message: 'Please provide remarks for rejection',
-          category: 'incident',
-          priority: 'medium',
-          user_id: this.selectedUserId || 'default_user'
-        });
         return;
       }
       
@@ -1817,13 +1512,6 @@ export default {
       
       if (file.size > 5 * 1024 * 1024) {
         PopupService.error('File size exceeds 5MB limit');
-        this.sendPushNotification({
-          title: 'File Upload Error',
-          message: 'File size exceeds 5MB limit',
-          category: 'incident',
-          priority: 'medium',
-          user_id: this.selectedUserId || 'default_user'
-        });
         event.target.value = '';
         return;
       }
@@ -1840,7 +1528,8 @@ export default {
       axios.post('http://localhost:8000/api/upload-file/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        timeout :1000000
       })
       .then(response => {
         console.log('File processed successfully:', response.data);
@@ -1850,44 +1539,16 @@ export default {
           this.mitigationSteps[index].fileName = file.name;
           
           PopupService.success('File uploaded successfully');
-          this.sendPushNotification({
-            title: 'File Upload Success',
-            message: 'File uploaded successfully',
-            category: 'incident',
-            priority: 'medium',
-            user_id: this.selectedUserId || 'default_user'
-          });
         } else {
           PopupService.error('Error uploading file: ' + response.data.error);
-          this.sendPushNotification({
-            title: 'File Upload Error',
-            message: 'Error uploading file: ' + response.data.error,
-            category: 'incident',
-            priority: 'high',
-            user_id: this.selectedUserId || 'default_user'
-          });
         }
       })
       .catch(error => {
         console.error('Error processing file:', error);
         if (error.response && error.response.data && error.response.data.error) {
           PopupService.error('Error uploading file: ' + error.response.data.error);
-          this.sendPushNotification({
-            title: 'File Upload Error',
-            message: 'Error uploading file: ' + error.response.data.error,
-            category: 'incident',
-            priority: 'high',
-            user_id: this.selectedUserId || 'default_user'
-          });
         } else {
           PopupService.error('Error uploading file. Please try again.');
-          this.sendPushNotification({
-            title: 'File Upload Error',
-            message: 'Error uploading file. Please try again.',
-            category: 'incident',
-            priority: 'high',
-            user_id: this.selectedUserId || 'default_user'
-          });
         }
       })
       .finally(() => {
@@ -2095,13 +1756,6 @@ export default {
       // Get the first incident ID for testing
       if (this.userIncidents.length === 0) {
         PopupService.error('No incidents available for testing');
-        this.sendPushNotification({
-          title: 'Testing Error',
-          message: 'No incidents available for testing',
-          category: 'incident',
-          priority: 'medium',
-          user_id: this.selectedUserId || 'default_user'
-        });
         return;
       }
       
@@ -2124,24 +1778,10 @@ export default {
         .then(response => {
           console.log('Mitigations endpoint test successful:', response.data);
           PopupService.success('Mitigations endpoint test successful');
-          this.sendPushNotification({
-            title: 'API Test Success',
-            message: 'Mitigations endpoint test successful',
-            category: 'incident',
-            priority: 'low',
-            user_id: this.selectedUserId || 'default_user'
-          });
         })
         .catch(error => {
           console.error('Mitigations endpoint test failed:', error);
           PopupService.error(`Mitigations endpoint test failed: ${error.message}`);
-          this.sendPushNotification({
-            title: 'API Test Failed',
-            message: `Mitigations endpoint test failed: ${error.message}`,
-            category: 'incident',
-            priority: 'medium',
-            user_id: this.selectedUserId || 'default_user'
-          });
         });
       
       // Test the review endpoint
@@ -2149,25 +1789,19 @@ export default {
         .then(response => {
           console.log('Review endpoint test successful:', response.data);
           PopupService.success('Review endpoint test successful');
-          this.sendPushNotification({
-            title: 'API Test Success',
-            message: 'Review endpoint test successful',
-            category: 'incident',
-            priority: 'low',
-            user_id: this.selectedUserId || 'default_user'
-          });
         })
         .catch(error => {
           console.error('Review endpoint test failed:', error);
           PopupService.error(`Review endpoint test failed: ${error.message}`);
-          this.sendPushNotification({
-            title: 'API Test Failed',
-            message: `Review endpoint test failed: ${error.message}`,
-            category: 'incident',
-            priority: 'medium',
-            user_id: this.selectedUserId || 'default_user'
-          });
         });
+    },
+    handleUserTaskClick(task) {
+      if (task.actions === 'view') this.viewMitigations(task.id);
+      else if (task.actions === 'resubmit') this.viewMitigations(task.id); // Could be a resubmit modal if needed
+    },
+    handleReviewerTaskClick(task) {
+      if (task.actions === 'review') this.reviewMitigations(task);
+      else if (task.actions === 'view') this.reviewMitigations(task);
     }
   }
 }

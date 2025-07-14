@@ -108,8 +108,8 @@
               </button>
               <button 
                 class="incident-action-icon"
-                @click="handleDropdownAction('reject', row)"
-                title="Reject Incident"
+                @click="handleDropdownAction('close', row)"
+                title="Close Incident"
                 v-if="canEditIncident()"
               >
                 <i class="fas fa-times"></i>
@@ -151,6 +151,15 @@
             <h3 class="incident-modal-title incident-rejected">REJECTED</h3>
             <div class="incident-modal-footer">
               <button @click="confirmReject" class="incident-modal-btn incident-reject-btn">Confirm Reject</button>
+              <button @click="closeModal" class="incident-modal-btn incident-cancel-btn">Cancel</button>
+            </div>
+          </div>
+
+          <div v-else-if="modalAction === 'close'" class="incident-rejected-container">
+            <div class="incident-rejected-icon">✕</div>
+            <h3 class="incident-modal-title incident-rejected">CLOSED</h3>
+            <div class="incident-modal-footer">
+              <button @click="confirmClose" class="incident-modal-btn incident-reject-btn">Confirm Close</button>
               <button @click="closeModal" class="incident-modal-btn incident-cancel-btn">Cancel</button>
             </div>
           </div>
@@ -467,7 +476,7 @@ export default {
           case 'escalate':
             hasPermission = this.canEscalateIncident();
             break;
-          case 'reject':
+          case 'close':
             hasPermission = this.canEditIncident();
             break;
         }
@@ -483,7 +492,7 @@ export default {
             case 'escalate':
               AccessUtils.showIncidentAccessDenied('escalate');
               break;
-            case 'reject':
+            case 'close':
               AccessUtils.showIncidentAccessDenied('edit');
               break;
             default:
@@ -502,10 +511,18 @@ export default {
             this.openAssignModal(incident);
             break;
           case 'escalate':
-            this.openSolveModal(incident);
+            PopupService.confirm(
+              `Are you sure you want to escalate Incident #${incident.IncidentId} to Risk? This will forward the incident to the Risk module for further evaluation and mitigation.`,
+              'Escalate to Risk',
+              () => this.confirmSolve(incident)
+            );
             break;
-          case 'reject':
-            this.openRejectModal(incident);
+          case 'close':
+            PopupService.confirm(
+              `Are you sure you want to close Incident #${incident.IncidentId}? This action cannot be undone.`,
+              'Close Incident',
+              () => this.confirmClose(incident)
+            );
             break;
         }
       },
@@ -533,6 +550,11 @@ export default {
       console.log('Selected incident:', incident);
       console.log('Incident Mitigation field:', incident.Mitigation);
       this.loadExistingMitigations(incident);
+    },
+    openCloseModal(incident) {
+      this.selectedIncident = incident;
+      this.modalAction = 'close';
+      this.showModal = true;
     },
     closeModal() {
       this.showModal = false;
@@ -749,18 +771,18 @@ export default {
         }
       });
     },
-    confirmSolve() {
-      console.log('Escalating incident to risk:', this.selectedIncident.IncidentId);
+    confirmSolve(incident) {
+      console.log('Escalating incident to risk:', incident.IncidentId);
       
       // Update incident status to "Scheduled"
-      axios.put(`http://localhost:8000/api/incidents/${this.selectedIncident.IncidentId}/status/`, {
+      axios.put(`http://localhost:8000/api/incidents/${incident.IncidentId}/status/`, {
         status: 'Scheduled'
       })
       .then(response => {
         console.log('Incident escalated to risk - API response:', response.data);
         
         // Show success popup
-        PopupService.success(`Incident #${this.selectedIncident.IncidentId} has been successfully escalated to Risk Management for further evaluation and mitigation.`);
+        PopupService.success(`Incident #${incident.IncidentId} has been successfully escalated to Risk Management for further evaluation and mitigation.`, 'Escalated to Risk');
         
         // Immediately update the local incident object for instant UI feedback
         const incident = this.incidents.find(inc => inc.IncidentId === this.selectedIncident.IncidentId);
@@ -836,6 +858,39 @@ export default {
         if (!AccessUtils.handleApiError(error, 'reject incidents')) {
           // Only show generic error if it's not an access denied error
           PopupService.error('Failed to reject incident. Please try again.');
+        }
+      });
+    },
+    confirmClose(incident) {
+      console.log('Closing incident:', incident.IncidentId);
+      // Update incident status to "Closed"
+      axios.put(`http://localhost:8000/api/incidents/${incident.IncidentId}/status/`, {
+        status: 'Closed'
+      })
+      .then(response => {
+        console.log('Incident closed - API response:', response.data);
+        // Immediately update the local incident object for instant UI feedback
+        const incident = this.incidents.find(inc => inc.IncidentId === this.selectedIncident.IncidentId);
+        if (incident) {
+          incident.Status = 'Closed';
+          console.log('Updated local incident status to Closed');
+        }
+        // Update filtered incidents as well
+        const filteredIncident = this.filteredIncidents.find(inc => inc.IncidentId === this.selectedIncident.IncidentId);
+        if (filteredIncident) {
+          filteredIncident.Status = 'Closed';
+        }
+        // Refresh incidents list after status update for data consistency
+        this.fetchIncidents();
+        // Auto close the modal after 2 seconds
+        setTimeout(() => {
+          this.closeModal();
+        }, 2000);
+      })
+      .catch(error => {
+        console.error('Error updating incident status:', error);
+        if (!AccessUtils.handleApiError(error, 'close incidents')) {
+          PopupService.error('Failed to close incident. Please try again.');
         }
       });
     },

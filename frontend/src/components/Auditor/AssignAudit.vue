@@ -8,8 +8,9 @@
         <button 
           v-for="(tab, index) in tabs" 
           :key="index"
-          :class="['tab-button', { active: currentTab === index }]"
-          @click="currentTab = index"
+          :class="['tab-button', { active: currentTab === index, disabled: !isTabEnabled(index) }]"
+          :disabled="!isTabEnabled(index)"
+          @click="isTabEnabled(index) && (currentTab = index)"
         >
           {{ tab.name }}
           <span class="tab-number">{{ index + 1 }}</span>
@@ -1536,6 +1537,15 @@ return;
         member.isTeamEditMode = false;
       });
     },
+    isTabEnabled(index) {
+      // Only allow current tab and previous tabs
+      if (index === 0) return true;
+      if (index === this.currentTab) return true;
+      // Only enable next tab if all previous are completed
+      if (index === this.currentTab + 1 && this.canProceed) return true;
+      // Otherwise, disable
+      return false;
+    }
   },
   watch: {
     'teamMembers': {
@@ -2140,5 +2150,10 @@ return;
 .expand-all-btn:hover {
   background: #f1f5f9;
   transform: translateY(-1px);
+}
+.tab-button.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 </style>

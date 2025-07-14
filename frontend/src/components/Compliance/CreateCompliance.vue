@@ -218,6 +218,9 @@
                       + Add "{{ businessUnitSearch[idx] }}"
                     </button>
                   </div>
+                  <div v-else-if="filteredOptions.BusinessUnitsCovered.length === 0 && !businessUnitSearch[idx]" class="dropdown-add-option">
+                    <span>No options available. Type to add new:</span>
+                  </div>
                   <div 
                     v-for="option in filteredOptions.BusinessUnitsCovered" 
                     :key="option.id" 
@@ -355,6 +358,9 @@
                       + Add "{{ riskCategorySearch[idx] }}"
                     </button>
                   </div>
+                  <div v-else-if="filteredOptions.RiskCategory.length === 0 && !riskCategorySearch[idx]" class="dropdown-add-option">
+                    <span>No options available. Type to add new:</span>
+                  </div>
                   <div 
                     v-for="option in filteredOptions.RiskCategory" 
                     :key="option.id" 
@@ -391,6 +397,9 @@
                     <button @click="addNewOption(idx, 'RiskBusinessImpact', riskBusinessImpactSearch[idx])" class="dropdown-add-btn">
                       + Add "{{ riskBusinessImpactSearch[idx] }}"
                     </button>
+                  </div>
+                  <div v-else-if="filteredOptions.RiskBusinessImpact.length === 0 && !riskBusinessImpactSearch[idx]" class="dropdown-add-option">
+                    <span>No options available. Type to add new:</span>
                   </div>
                   <div 
                     v-for="option in filteredOptions.RiskBusinessImpact" 
@@ -618,13 +627,13 @@ export default {
           Impact: 5.0,
           Probability: 5.0,
           Status: 'Under Review',
-          reviewer_id: 2, // Default reviewer ID
-          CreatedByName: '2', // Default reviewer name as string
+          reviewer_id: '', // No default reviewer
+          CreatedByName: '', // No default creator
           Applicability: '',
           MaturityLevel: 'Initial',
           ActiveInactive: 'Active',
           PermanentTemporary: 'Permanent',
-          mitigationSteps: [{ stepNumber: 1, description: '' }], // Array to hold mitigation steps
+          mitigationSteps: [{ stepNumber: 1, description: '' }],
           validationErrors: {}
         }
       ],
@@ -1273,12 +1282,7 @@ export default {
             label: `${user.UserName}${user.email ? ` (${user.email})` : ''}`
           }));
           
-          // Set default reviewer if users exist
-          if (this.users.length > 0 && this.complianceList.length > 0) {
-            this.complianceList[0].reviewer_id = this.users[0].UserId;
-          }
-          
-          console.log('Loaded users:', this.users);
+          // Do not set any default reviewer_id here
         } else {
           throw new Error('Invalid users data received');
         }
@@ -1294,32 +1298,69 @@ export default {
       try {
         this.loading = true;
         
+        console.log('Loading category options from server...');
+        
         // Load business units
         const buResponse = await complianceService.getCategoryBusinessUnits('BusinessUnitsCovered');
         if (buResponse.data.success) {
           this.categoryOptions.BusinessUnitsCovered = buResponse.data.data;
+          this.filteredOptions.BusinessUnitsCovered = [...buResponse.data.data];
+          console.log('Loaded BusinessUnitsCovered:', this.categoryOptions.BusinessUnitsCovered);
         }
         
         // Load risk types
         const rtResponse = await complianceService.getCategoryBusinessUnits('RiskType');
         if (rtResponse.data.success) {
           this.categoryOptions.RiskType = rtResponse.data.data;
+          this.filteredOptions.RiskType = [...rtResponse.data.data];
+          console.log('Loaded RiskType:', this.categoryOptions.RiskType);
         }
         
         // Load risk categories
         const rcResponse = await complianceService.getCategoryBusinessUnits('RiskCategory');
         if (rcResponse.data.success) {
           this.categoryOptions.RiskCategory = rcResponse.data.data;
+          this.filteredOptions.RiskCategory = [...rcResponse.data.data];
+          console.log('Loaded RiskCategory:', this.categoryOptions.RiskCategory);
         }
         
         // Load risk business impacts
         const rbiResponse = await complianceService.getCategoryBusinessUnits('RiskBusinessImpact');
         if (rbiResponse.data.success) {
           this.categoryOptions.RiskBusinessImpact = rbiResponse.data.data;
+          this.filteredOptions.RiskBusinessImpact = [...rbiResponse.data.data];
+          console.log('Loaded RiskBusinessImpact:', this.categoryOptions.RiskBusinessImpact);
         }
+        
+        console.log('All category options loaded successfully');
       } catch (error) {
         console.error('Failed to load category options:', error);
         PopupService.error('Failed to load dropdown options. Some features may be limited.');
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    // Refresh category options from server
+    async refreshCategoryOptions() {
+      try {
+        console.log('Refreshing category options...');
+        await this.loadCategoryOptions();
+        console.log('Category options refreshed successfully');
+      } catch (error) {
+        console.error('Failed to refresh category options:', error);
+      }
+    },
+    
+    // Handle dropdown refresh button click
+    async handleDropdownRefresh(field) {
+      try {
+        this.loading = true;
+        await this.refreshCategoryOptions();
+        PopupService.success(`${field} options refreshed successfully`);
+      } catch (error) {
+        console.error(`Failed to refresh ${field} options:`, error);
+        PopupService.error(`Failed to refresh ${field} options`);
       } finally {
         this.loading = false;
       }
@@ -1330,8 +1371,15 @@ export default {
       // Close any open dropdown
       this.activeDropdown = { index, field };
       
+      // Initialize filtered options if not already set
+      if (!this.filteredOptions[field] || this.filteredOptions[field].length === 0) {
+        this.filteredOptions[field] = [...(this.categoryOptions[field] || [])];
+      }
+      
       // Set initial filtered options based on current search term
       this.filterOptions(index, field);
+      
+      console.log(`Showing dropdown for ${field} at index ${index}:`, this.filteredOptions[field]);
       
       // Prevent event from bubbling up
       event.stopPropagation();
@@ -1354,6 +1402,27 @@ export default {
       }
     },
     
+    // Clear search field and reset filtered options
+    clearSearchField(index, field) {
+      switch (field) {
+        case 'BusinessUnitsCovered':
+          this.businessUnitSearch[index] = '';
+          break;
+        case 'RiskType':
+          this.riskTypeSearch[index] = '';
+          break;
+        case 'RiskCategory':
+          this.riskCategorySearch[index] = '';
+          break;
+        case 'RiskBusinessImpact':
+          this.riskBusinessImpactSearch[index] = '';
+          break;
+      }
+      
+      // Reset filtered options to show all options
+      this.filteredOptions[field] = [...(this.categoryOptions[field] || [])];
+    },
+    
     // Filter dropdown options based on search term
     filterOptions(index, field, searchTerm = '') {
       let optionsToFilter = [];
@@ -1369,24 +1438,45 @@ export default {
           optionsToFilter = this.subPolicies;
           break;
         case 'BusinessUnitsCovered':
-          optionsToFilter = this.categoryOptions.BusinessUnitsCovered;
+          optionsToFilter = this.categoryOptions.BusinessUnitsCovered || [];
           break;
         case 'RiskType':
-          optionsToFilter = this.categoryOptions.RiskType;
+          optionsToFilter = this.categoryOptions.RiskType || [];
           break;
         case 'RiskCategory':
-          optionsToFilter = this.categoryOptions.RiskCategory;
+          optionsToFilter = this.categoryOptions.RiskCategory || [];
           break;
         case 'RiskBusinessImpact':
-          optionsToFilter = this.categoryOptions.RiskBusinessImpact;
+          optionsToFilter = this.categoryOptions.RiskBusinessImpact || [];
           break;
       }
       
+      // Get the current search term for this specific field and index
+      let currentSearchTerm = '';
+      switch (field) {
+        case 'BusinessUnitsCovered':
+          currentSearchTerm = this.businessUnitSearch[index] || '';
+          break;
+        case 'RiskType':
+          currentSearchTerm = this.riskTypeSearch[index] || '';
+          break;
+        case 'RiskCategory':
+          currentSearchTerm = this.riskCategorySearch[index] || '';
+          break;
+        case 'RiskBusinessImpact':
+          currentSearchTerm = this.riskBusinessImpactSearch[index] || '';
+          break;
+        default:
+          currentSearchTerm = searchTerm;
+      }
+      
       // Filter options based on search term (case-insensitive)
-      const lowerSearchTerm = searchTerm.toLowerCase();
+      const lowerSearchTerm = currentSearchTerm.toLowerCase();
       this.filteredOptions[field] = optionsToFilter.filter(option => 
         option.value.toLowerCase().includes(lowerSearchTerm)
       );
+      
+      console.log(`Filtered ${field} options:`, this.filteredOptions[field]);
     },
     
     // Select an option from the dropdown
@@ -1433,11 +1523,15 @@ export default {
       try {
         this.loading = true;
         
+        console.log(`Adding new ${field} option:`, value);
+        
         // Add the new option to the server
         const response = await complianceService.addCategoryBusinessUnit({
           source: field,
           value: value.trim()
         });
+        
+        console.log('Server response:', response);
         
         if (response.data.success) {
           // Add the new option to the local options
@@ -1447,25 +1541,38 @@ export default {
             value: newOption.value
           });
           
+          // Update filtered options to include the new option
+          this.filteredOptions[field].push({
+            id: newOption.id,
+            value: newOption.value
+          });
+          
           // Select the new option
           this.selectOption(index, field, newOption.value);
           
           PopupService.success(`Added new ${field} option: ${newOption.value}`);
+          
+          console.log(`Successfully added ${field} option:`, newOption);
         } else {
           throw new Error(response.data.error || 'Failed to add new option');
         }
       } catch (error) {
         console.error(`Failed to add new ${field} option:`, error);
-        PopupService.error(`Failed to add new option: ${error.message || error}`);
+        
+        // Check if it's a duplicate error
+        if (error.response && error.response.data && error.response.data.error && 
+            error.response.data.error.includes('already exists')) {
+          PopupService.warning(`"${value}" already exists. Please select it from the dropdown.`);
+        } else {
+          PopupService.error(`Failed to add new option: ${error.message || error}`);
+        }
       } finally {
         this.loading = false;
       }
     },
     
     addCompliance() {
-      // Get applicability from the selected policy
       const policyApplicability = this.selectedPolicy ? this.selectedPolicy.applicability || '' : '';
-      
       this.complianceList.push({
         ComplianceTitle: '',
         ComplianceItemDescription: '',
@@ -1487,26 +1594,20 @@ export default {
         Impact: 5.0,
         Probability: 5.0,
         Status: 'Under Review',
-        reviewer_id: this.users.length > 0 ? this.users[0].UserId : 2, // Default to first user or 2
-        CreatedByName: this.users.length > 0 ? this.users[0].UserName : '2', // Default reviewer name
+        reviewer_id: '', // No default reviewer
+        CreatedByName: '', // No default creator
         Applicability: policyApplicability,
         MaturityLevel: 'Initial',
         ActiveInactive: 'Active',
         PermanentTemporary: 'Permanent',
-        mitigationSteps: [{ stepNumber: 1, description: '' }], // Initialize with one empty step
+        mitigationSteps: [{ stepNumber: 1, description: '' }],
         validationErrors: {}
       });
-      
-      // Add empty search terms for the new compliance item
       this.businessUnitSearch.push('');
       this.riskTypeSearch.push('');
       this.riskCategorySearch.push('');
       this.riskBusinessImpactSearch.push('');
-      
-      // Switch to the newly added tab
       this.activeTab = this.complianceList.length - 1;
-      
-      // Initialize mitigation data for the new compliance item
       this.onMitigationStepChange(this.activeTab);
     },
     removeCompliance(idx) {
@@ -1539,98 +1640,119 @@ export default {
 
     async submitCompliance() {
       try {
-        // Validate all fields first
         const validation = this.validateAllFields();
         if (!validation.isValid) {
-          // Show validation errors
           PopupService.error(`Validation failed: ${validation.errors.join(', ')}`);
           return;
         }
-
         this.loading = true;
-        console.log('Submitting compliance list:', this.complianceList);
-
-        // Process each compliance item
+        const loggedInUserId = localStorage.getItem('user_id') || '';
+        const createdCompliances = [];
+        const errors = [];
+        if (this.complianceList.length > 1) {
+          PopupService.info(`Creating ${this.complianceList.length} compliance items. Please wait...`, 'Processing');
+        }
         for (let idx = 0; idx < this.complianceList.length; idx++) {
           const compliance = this.complianceList[idx];
-          
-          // Ensure mitigation data is properly generated from steps
-          this.onMitigationStepChange(idx);
-          
-          // Ensure all required fields are present
-          if (!this.selectedSubPolicy?.id) {
-            throw new Error('SubPolicy is required');
+          // Only set CreatedByName if user is logged in
+          compliance.CreatedByName = loggedInUserId || '';
+          try {
+            this.onMitigationStepChange(idx);
+            if (!this.selectedSubPolicy?.id) {
+              throw new Error('SubPolicy is required');
+            }
+            let mitigationToSend = compliance.mitigation;
+            if (typeof mitigationToSend === 'object' && mitigationToSend !== null) {
+              mitigationToSend = JSON.stringify(mitigationToSend);
+            } else if (typeof mitigationToSend !== 'string') {
+              mitigationToSend = '';
+            }
+            const complianceData = {
+              SubPolicy: this.selectedSubPolicy.id,
+              ComplianceTitle: compliance.ComplianceTitle?.trim(),
+              ComplianceItemDescription: compliance.ComplianceItemDescription?.trim(),
+              ComplianceType: compliance.ComplianceType?.trim(),
+              Scope: compliance.Scope?.trim(),
+              Objective: compliance.Objective?.trim(),
+              BusinessUnitsCovered: compliance.BusinessUnitsCovered?.trim(),
+              Identifier: compliance.Identifier?.trim() || '',
+              IsRisk: Boolean(compliance.IsRisk),
+              PossibleDamage: compliance.PossibleDamage?.trim(),
+              mitigation: mitigationToSend,
+              PotentialRiskScenarios: compliance.PotentialRiskScenarios?.trim(),
+              RiskType: compliance.RiskType?.trim(),
+              RiskCategory: compliance.RiskCategory?.trim(),
+              RiskBusinessImpact: compliance.RiskBusinessImpact?.trim(),
+              MandatoryOptional: compliance.MandatoryOptional || 'Mandatory',
+              ManualAutomatic: compliance.ManualAutomatic || 'Manual',
+              Impact: parseFloat(compliance.Impact) || 5.0,
+              Probability: parseFloat(compliance.Probability) || 5.0,
+              Status: 'Under Review',
+              ComplianceVersion: "1.0",
+              reviewer: compliance.reviewer_id, // Must be explicitly set
+              CreatedByName: compliance.CreatedByName, // Must be explicitly set
+              Applicability: compliance.Applicability?.trim(),
+              MaturityLevel: compliance.MaturityLevel || 'Initial',
+              ActiveInactive: compliance.ActiveInactive || 'Active',
+              PermanentTemporary: compliance.PermanentTemporary || 'Permanent',
+              ApprovalDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            };
+            const requiredFields = ['SubPolicy', 'ComplianceTitle', 'ComplianceItemDescription', 'reviewer'];
+            const missingFields = requiredFields.filter(field => !complianceData[field]);
+            if (missingFields.length > 0) {
+              throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+            }
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Request timeout')), 30000)
+            );
+            const response = await Promise.race([
+              complianceService.createCompliance(complianceData),
+              timeoutPromise
+            ]);
+            if (!response.data.success) {
+              throw new Error(response.data.message || 'Failed to create compliance');
+            }
+            createdCompliances.push({
+              ComplianceId: response.data.compliance_id,
+              ComplianceItemDescription: complianceData.ComplianceItemDescription,
+              Identifier: response.data.Identifier,
+              itemNumber: idx + 1
+            });
+            if (idx < this.complianceList.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+          } catch (error) {
+            errors.push(`Item ${idx + 1}: ${error.message || 'Failed to create compliance'}`);
           }
-
-          const complianceData = {
-            SubPolicy: this.selectedSubPolicy.id,
-            ComplianceTitle: compliance.ComplianceTitle?.trim(),
-            ComplianceItemDescription: compliance.ComplianceItemDescription?.trim(),
-            ComplianceType: compliance.ComplianceType?.trim(),
-            Scope: compliance.Scope?.trim(),
-            Objective: compliance.Objective?.trim(),
-            BusinessUnitsCovered: compliance.BusinessUnitsCovered?.trim(),
-            Identifier: compliance.Identifier?.trim() || '',
-            IsRisk: Boolean(compliance.IsRisk),
-            PossibleDamage: compliance.PossibleDamage?.trim(),
-            mitigation: compliance.mitigation?.trim(),
-            PotentialRiskScenarios: compliance.PotentialRiskScenarios?.trim(),
-            RiskType: compliance.RiskType?.trim(),
-            RiskCategory: compliance.RiskCategory?.trim(),
-            RiskBusinessImpact: compliance.RiskBusinessImpact?.trim(),
-            Criticality: compliance.Criticality || 'Medium',
-            MandatoryOptional: compliance.MandatoryOptional || 'Mandatory',
-            ManualAutomatic: compliance.ManualAutomatic || 'Manual',
-            Impact: parseFloat(compliance.Impact) || 5.0,
-            Probability: parseFloat(compliance.Probability) || 5.0,
-            Status: 'Under Review',
-            ComplianceVersion: "1.0",
-            reviewer: parseInt(compliance.reviewer_id), // Ensure it's a number
-            CreatedByName: compliance.CreatedByName || compliance.reviewer_id?.toString(),
-            Applicability: compliance.Applicability?.trim(),
-            MaturityLevel: compliance.MaturityLevel || 'Initial',
-            ActiveInactive: compliance.ActiveInactive || 'Active',
-            PermanentTemporary: compliance.PermanentTemporary || 'Permanent',
-            ApprovalDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          };
-
-          // Validate required fields
-          const requiredFields = ['SubPolicy', 'ComplianceTitle', 'ComplianceItemDescription', 'reviewer'];
-          const missingFields = requiredFields.filter(field => !complianceData[field]);
-          if (missingFields.length > 0) {
-            throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+        }
+        if (createdCompliances.length > 0) {
+          if (createdCompliances.length === this.complianceList.length) {
+            PopupService.success(`Successfully created ${createdCompliances.length} compliance item(s)!`);
+          } else {
+            PopupService.warning(`Created ${createdCompliances.length} out of ${this.complianceList.length} compliance items. Some items failed to create.`);
           }
-
-          console.log('Submitting compliance data:', complianceData);
-          const response = await complianceService.createCompliance(complianceData);
-          console.log('Compliance creation response:', response);
-          console.log('Response data:', response.data);
-
-          if (!response.data.success) {
-            throw new Error(response.data.message || 'Failed to create compliance');
-          }
-
-          // Show success popup using CompliancePopups
-          const popupData = {
-            ComplianceId: complianceData.ComplianceId,
-            ComplianceItemDescription: complianceData.ComplianceItemDescription,
-            Identifier: response.data.Identifier
-          };
-          console.log('Popup data:', popupData);
-          CompliancePopups.complianceCreated(popupData);
-
-          // Clear form instead of navigating away
+          createdCompliances.forEach(compliance => {
+            const popupData = {
+              ComplianceId: compliance.ComplianceId,
+              ComplianceItemDescription: compliance.ComplianceItemDescription,
+              Identifier: compliance.Identifier
+            };
+            CompliancePopups.complianceCreated(popupData);
+          });
+        }
+        if (errors.length > 0) {
+          PopupService.error(`Failed to create some compliance items: ${errors.join(', ')}`);
+        }
+        if (createdCompliances.length > 0) {
           this.resetForm();
+        } else {
+          PopupService.error('Failed to create any compliance items. Please check your input and try again.');
         }
       } catch (error) {
-        console.error('Error creating compliance:', error);
-        
-        // Check if it's an access control error
         if (error.response && [401, 403].includes(error.response.status)) {
           AccessUtils.showComplianceCreateDenied();
           return;
         }
-        
         this.$toast?.error(error.response?.data?.message || error.message || 'Failed to create compliance items');
       } finally {
         this.loading = false;
@@ -1665,18 +1787,13 @@ export default {
         }
       });
       
-      compliance.mitigation = JSON.stringify(mitigationData)
-        .replace(/\\"/g, '"')
-        .replace(/\\\\/g, '\\')
-        .replace(/\\n/g, '\n')
-        .replace(/\\t/g, '\t');
+      compliance.mitigation = mitigationData;
       
       // Validate the field
       this.validateComplianceField(compliance, 'mitigation', compliance.mitigation);
     },
 
     resetForm() {
-      // Reset compliance list to initial state
       this.complianceList = [{
         ComplianceTitle: '',
         ComplianceItemDescription: '',
@@ -1698,8 +1815,8 @@ export default {
         Impact: 5.0,
         Probability: 5.0,
         Status: 'Under Review',
-        reviewer_id: this.users.length > 0 ? this.users[0].UserId : 2,
-        CreatedByName: this.users.length > 0 ? this.users[0].UserName : '2',
+        reviewer_id: '', // No default reviewer
+        CreatedByName: '', // No default creator
         Applicability: '',
         MaturityLevel: 'Initial',
         ActiveInactive: 'Active',
@@ -1707,28 +1824,18 @@ export default {
         mitigationSteps: [{ stepNumber: 1, description: '' }],
         validationErrors: {}
       }];
-      
-      // Reset selection fields
       this.selectedFramework = '';
       this.selectedPolicy = '';
       this.selectedSubPolicy = '';
       this.policies = [];
       this.subPolicies = [];
-      
-      // Reset search arrays
       this.businessUnitSearch = [''];
       this.riskTypeSearch = [''];
       this.riskCategorySearch = [''];
       this.riskBusinessImpactSearch = [''];
-      
-      // Reset active tab
       this.activeTab = 0;
-      
-      // Reset any other form-related data
       this.error = null;
       this.loading = false;
-      
-      // Initialize mitigation data for the reset form
       this.onMitigationStepChange(0);
     },
          onFrameworkChange(option) {

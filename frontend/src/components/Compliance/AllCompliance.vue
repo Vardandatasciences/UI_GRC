@@ -85,10 +85,10 @@
               <div class="compliance-card-title">{{ subpolicy.name }}</div>
               <div class="compliance-card-category">{{ subpolicy.category }}</div>
               <div class="compliance-card-status" :class="statusClass(subpolicy.status)">{{ subpolicy.status }}</div>
-              <div class="compliance-card-desc">{{ subpolicy.description }}</div>
+              <div class="card-desc" :title="subpolicy.description">{{ truncateDescription(subpolicy.description) }}</div>
               <div class="compliance-metadata">
-                <span>Control: {{ subpolicy.control }}</span>
-                <span>{{ subpolicy.permanent_temporary }}</span>
+                <span :title="subpolicy.control">{{ truncateDescription(subpolicy.control) }}</span>
+                <span :title="subpolicy.permanent_temporary">{{ truncateDescription(subpolicy.permanent_temporary) }}</span>
               </div>
               <div class="compliance-card-actions">
                 <button class="compliance-action-btn primary" @click.stop="viewAllCompliances('subpolicy', subpolicy.id, subpolicy.name)">
@@ -625,7 +625,7 @@ async function selectPolicy(policy) {
     selectedPolicy.value = policy
     selectedSubpolicy.value = null
     
-    // Get active subpolicies for the selected policy using the correct endpoint
+    // Get subpolicies for the selected policy using the correct endpoint and param
     const response = await axios.get('/api/compliance/all-policies/subpolicies/', {
       params: { 
         policy_id: policy.id
@@ -638,12 +638,6 @@ async function selectPolicy(policy) {
       subpolicies.value = []
     }
   } catch (err) {
-    // Check if it's an access control error
-    if (err.response && [401, 403].includes(err.response.status)) {
-      AccessUtils.showViewAllComplianceDenied();
-      return;
-    }
-    
     error.value = 'Failed to load subpolicies'
     console.error('Error fetching subpolicies:', err)
     subpolicies.value = []
@@ -915,6 +909,13 @@ const formatMitigation = (mitigation) => {
   // Return as plain text
   return mitigation;
 };
+
+// Add this utility function for truncating descriptions
+function truncateDescription(desc) {
+  if (!desc) return '';
+  const maxLen = 80;
+  return desc.length > maxLen ? desc.slice(0, maxLen) + '...' : desc;
+}
 
 // Add methods for actions
 function handleViewCompliance(row) {

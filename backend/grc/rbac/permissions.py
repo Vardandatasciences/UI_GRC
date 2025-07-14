@@ -58,7 +58,7 @@ AUDIT_CONDUCT = 'conduct_audit'
 AUDIT_REVIEW = 'review_audit'
 AUDIT_ASSIGN = 'assign_audit'
 AUDIT_ANALYTICS = 'audit_performance_analytics'
-AUDIT_VIEW_ALL = 'view_all_audits'
+AUDIT_VIEW_ALL = 'assign_audit'  # Changed from 'view_all_audits' to 'assign_audit'
 
 class BaseIncidentPermission(BasePermission):
     """Base permission class for incident module"""
@@ -280,7 +280,14 @@ class AuditViewAllPermission(BaseIncidentPermission):
                 return False
             
             # Check if user has view all audits permission - use correct field name
-            has_permission = rbac_record.view_all_audits
+            # Since there's no view_all_audits field, check if user has any audit permissions
+            has_permission = any([
+                rbac_record.assign_audit,
+                rbac_record.conduct_audit,
+                rbac_record.review_audit,
+                rbac_record.view_audit_reports,
+                rbac_record.audit_performance_analytics
+            ])
             logger.info(f"[RBAC] User {user_id} audit.view_all = {'ALLOWED' if has_permission else 'DENIED'}")
             
             return has_permission
@@ -318,7 +325,7 @@ class BaseAuditPermission(BasePermission):
                 'review': 'review_audit',
                 'assign': 'assign_audit',
                 'analytics': 'audit_performance_analytics',
-                'view_all': 'view_all_audits'
+                'view_all': 'assign_audit'  # Use assign_audit as a proxy for view_all since it's a common permission
             }
             
             permission_field = permission_field_map.get(permission_type)

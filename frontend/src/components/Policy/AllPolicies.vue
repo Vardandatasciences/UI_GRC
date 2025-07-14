@@ -9,7 +9,7 @@
     </div>
 
     <!-- RBAC Access Denied -->
-    <div v-else-if="!canViewPolicies && !rbacLoading" class="access-denied-container">
+    <div v-else-if="!canViewPolicies" class="access-denied-container">
       <div class="access-denied-content">
         <i class="fas fa-shield-alt access-denied-icon"></i>
         <h2>Access Denied</h2>

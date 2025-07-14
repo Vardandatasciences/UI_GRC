@@ -392,7 +392,19 @@ class RiskInstanceSerializer(serializers.ModelSerializer):
             mutable_data['RiskOwner'] = 'System Owner'
         
         if not mutable_data.get('RiskStatus'):
-            mutable_data['RiskStatus'] = 'Open'
+            mutable_data['RiskStatus'] = 'Not Assigned'
+        
+        # Handle integer fields that might be sent as strings
+        integer_fields = ['ReportedBy', 'UserId', 'RiskId', 'IncidentId', 'ComplianceId', 'ReviewerId', 'ReviewerCount', 'RecurrenceCount']
+        for field in integer_fields:
+            if field in mutable_data and mutable_data[field] is not None:
+                try:
+                    if isinstance(mutable_data[field], str) and mutable_data[field].strip():
+                        mutable_data[field] = int(mutable_data[field])
+                    elif mutable_data[field] == '':
+                        mutable_data[field] = None
+                except (ValueError, TypeError):
+                    mutable_data[field] = None
         
         # Handle RiskMitigation if it's present but empty
         if 'RiskMitigation' in mutable_data and not mutable_data['RiskMitigation']:
@@ -406,7 +418,13 @@ class RiskInstanceSerializer(serializers.ModelSerializer):
         if 'RiskFormDetails' in mutable_data and not mutable_data['RiskFormDetails']:
             mutable_data['RiskFormDetails'] = None
         
-        return super().to_internal_value(mutable_data)
+        try:
+            result = super().to_internal_value(mutable_data)
+            return result
+        except Exception as e:
+            print(f"Serializer validation error: {e}")
+            print(f"Data being validated: {mutable_data}")
+            raise
     
     def create(self, validated_data):
         # Clean up the data before creating the instance

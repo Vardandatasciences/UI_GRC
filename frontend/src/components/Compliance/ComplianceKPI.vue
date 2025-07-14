@@ -97,11 +97,23 @@
       </div>
 
       <div v-else>
-        <div class="non-compliance-badge">
-          {{ nonComplianceCount }}
+        <div class="non-compliance-chart-container">
+          <Doughnut
+            v-if="nonComplianceChartData"
+            :data="nonComplianceChartData"
+            :options="nonComplianceChartOptions"
+          />
         </div>
-        <div class="non-compliance-label">
-          Total Non-Compliant Items
+        
+        <div class="non-compliance-summary">
+          <div class="total-count">
+            <div class="count-value">{{ nonComplianceData.total_non_compliance_count }}</div>
+            <div class="count-label">Total Non-Compliant Items</div>
+          </div>
+          <div class="framework-count">
+            <div class="count-value">{{ nonComplianceData.framework_count }}</div>
+            <div class="count-label">Frameworks</div>
+          </div>
         </div>
       </div>
     </div>
@@ -526,7 +538,50 @@ export default {
       },
       nonComplianceLoading: true,
       nonComplianceError: null,
-      nonComplianceCount: 0,
+      nonComplianceData: {
+        total_non_compliance_count: 0,
+        framework_breakdown: [],
+        framework_count: 0
+      },
+      nonComplianceChartData: null,
+      nonComplianceChartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        radius: '90%',
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            titleColor: '#1e293b',
+            bodyColor: '#475569',
+            borderColor: '#e2e8f0',
+            borderWidth: 1,
+            padding: 12,
+            boxPadding: 6,
+            usePointStyle: true,
+            callbacks: {
+              label: function(context) {
+                const value = context.raw;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return [
+                  `${context.label}: ${value}`,
+                  `Percentage: ${percentage}%`
+                ];
+              }
+            }
+          }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 1000,
+          easing: 'easeOutQuart'
+        }
+      },
       mitigatedLoading: true,
       mitigatedError: null,
       mitigatedCount: 0,
@@ -975,7 +1030,8 @@ export default {
         const response = await complianceService.getNonComplianceCount();
         console.log('Non-Compliance Response:', response);
         if (response.data && response.data.success) {
-          this.nonComplianceCount = response.data.data.non_compliance_count;
+          this.nonComplianceData = response.data.data;
+          this.updateNonComplianceChartData();
         } else {
           throw new Error(response.data?.message || 'Failed to fetch non-compliance count');
         }
@@ -991,6 +1047,41 @@ export default {
       } finally {
         this.nonComplianceLoading = false;
       }
+    },
+
+    updateNonComplianceChartData() {
+      if (!this.nonComplianceData || !this.nonComplianceData.framework_breakdown) return;
+      
+      const breakdown = this.nonComplianceData.framework_breakdown;
+      
+      // Add null check for breakdown array
+      if (!Array.isArray(breakdown) || breakdown.length === 0) return;
+      
+      // Modern gradient colors for doughnut chart
+      const colors = [
+        '#ef4444',  // Red
+        '#f97316',  // Orange
+        '#eab308',  // Yellow
+        '#84cc16',  // Lime
+        '#22c55e',  // Green
+        '#14b8a6',  // Teal
+        '#06b6d4',  // Cyan
+        '#3b82f6',  // Blue
+        '#8b5cf6',  // Violet
+        '#ec4899'   // Pink
+      ];
+      
+      this.nonComplianceChartData = {
+        labels: breakdown.map(item => item?.framework_name || 'Unknown'),
+        datasets: [{
+          data: breakdown.map(item => item?.count || 0),
+          backgroundColor: colors.slice(0, breakdown.length),
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverBorderWidth: 3,
+          hoverBorderColor: '#f8fafc'
+        }]
+      };
     },
 
     async fetchMitigatedCount() {
