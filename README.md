@@ -41,8 +41,12 @@ cd backend
 python -m venv venv
 source venv/bin/activate  # On Windows use: venv\Scripts\activate
 pip install -r requirements.txt
-python manage.py runserver
+python manage.py runserve
 
+
+## DB credentials
+
+go to GRC/backend/settings.py add Db credentials to connect with DataBase
 
 ##📌 Notes
 Make sure to update .env or settings.py with your MySQL DB credentials.
