@@ -13,3 +13,7 @@ pandas
 xmltodict
 reportlab
 requests
+celery
+python-docx
+langchain_ollama
+langchain
