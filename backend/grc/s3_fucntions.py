@@ -21,7 +21,8 @@ class RenderS3Client:
     """
     
     def __init__(self, 
-                 api_base_url: str = "https://aws-microservice.onrender.com",
+                #  api_base_url: str = "https://aws-microservice.onrender.com",
+                api_base_url: str = "http://65.1.95.39:3000/",
                  mysql_config: Optional[Dict] = None):
         """
         Initialize the Render S3 client with local MySQL

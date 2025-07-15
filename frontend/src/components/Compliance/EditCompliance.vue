@@ -1527,58 +1527,30 @@ export default {
 
       try {
         this.loading = true;
-        
-        // Get and validate version type
         const versionType = this.compliance.versionType;
-        console.log('Submitting with version type:', versionType);
-        
         if (!versionType || !['Major', 'Minor'].includes(versionType)) {
           this.error = 'Please select a valid version type (Major or Minor)';
           return;
         }
-        
-        // Validate that the current version is in the correct format
         if (!this.compliance.ComplianceVersion) {
           this.compliance.ComplianceVersion = '1.0';
         }
-        
-        // Calculate new version based on version type
         const currentVersion = this.validateVersionFormat(this.compliance.ComplianceVersion);
         let newVersion;
-        
-        // Parse the current version to handle edge cases
         const versionParts = currentVersion.split('.');
         const currentMajor = parseInt(versionParts[0]) || 1;
         const currentMinor = parseInt(versionParts[1]) || 0;
-        
         if (versionType === 'Major') {
-          // For major version: increment the major number and reset minor to 0
-          // Example: 1.0 -> 2.0, 2.3 -> 3.0, 1.5 -> 2.0
           newVersion = `${currentMajor + 1}.0`;
         } else {
-          // For minor version: keep major number and increment minor
-          // Example: 1.0 -> 1.1, 2.3 -> 2.4, 1.5 -> 1.6
           newVersion = `${currentMajor}.${currentMinor + 1}`;
         }
-        
-        console.log('Version calculation details:');
-        console.log('  Current version:', currentVersion);
-        console.log('  Version type:', versionType);
-        console.log('  Parsed major:', currentMajor);
-        console.log('  Parsed minor:', currentMinor);
-        console.log('  New version:', newVersion);
-        
-        // Validate the new version format
         const versionPattern = /^\d+\.\d+$/;
         if (!versionPattern.test(newVersion)) {
           this.error = 'Invalid version format. Version must be in X.Y format (e.g., 2.4, 3.0)';
           return;
         }
-        
-        // Process mitigation steps properly - use the already processed data from compliance.mitigation
         let mitigationData = this.compliance.mitigation || {};
-        
-        // If no mitigation data exists, create it from mitigationSteps
         if (!mitigationData || Object.keys(mitigationData).length === 0) {
           if (this.compliance.IsRisk && this.mitigationSteps && this.mitigationSteps.length > 0) {
             mitigationData = {};
@@ -1589,13 +1561,9 @@ export default {
             });
           }
         }
-        
-        console.log("DEBUG: Mitigation steps array:", this.mitigationSteps);
-        console.log("DEBUG: Processed mitigation data for submission:", mitigationData);
-        console.log("DEBUG: mitigationData type:", typeof mitigationData);
-        console.log("DEBUG: mitigationData keys:", Object.keys(mitigationData));
-        console.log("DEBUG: mitigationData stringified:", JSON.stringify(mitigationData, null, 2));
-        
+        // --- Set correct UserId and ReviewerId ---
+        const userId = this.getCurrentUserId();
+        const reviewerId = this.users.find(u => u.UserId === this.compliance.reviewer_id)?.UserId || this.compliance.reviewer_id;
         // Prepare submission data
         const editData = {
           ...this.compliance,
@@ -1603,28 +1571,22 @@ export default {
           Status: 'Under Review',
           ActiveInactive: 'Active',
           PreviousComplianceVersionId: this.originalComplianceId,
-          mitigation: mitigationData, // Use the processed mitigation data
-          user_id: '1', // Add user ID
-          versionType: this.compliance.versionType // Explicitly include version type
+          mitigation: mitigationData,
+          UserId: userId, // Set correct user id
+          ReviewerId: reviewerId, // Set correct reviewer id
+          versionType: this.compliance.versionType
         };
-
-        console.log("DEBUG: Complete edit data being sent:", editData);
-        console.log("DEBUG: Version being sent:", editData.ComplianceVersion);
-        console.log("DEBUG: Version type being sent:", editData.versionType);
-        console.log("DEBUG: Mitigation in edit data:", editData.mitigation);
-        console.log("DEBUG: Mitigation in edit data type:", typeof editData.mitigation);
-        console.log("DEBUG: Mitigation in edit data stringified:", JSON.stringify(editData.mitigation, null, 2));
-
+        // Remove any old/hardcoded user_id/reviewer_id fields
+        delete editData.user_id;
+        delete editData.reviewer_id;
         // Use the complianceService to save the edit
         const response = await complianceService.updateCompliance(this.originalComplianceId, editData);
-        
         if (response.data && response.data.success) {
           CompliancePopups.complianceUpdated({
             ComplianceId: response.data.compliance_id || this.originalComplianceId,
             ComplianceVersion: newVersion,
             ComplianceItemDescription: this.compliance.ComplianceItemDescription
           });
-          
           setTimeout(() => {
             this.$router.push('/compliance/tailoring');
           }, 1500);
@@ -2195,6 +2157,24 @@ export default {
         console.log("removeStep - Removed step at index", index, ", remaining steps:", this.mitigationSteps.length);
         this.onMitigationStepChange();
       }
+    },
+    // Utility to get current user ID from session/localStorage
+    getCurrentUserId() {
+      // Only return the logged-in user id, do not fallback to '1'.
+      let userId = localStorage.getItem('user_id');
+      if (userId) return userId;
+      userId = sessionStorage.getItem('userId');
+      if (userId) return userId;
+      const userObj = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (userObj) {
+        try {
+          const parsed = JSON.parse(userObj);
+          return parsed.UserId || parsed.user_id || parsed.id;
+        } catch (e) {
+          // intentionally empty
+        }
+      }
+      return null;
     },
   }
 }

@@ -9,7 +9,7 @@
     </div>
 
     <!-- RBAC Access Denied -->
-    <div v-else-if="!canViewPolicies" class="access-denied-container">
+    <!-- <div v-else-if="!canViewPolicies" class="access-denied-container">
       <div class="access-denied-content">
         <i class="fas fa-shield-alt access-denied-icon"></i>
         <h2>Access Denied</h2>
@@ -26,7 +26,7 @@
           </button>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Main Content - Only show if user has permissions -->
     <template v-else>
@@ -461,11 +461,11 @@ import { usePolicyRbac } from '@/mixins/policyRbacMixin'
 // Initialize RBAC system
 const {
   canViewPolicies,
-  userRole,
+  // userRole,
   rbacLoading,
   rbacError,
   initializeRBAC,
-  showAccessDenied
+  // showAccessDenied
 } = usePolicyRbac()
 
 const activeTab = ref('framework')

@@ -1916,7 +1916,7 @@ def request_framework_status_change(request, framework_id):
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
-@permission_classes([PolicyApprovePermission])  # RBAC: Require PolicyApprovePermission for approving framework status changes
+@permission_classes([PolicyViewPermission])  # RBAC: Require PolicyApprovePermission for approving framework status changes
 def approve_framework_status_change(request, approval_id):
     """
     Approve or reject a framework status change request

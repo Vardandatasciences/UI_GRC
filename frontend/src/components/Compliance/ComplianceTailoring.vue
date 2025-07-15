@@ -480,6 +480,22 @@ export default {
       date.setDate(date.getDate() + 7);
       return date.toISOString().split('T')[0];
     },
+    getCurrentUserId() {
+      let userId = localStorage.getItem('user_id');
+      if (userId) return userId;
+      userId = sessionStorage.getItem('userId');
+      if (userId) return userId;
+      const userObj = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (userObj) {
+        try {
+          const parsed = JSON.parse(userObj);
+          return parsed.UserId || parsed.user_id || parsed.id || '1';
+        } catch (e) {
+          // intentionally empty
+        }
+      }
+      return '1';
+    },
     navigateToEdit(compliance) {
       // Initialize the mitigation steps before navigation using the same parsing logic
       if (compliance.mitigation) {
@@ -488,7 +504,11 @@ export default {
       } else {
         compliance.mitigationSteps = [{ description: '' }];
       }
-      console.log('Initialized mitigation steps:', compliance.mitigationSteps);
+      // --- Ensure reviewer_id is set for editing ---
+      if (compliance.ReviewerId) {
+        compliance.reviewer_id = compliance.ReviewerId;
+      }
+      // Do not set UserId or reviewer_id to any default value here
       this.$router.push(`/compliance/edit/${compliance.ComplianceId}`);
     },
     parseMitigationSteps(mitigation) {

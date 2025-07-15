@@ -1278,11 +1278,11 @@ export default {
       return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
     },
     async submitCopy() {
+      if (this.loading) return; // Prevent double submission
       if (!this.canSaveCopy) {
         this.error = 'Please fill all required fields and select a destination.';
         return;
       }
-      
       try {
         this.loading = true;
         this.error = null;
@@ -1314,7 +1314,6 @@ export default {
           Scope: this.compliance.Scope || '',
           Objective: this.compliance.Objective || '',
           BusinessUnitsCovered: this.compliance.BusinessUnitsCovered || '',
-          
           // Risk fields
           IsRisk: Boolean(this.compliance.IsRisk),
           PossibleDamage: this.compliance.PossibleDamage || '',
@@ -1323,7 +1322,6 @@ export default {
           RiskType: this.compliance.RiskType || '',
           RiskCategory: this.compliance.RiskCategory || '',
           RiskBusinessImpact: this.compliance.RiskBusinessImpact || '',
-          
           // Classification fields
           Criticality: this.compliance.Criticality || 'Medium',
           MandatoryOptional: this.compliance.MandatoryOptional || 'Mandatory',
@@ -1331,29 +1329,24 @@ export default {
           Impact: String(this.compliance.Impact || 5.0),
           Probability: String(this.compliance.Probability || 5.0),
           MaturityLevel: this.compliance.MaturityLevel || 'Initial',
-          
           // Target location - CRITICAL: Make sure both field names are included
           SubPolicy: this.targetSubPolicyId,
           target_subpolicy_id: this.targetSubPolicyId,
-          
           // Status fields
           Status: 'Under Review',
           ActiveInactive: 'Inactive',
           ComplianceVersion: '1.0',
           PermanentTemporary: this.compliance.PermanentTemporary || 'Permanent',
-          
           // Reviewer
-          reviewer_id: this.compliance.reviewer_id,
-          reviewer: this.compliance.reviewer_id, // Support both field names
-          
+          reviewer_id: this.compliance.reviewer_id, // Only use the selected dropdown value
+          reviewer: this.compliance.reviewer_id, // Only use the selected dropdown value
           // Other fields
           Applicability: this.compliance.Applicability || '',
           Identifier: '', // Will be auto-generated
-          CreatedByName: (this.compliance.reviewer_id || this.compliance.reviewer).toString(),
-          
+          CreatedByName: '', // Do not set user id by default
+          UserId: this.getCurrentUserId(), // Set the logged-in user id
           // Ensure all dates are properly formatted
           ApprovalDueDate: this.getDefaultDueDate(),
-          
           // Add any missing fields that might be required by backend
           ComplianceId: null, // Will be auto-generated
           FrameworkId: null, // Not needed for clone
@@ -1781,6 +1774,20 @@ export default {
       console.log('✅ Validation passed, submitting...');
       // If valid, proceed with submission
       this.submitCopy();
+    },
+    getCurrentUserId() {
+      let userId = localStorage.getItem('user_id');
+      if (userId) return userId;
+      userId = sessionStorage.getItem('userId');
+      if (userId) return userId;
+      const userObj = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (userObj) {
+        try {
+          const parsed = JSON.parse(userObj);
+          return parsed.UserId || parsed.user_id || parsed.id;
+        } catch (e) { /* intentionally empty: ignore JSON parse errors */ }
+      }
+      return null;
     }
   }
 }

@@ -1,8 +1,24 @@
 <template>
   <div class="compliance-container">
-    <div class="custom-header">
-      <span>Control Management</span>
-      <div class="custom-header-underline"></div>
+    <div class="compliance-view-header">
+      <h2 class="compliance-view-title">Control Management</h2>
+      <div class="compliance-header-actions">
+        <!-- Export controls -->
+        <div class="compliance-export-controls">
+          <select v-model="exportFormat" class="compliance-export-format-select">
+            <option value="xlsx">Excel (.xlsx)</option>
+            <option value="csv">CSV (.csv)</option>
+            <option value="pdf">PDF (.pdf)</option>
+            <option value="json">JSON (.json)</option>
+            <option value="xml">XML (.xml)</option>
+            <option value="txt">Text (.txt)</option>
+          </select>
+          <button @click="exportCompliances" class="compliance-export-btn" :disabled="isExporting">
+            <span v-if="isExporting">Exporting...</span>
+            <span v-else>Export</span>
+          </button>
+        </div>
+      </div>
     </div>
 
 
@@ -105,19 +121,6 @@
         <div class="compliance-section-header">
           <span>Compliances in {{ selectedSubpolicy.name }}</span>
           <div class="compliance-section-actions">
-            <!-- Export Controls -->
-            <div class="compliance-inline-export-controls">
-              <select v-model="selectedFormat" class="compliance-format-select">
-                <option value="xlsx">Excel (.xlsx)</option>
-                <option value="csv">CSV (.csv)</option>
-                <option value="pdf">PDF (.pdf)</option>
-                <option value="json">JSON (.json)</option>
-                <option value="xml">XML (.xml)</option>
-              </select>
-              <button class="compliance-export-btn" @click="handleExport(selectedFormat)">
-                <i class="fas fa-download"></i> Export
-              </button>
-            </div>
             <button class="compliance-view-toggle-btn small-view-toggle" @click="toggleViewMode">
               <i :class="viewMode === 'card' ? 'fas fa-list' : 'fas fa-th-large'"></i>
               {{ viewMode === 'card' ? 'List View' : 'Card View' }}
@@ -496,10 +499,13 @@ const subpolicies = ref([])
 const loading = ref(false)
 const error = ref(null)
 const versionModalTitle = ref('')
-const selectedFormat = ref('xlsx')
 const viewMode = ref('list') // Changed to list as default view
 const expandedCompliance = ref(null)
 const router = useRouter()
+
+// Export state
+const exportFormat = ref('xlsx')
+const isExporting = ref(false)
 
 // Define columns for DynamicTable
 const tableColumns = [
@@ -781,84 +787,120 @@ const viewAllCompliances = (type, id, name) => {
   });
 };
 
-async function handleExport(format) {
-  try {
-    if (!selectedSubpolicy.value) {
-      PopupService.warning('No subpolicy selected for export', 'Export Warning');
-      return;
-    }
-    
-    const itemType = 'subpolicy';
-    const itemId = selectedSubpolicy.value.SubPolicyId;
-    
-    // Show confirmation popup before export
-    PopupService.confirm(
-      `Do you want to export ${selectedSubpolicy.value.name} controls to ${format.toUpperCase()} format?`,
-      'Confirm Export',
-      async () => {
-        console.log(`Attempting export for ${itemType} ${itemId} in ${format} format`);
-        
-        // Show processing popup
-        PopupService.success('Export is being processed. This may take a few moments...', 'Processing Export');
-        
-        try {
-          // Update the API endpoint URL with path parameters
-          const response = await axios({
-            url: `/api/compliance/export/all-compliances/${format}/${itemType}/${itemId}/`,
-            method: 'GET',
-            responseType: 'blob',
-            timeout: 30000,
-            headers: {
-              'Accept': 'application/json, application/pdf, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv, application/xml'
-            }
-          });
 
-          // Handle successful download
-          const contentType = response.headers['content-type'];
-          const blob = new Blob([response.data], { type: contentType });
-          
-          // Get filename from header or create default
-          let filename = `compliances_${itemType}_${itemId}.${format}`;
-          const disposition = response.headers['content-disposition'];
-          if (disposition && disposition.includes('filename=')) {
-            filename = disposition.split('filename=')[1].replace(/"/g, '');
-          }
-          
-          // Trigger download
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(link.href);
-          
-          PopupService.success(`Export completed successfully! File: ${filename}`, 'Export Complete');
-        } catch (downloadError) {
-          // Check if it's an access control error
-          if (downloadError.response && [401, 403].includes(downloadError.response.status)) {
-            AccessUtils.showViewAllComplianceDenied();
-            return;
-          }
-          
-          console.error('Export error:', downloadError);
-          const errorMessage = downloadError.response?.data?.message || downloadError.message || 'Failed to export compliances';
-          PopupService.error(`Export failed: ${errorMessage}`, 'Export Error');
-        }
-      },
-      () => {
-        PopupService.success('Export cancelled', 'Cancelled');
-      }
-    );
-  } catch (error) {
-    console.error('Export error:', error);
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to export compliances';
-    PopupService.error(`Export failed: ${errorMessage}`, 'Export Error');
-  }
-}
 
 const toggleViewMode = () => {
   viewMode.value = viewMode.value === 'card' ? 'list' : 'card';
+}
+
+const exportCompliances = () => {
+  console.log('Exporting compliances...');
+  isExporting.value = true;
+  
+  // Determine what to export based on current selection
+  let dataToExport = [];
+  let exportOptions = {};
+  
+  if (selectedSubpolicy.value && selectedSubpolicy.value.compliances) {
+    // Export compliances for selected subpolicy
+    dataToExport = selectedSubpolicy.value.compliances.map(compliance => ({
+      ComplianceId: compliance.id,
+      ComplianceItemDescription: compliance.name,
+      Status: compliance.status,
+      Criticality: compliance.category,
+      MaturityLevel: compliance.maturityLevel,
+      MandatoryOptional: compliance.mandatoryOptional,
+      ManualAutomatic: compliance.manualAutomatic,
+      CreatedByName: compliance.createdBy,
+      CreatedByDate: compliance.createdDate,
+      ComplianceVersion: compliance.version,
+      Identifier: compliance.identifier,
+      SubPolicyName: selectedSubpolicy.value.name,
+      PolicyName: selectedPolicy.value?.name || '',
+      FrameworkName: selectedFramework.value?.name || ''
+    }));
+    exportOptions = {
+      item_type: 'subpolicy',
+      item_id: selectedSubpolicy.value.id,
+      filters: {
+        subpolicy_id: selectedSubpolicy.value.id
+      }
+    };
+  } else if (selectedPolicy.value) {
+    // Export compliances for selected policy
+    dataToExport = []; // Would need to fetch policy compliances
+    exportOptions = {
+      item_type: 'policy',
+      item_id: selectedPolicy.value.id,
+      filters: {
+        policy_id: selectedPolicy.value.id
+      }
+    };
+  } else if (selectedFramework.value) {
+    // Export compliances for selected framework
+    dataToExport = []; // Would need to fetch framework compliances
+    exportOptions = {
+      item_type: 'framework',
+      item_id: selectedFramework.value.id,
+      filters: {
+        framework_id: selectedFramework.value.id
+      }
+    };
+  } else {
+    // Export all compliances
+    dataToExport = [];
+    exportOptions = {
+      item_type: 'all',
+      filters: {}
+    };
+  }
+  
+  // Only send necessary fields to reduce payload size
+  const trimmedData = dataToExport.map(compliance => ({
+    ComplianceId: compliance.ComplianceId,
+    ComplianceItemDescription: compliance.ComplianceItemDescription,
+    Status: compliance.Status,
+    Criticality: compliance.Criticality,
+    MaturityLevel: compliance.MaturityLevel,
+    MandatoryOptional: compliance.MandatoryOptional,
+    ManualAutomatic: compliance.ManualAutomatic,
+    CreatedByName: compliance.CreatedByName,
+    CreatedByDate: compliance.CreatedByDate,
+    ComplianceVersion: compliance.ComplianceVersion,
+    Identifier: compliance.Identifier,
+    SubPolicyName: compliance.SubPolicyName,
+    PolicyName: compliance.PolicyName,
+    FrameworkName: compliance.FrameworkName
+  }));
+  
+  axios.post('/api/compliance/export/', {
+    file_format: exportFormat.value,
+    data: JSON.stringify(trimmedData),
+    options: JSON.stringify(exportOptions)
+  })
+  .then(response => {
+    console.log('Export successful:', response.data);
+    
+    // Check if we have a file URL
+    if (response.data && response.data.file_url) {
+      // Open the file URL in a new tab
+      window.open(response.data.file_url, '_blank');
+    }
+    
+    isExporting.value = false;
+    PopupService.success('Export completed successfully');
+  })
+  .catch(error => {
+    console.error('Export failed:', error);
+    
+    // Check if this is an access control error first
+    if (!AccessUtils.handleApiError(error, 'export compliances')) {
+      // Only show generic error if it's not an access denied error
+      PopupService.error('Export failed. Please try again.');
+    }
+    
+    isExporting.value = false;
+  });
 }
 
 const handleComplianceExpand = (compliance) => {
@@ -931,6 +973,63 @@ function handleEditCompliance(row) {
 <style src="./AllCompliance.css"></style>
 
 <style>
+/* Header layout with export controls */
+.compliance-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.compliance-view-title {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.compliance-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.compliance-export-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.compliance-export-format-select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.compliance-export-btn {
+  padding: 8px 15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.compliance-export-btn:hover {
+  background-color: #45a049;
+}
+
+.compliance-export-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
 /* Add these styles to your existing CSS */
 .version-grid {
   display: grid;

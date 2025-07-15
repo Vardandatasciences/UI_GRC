@@ -147,6 +147,10 @@ from .routes import previous_version
 from .routes import compliance
 from .routes import user_profile
 from .routes.user_profile import *
+
+
+from .compliance_views import get_compliance_approvals_by_user, get_compliance_approvals_by_reviewer
+# 
 # ============================================================================
 # AUTHENTICATION URLs
 # ============================================================================
@@ -442,6 +446,9 @@ compliance_urlpatterns = [
     path('api/compliance/export/all-compliances/<str:export_format>/',
          compliance_views.export_compliances,
          name='export-all-compliances-legacy'),
+    path('api/compliance/export/',
+         compliance_views.export_compliances_post,
+         name='export-compliances-post'),
     
     # Audit Information
     path('compliance/compliance/<int:compliance_id>/audit-info/',
@@ -461,7 +468,9 @@ compliance_urlpatterns = [
     
     # Testing and Utilities
     path('test-notification/', compliance_views.test_notification, name='test-notification'),
-    
+    # Compliance Approvals for User Tasks
+    path('compliance-approvals/user/<int:user_id>/', compliance_views.get_compliance_approvals_by_user, name='get_compliance_approvals_by_user'),
+    path('compliance-approvals/reviewer/<int:user_id>/', compliance_views.get_compliance_approvals_by_reviewer, name='get_compliance_approvals_by_reviewer'),
     # Additional API endpoints for subpolicy integration
     path('compliance/policies/<int:policy_id>/subpolicies/add/', add_subpolicy_to_policy, name='api-add-subpolicy-to-policy'),
 ]

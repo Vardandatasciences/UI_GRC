@@ -182,7 +182,93 @@
         </div>
       </div>
 
-
+      <!-- Auditor Section -->
+      <div @click="toggleSubmenu('auditor')" class="menu-item has-submenu" :class="{'expanded': openMenus.auditor}">
+        <i class="fas fa-user-tie icon"></i>
+        <span v-if="!isCollapsed">Auditor</span>
+        <i v-if="!isCollapsed" class="fas fa-chevron-right submenu-arrow"></i>
+      </div>
+      <div v-if="!isCollapsed && openMenus.auditor" class="submenu">
+        <div class="menu-item" @click="navigate('/auditor/dashboard')" :class="{'active': isActive('/auditor/dashboard')}">
+          <i class="fas fa-th-large icon"></i>
+          <span>Audits</span>
+        </div>
+        <div class="menu-item" @click="navigate('/auditor/assign')" :class="{'active': isActive('/auditor/assign')}">
+          <i class="fas fa-check-square icon"></i>
+          <span>Assign Audit</span>
+        </div>
+        <div class="menu-item" @click="navigate('/auditor/reviews')" :class="{'active': isActive('/auditor/reviews')}">
+          <i class="fas fa-tasks icon"></i>
+          <span>Review Audits</span>
+        </div>
+        <div class="menu-item" @click="navigate('/auditor/reports')" :class="{'active': isActive('/auditor/reports')}">
+          <i class="fas fa-file-alt icon"></i>
+          <span>Audit Reports</span>
+        </div>
+        <div @click="toggleSubmenu('performance')" class="menu-item has-submenu" :class="{'expanded': openMenus.performance}">
+          <i class="fas fa-chart-bar icon"></i>
+          <span>Performance Analysis</span>
+          <i class="fas fa-chevron-right submenu-arrow"></i>
+        </div>
+        <div v-if="openMenus.performance" class="submenu">
+          <div class="menu-item" @click="navigate('/auditor/performance/kpi')" :class="{'active': isActive('/auditor/performance/kpi')}">
+            <i class="fas fa-tachometer-alt icon"></i>
+            <span>KPIs Analysis</span>
+          </div>
+          <div class="menu-item" @click="navigate('/auditor/performance/userdashboard')" :class="{'active': isActive('/auditor/performance/userdashboard')}">
+            <i class="fas fa-chart-line icon"></i>
+            <span>Dashboard</span>
+          </div>
+        </div>
+      </div>
+      <!-- Incident Section -->
+      <div @click="toggleSubmenu('incident')" class="menu-item has-submenu" :class="{'expanded': openMenus.incident}">
+        <i class="fas fa-exclamation-circle icon"></i>
+        <span v-if="!isCollapsed">Incident</span>
+        <i v-if="!isCollapsed" class="fas fa-chevron-right submenu-arrow"></i>
+      </div>
+      <div v-if="!isCollapsed && openMenus.incident" class="submenu">
+        <div @click="toggleSubmenu('incidentManagement')" class="menu-item has-submenu" :class="{'expanded': openMenus.incidentManagement}">
+          <i class="fas fa-clipboard-list icon"></i>
+          <span>Incident Management</span>
+          <i class="fas fa-chevron-right submenu-arrow"></i>
+        </div>
+        <div v-if="!isCollapsed && openMenus.incidentManagement" class="submenu">
+          <div class="menu-item" @click="navigate('/incident/incident')" :class="{'active': isActive('/incident/incident')}">
+            <i class="fas fa-list icon"></i>
+            <span>Incident List</span>
+          </div>
+          <div class="menu-item" @click="navigate('/incident/create')" :class="{'active': isActive('/incident/create')}">
+            <i class="fas fa-plus icon"></i>
+            <span>Create Incident</span>
+          </div>
+          <!-- Audit Findings List -->
+          <div class="menu-item" @click="navigate('/incident/audit-findings')" :class="{'active': isActive('/incident/audit-findings')}">
+            <i class="fas fa-search icon"></i>
+            <span>Audit Findings</span>
+          </div>
+          <!-- User Tasks -->
+          <div class="menu-item" @click="navigate('/incident/user-tasks')" :class="{'active': isActive('/incident/user-tasks')}">
+            <i class="fas fa-user-check icon"></i>
+            <span>User Tasks</span>
+          </div>
+        </div>
+        <div @click="toggleSubmenu('incidentPerformance')" class="menu-item has-submenu" :class="{'expanded': openMenus.incidentPerformance}">
+          <i class="fas fa-chart-line icon"></i>
+          <span>Performance Analysis</span>
+          <i class="fas fa-chevron-right submenu-arrow"></i>
+        </div>
+        <div v-if="!isCollapsed && openMenus.incidentPerformance" class="submenu">
+          <div class="menu-item" @click="navigate('/incident/dashboard')" :class="{'active': isActive('/incident/dashboard')}">
+            <i class="fas fa-chart-pie icon"></i>
+            <span>KPIs Analysis</span>
+          </div>
+          <div class="menu-item" @click="navigate('/incident/performance/dashboard')" :class="{'active': isActive('/incident/performance/dashboard')}">
+            <i class="fas fa-tachometer-alt icon"></i>
+            <span>Dashboard</span>
+          </div>
+        </div>
+      </div>
       <!-- Risk Section -->
       <div @click="toggleSubmenu('risk')" class="menu-item has-submenu" :class="{'expanded': openMenus.risk}">
         <i class="fas fa-exclamation-triangle icon"></i>
@@ -257,95 +343,9 @@
           </div>
         </div>
       </div>
-      <!-- Auditor Section -->
-      <div @click="toggleSubmenu('auditor')" class="menu-item has-submenu" :class="{'expanded': openMenus.auditor}">
-        <i class="fas fa-user-tie icon"></i>
-        <span v-if="!isCollapsed">Auditor</span>
-        <i v-if="!isCollapsed" class="fas fa-chevron-right submenu-arrow"></i>
-      </div>
-      <div v-if="!isCollapsed && openMenus.auditor" class="submenu">
-        <div class="menu-item" @click="navigate('/auditor/dashboard')" :class="{'active': isActive('/auditor/dashboard')}">
-          <i class="fas fa-th-large icon"></i>
-          <span>Audits</span>
-        </div>
-        <div class="menu-item" @click="navigate('/auditor/assign')" :class="{'active': isActive('/auditor/assign')}">
-          <i class="fas fa-check-square icon"></i>
-          <span>Assign Audit</span>
-        </div>
-        <div class="menu-item" @click="navigate('/auditor/reviews')" :class="{'active': isActive('/auditor/reviews')}">
-          <i class="fas fa-tasks icon"></i>
-          <span>Review Audits</span>
-        </div>
-        <div class="menu-item" @click="navigate('/auditor/reports')" :class="{'active': isActive('/auditor/reports')}">
-          <i class="fas fa-file-alt icon"></i>
-          <span>Audit Reports</span>
-        </div>
-        <div @click="toggleSubmenu('performance')" class="menu-item has-submenu" :class="{'expanded': openMenus.performance}">
-          <i class="fas fa-chart-bar icon"></i>
-          <span>Performance Analysis</span>
-          <i class="fas fa-chevron-right submenu-arrow"></i>
-        </div>
-        <div v-if="openMenus.performance" class="submenu">
-          <div class="menu-item" @click="navigate('/auditor/performance/kpi')" :class="{'active': isActive('/auditor/performance/kpi')}">
-            <i class="fas fa-tachometer-alt icon"></i>
-            <span>KPIs Analysis</span>
-          </div>
-          <div class="menu-item" @click="navigate('/auditor/performance/userdashboard')" :class="{'active': isActive('/auditor/performance/userdashboard')}">
-            <i class="fas fa-chart-line icon"></i>
-            <span>Dashboard</span>
-          </div>
-        </div>
-      </div>
+      
 
-
-      <!-- Incident Section -->
-      <div @click="toggleSubmenu('incident')" class="menu-item has-submenu" :class="{'expanded': openMenus.incident}">
-        <i class="fas fa-exclamation-circle icon"></i>
-        <span v-if="!isCollapsed">Incident</span>
-        <i v-if="!isCollapsed" class="fas fa-chevron-right submenu-arrow"></i>
-      </div>
-      <div v-if="!isCollapsed && openMenus.incident" class="submenu">
-        <div @click="toggleSubmenu('incidentManagement')" class="menu-item has-submenu" :class="{'expanded': openMenus.incidentManagement}">
-          <i class="fas fa-clipboard-list icon"></i>
-          <span>Incident Management</span>
-          <i class="fas fa-chevron-right submenu-arrow"></i>
-        </div>
-        <div v-if="!isCollapsed && openMenus.incidentManagement" class="submenu">
-          <div class="menu-item" @click="navigate('/incident/incident')" :class="{'active': isActive('/incident/incident')}">
-            <i class="fas fa-list icon"></i>
-            <span>Incident List</span>
-          </div>
-          <div class="menu-item" @click="navigate('/incident/create')" :class="{'active': isActive('/incident/create')}">
-            <i class="fas fa-plus icon"></i>
-            <span>Create Incident</span>
-          </div>
-          <!-- Audit Findings List -->
-          <div class="menu-item" @click="navigate('/incident/audit-findings')" :class="{'active': isActive('/incident/audit-findings')}">
-            <i class="fas fa-search icon"></i>
-            <span>Audit Findings</span>
-          </div>
-          <!-- User Tasks -->
-          <div class="menu-item" @click="navigate('/incident/user-tasks')" :class="{'active': isActive('/incident/user-tasks')}">
-            <i class="fas fa-user-check icon"></i>
-            <span>User Tasks</span>
-          </div>
-        </div>
-        <div @click="toggleSubmenu('incidentPerformance')" class="menu-item has-submenu" :class="{'expanded': openMenus.incidentPerformance}">
-          <i class="fas fa-chart-line icon"></i>
-          <span>Performance Analysis</span>
-          <i class="fas fa-chevron-right submenu-arrow"></i>
-        </div>
-        <div v-if="!isCollapsed && openMenus.incidentPerformance" class="submenu">
-          <div class="menu-item" @click="navigate('/incident/dashboard')" :class="{'active': isActive('/incident/dashboard')}">
-            <i class="fas fa-chart-pie icon"></i>
-            <span>KPIs Analysis</span>
-          </div>
-          <div class="menu-item" @click="navigate('/incident/performance/dashboard')" :class="{'active': isActive('/incident/performance/dashboard')}">
-            <i class="fas fa-tachometer-alt icon"></i>
-            <span>Dashboard</span>
-          </div>
-        </div>
-      </div>
+      
     </nav>
 
     <div class="bottom-section">

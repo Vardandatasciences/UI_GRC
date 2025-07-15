@@ -1343,6 +1343,7 @@ def submit_compliance_review(request, approval_id):
         all_versions = PolicyApproval.objects.filter(Identifier=approval.Identifier)
         original_user_version = all_versions.filter(Version__startswith='u').order_by('ApprovalId').first()
         original_user_id = original_user_version.UserId if original_user_version else approval.UserId
+        original_reviewer_id = original_user_version.ReviewerId if original_user_version else approval.ReviewerId
         # --- ReviewerId should be the current reviewer ---
         current_reviewer_id = approval.ReviewerId
         if approved_not is False:
@@ -1366,7 +1367,7 @@ def submit_compliance_review(request, approval_id):
                 Identifier=approval.Identifier,
                 ExtractedData=extracted_data,
                 UserId=original_user_id,
-                ReviewerId=current_reviewer_id,
+                ReviewerId=original_reviewer_id,
                 ApprovedNot=approved_not,
                 Version=new_version,
                 ApprovalDueDate=approval.ApprovalDueDate,
@@ -1388,7 +1389,7 @@ def submit_compliance_review(request, approval_id):
                 Identifier=approval.Identifier,
                 ExtractedData=extracted_data,
                 UserId=original_user_id,
-                ReviewerId=current_reviewer_id,
+                ReviewerId=original_reviewer_id,
                 ApprovedNot=approved_not,
                 Version=new_version,
                 ApprovalDueDate=approval.ApprovalDueDate,
@@ -1486,25 +1487,29 @@ def resubmit_compliance_approval(request, approval_id):
             return Response({'error': 'ExtractedData is required'}, status=status.HTTP_400_BAD_REQUEST)
         print(f"Resubmitting compliance with ID: {approval_id}, Identifier: {approval.Identifier}")
         all_versions = PolicyApproval.objects.filter(Identifier=approval.Identifier)
-        # Check for an existing pending user version (ApprovedNot=None)
-        pending_user_version = all_versions.filter(Version__startswith='u', ApprovedNot=None).order_by('-Version').first()
-        if pending_user_version:
-            # Update the existing pending user version instead of creating a new one
-            pending_user_version.ExtractedData = extracted_data
-            pending_user_version.save()
-            print(f"Updated existing pending user version: {pending_user_version.Version}")
-            return Response({
-                'success': True,
-                'message': 'Compliance review resubmitted successfully (updated existing pending user version)',
-                'ApprovalId': pending_user_version.ApprovalId,
-                'Version': pending_user_version.Version
-            })
-        # Otherwise, create a new user version
+        # Find the original user/reviewer for this identifier (from u1)
+        original_user_id = None
+        original_reviewer_id = None
+        for pa in all_versions:
+            if pa.Version and pa.Version.startswith('u'):
+                try:
+                    version_num = int(pa.Version[1:]) if len(pa.Version) > 1 else 1
+                    if version_num == 1:
+                        original_user_id = pa.UserId
+                        original_reviewer_id = pa.ReviewerId
+                        break
+                except ValueError:
+                    continue
+        if not original_user_id:
+            original_user_id = approval.UserId
+        if not original_reviewer_id:
+            original_reviewer_id = approval.ReviewerId
+        # Find the next user version (uN) for this Identifier
         highest_u_version = 0
         for pa in all_versions:
-            if pa.Version and pa.Version.startswith('u') and len(pa.Version) > 1:
+            if pa.Version and pa.Version.startswith('u'):
                 try:
-                    version_num = int(pa.Version[1:])
+                    version_num = int(pa.Version[1:]) if len(pa.Version) > 1 else 1
                     if version_num > highest_u_version:
                         highest_u_version = version_num
                 except ValueError:
@@ -1525,17 +1530,16 @@ def resubmit_compliance_approval(request, approval_id):
             }
         extracted_data['Status'] = 'Under Review'
         extracted_data['ActiveInactive'] = 'Inactive'
-        new_approval = PolicyApproval(
+        new_approval = PolicyApproval.objects.create(
             Identifier=approval.Identifier,
             ExtractedData=extracted_data,
-            UserId=approval.UserId,
-            ReviewerId=approval.ReviewerId,
+            UserId=original_user_id,
+            ReviewerId=original_reviewer_id,
             ApprovedNot=0,
             Version=new_version,
             PolicyId=approval.PolicyId,
             ApprovalDueDate=approval.ApprovalDueDate
         )
-        new_approval.save()
         print(f"Saved new approval with ID: {new_approval.ApprovalId}, Version: {new_approval.Version}")
         return Response({
             'success': True,
@@ -5190,15 +5194,59 @@ def edit_compliance(request, compliance_id):
 
         # Create PolicyApproval for the new version
         # Map frontend field names to backend field names
-        reviewer_id = request.data.get('reviewer_id') or request.data.get('ReviewerId', 2)
-        user_id = request.data.get('UserId', 1)
+        reviewer_id = request.data.get('reviewer_id') or request.data.get('ReviewerId')
+        user_id = request.data.get('UserId')
+        
+        # Enforce that both user_id and reviewer_id are provided
+        if not user_id:
+            return Response({
+                'success': False,
+                'message': 'UserId is required and must be set to the logged-in user.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        if not reviewer_id:
+            return Response({
+                'success': False,
+                'message': 'ReviewerId is required and must be set to the selected reviewer.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Find the original user/reviewer for this identifier (from u1)
+        identifier = new_compliance.Identifier
+        all_versions = PolicyApproval.objects.filter(Identifier=identifier)
+        original_user_id = None
+        original_reviewer_id = None
+        for pa in all_versions:
+            if pa.Version and pa.Version.startswith('u'):
+                try:
+                    version_num = int(pa.Version[1:]) if len(pa.Version) > 1 else 1
+                    if version_num == 1:
+                        original_user_id = pa.UserId
+                        original_reviewer_id = pa.ReviewerId
+                        break
+                except ValueError:
+                    continue
+        # If this is the first PolicyApproval (no u1), use request values
+        if not original_user_id:
+            original_user_id = user_id
+        if not original_reviewer_id:
+            original_reviewer_id = reviewer_id
+        # Find the next user version (uN) for this Identifier
+        highest_u_version = 0
+        for pa in all_versions:
+            if pa.Version and pa.Version.startswith('u'):
+                try:
+                    version_num = int(pa.Version[1:]) if len(pa.Version) > 1 else 1
+                    if version_num > highest_u_version:
+                        highest_u_version = version_num
+                except ValueError:
+                    continue
+        next_user_version = f"u{highest_u_version + 1}"
         
         policy_approval = PolicyApproval.objects.create(
-            Identifier=new_compliance.Identifier,
+            Identifier=identifier,
             ExtractedData=extracted_data,
-            UserId=user_id,  # Default to 1 if not provided
-            ReviewerId=reviewer_id,  # Handle both reviewer_id and ReviewerId
-            Version=f"u{new_version}",  # Use u prefix for user version
+            UserId=original_user_id,  # Always use original user id
+            ReviewerId=original_reviewer_id,  # Always use original reviewer id
+            Version=next_user_version,  # Always increment user version
             ApprovedNot=None,  # Set to None for pending approval
             ApprovalDueDate=datetime.date.today() + datetime.timedelta(days=7),  # Due in 7 days
             PolicyId=policy  # Set the policy relationship correctly
@@ -5841,3 +5889,109 @@ def get_compliance_approvals_by_reviewer(request, user_id):
         return Response(serializer.data, status=200)
     except Exception as e:
         return Response({'error': str(e)}, status=400)
+
+
+@api_view(['POST'])
+@csrf_exempt
+@permission_classes([ComplianceExportPermission])
+@compliance_export_required
+def export_compliances_post(request):
+    """Export compliances via POST request with data (similar to incident export)"""
+    try:
+        # Get user ID from request
+        user_id = request.user.id if request.user.is_authenticated else 1  # Default to system user
+        
+        # Get request data
+        data = request.data.get('data', '[]')
+        file_format = request.data.get('file_format', 'xlsx')
+        options = request.data.get('options', '{}')
+        
+        # Parse data and options
+        try:
+            compliances_data = json.loads(data) if isinstance(data, str) else data
+            export_options = json.loads(options) if isinstance(options, str) else options
+        except json.JSONDecodeError as e:
+            return Response({
+                'success': False,
+                'message': f'Invalid JSON data: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create export task
+        export_task = ExportTask.objects.create(
+            export_data={
+                'file_type': file_format,
+                'user_id': str(user_id),
+                'data': compliances_data,
+                'options': export_options
+            },
+            file_type=file_format,
+            user_id=str(user_id),
+            status='pending'
+        )
+        
+        # Get user email for notification
+        try:
+            from .notification_service import NotificationService
+            notification_service = NotificationService()
+            user_email, user_name = notification_service.get_user_email_by_id(user_id)
+        except Exception as e:
+            print(f"Error getting user email: {str(e)}")
+            user_email = None
+            user_name = None
+        
+        # Process the export
+        try:
+            # Use the export_data function from export_service
+            from .export_service1 import export_data
+            result = export_data(
+                data=compliances_data,
+                file_format=file_format,
+                user_id=str(user_id),
+                options=export_options,
+                export_id=export_task.id
+            )
+            
+            # Task is already updated by export_data function
+            # Just refresh the task to get updated values
+            export_task.refresh_from_db()
+            
+            # Send completion notification if we have user email
+            if user_email:
+                try:
+                    from .notification_service import NotificationService
+                    notification_service = NotificationService()
+                    notification_result = notification_service.send_export_completion_notification(
+                        user_id=user_id,
+                        export_details={
+                            'id': export_task.id,
+                            'file_name': export_task.file_name,
+                            'file_type': export_task.file_type,
+                            's3_url': export_task.s3_url,
+                            'completed_at': export_task.completed_at.strftime('%Y-%m-%d %H:%M:%S')
+                        }
+                    )
+                    print(f"Export completion notification result: {notification_result}")
+                except Exception as e:
+                    print(f"Error sending export completion notification: {str(e)}")
+            
+        except Exception as e:
+            # Update task with error
+            export_task.status = 'failed'
+            export_task.error = str(e)
+            export_task.save()
+            raise
+        
+        return Response({
+            'success': True,
+            'message': 'Export completed successfully',
+            'task_id': export_task.id,
+            'file_url': export_task.s3_url,
+            'file_name': export_task.file_name
+        })
+        
+    except Exception as e:
+        print(f"Error in export_compliances_post: {str(e)}")
+        return Response({
+            'success': False,
+            'message': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

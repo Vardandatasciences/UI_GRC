@@ -235,7 +235,34 @@ export const complianceService = {
   // Add updateCompliance function
   updateCompliance: (complianceId, data) => {
     // Format the data similar to createCompliance
+        // Always get user_id from localStorage/session and set as UserId
+    let userId = localStorage.getItem('user_id') || sessionStorage.getItem('userId');
+    if (!userId) {
+      const userObj = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (userObj) {
+        try {
+          const parsed = JSON.parse(userObj);
+          userId = parsed.UserId || parsed.user_id || parsed.id;
+        } catch (e) { /* intentionally empty */ }
+      }
+    }
+    // Always get reviewer id from data (reviewer_id or ReviewerId)
+    let reviewerId = data.reviewer_id || data.ReviewerId || data.reviewer;
+    // Build mitigation object if mitigationSteps is present
+    let mitigation = data.mitigation;
+    if (data.mitigationSteps && Array.isArray(data.mitigationSteps)) {
+      mitigation = {};
+      data.mitigationSteps.forEach((step, idx) => {
+        if (step.description && step.description.trim()) {
+          mitigation[`${idx + 1}`] = step.description.trim();
+        }
+      });
+    }
+    // Build the payload
     const formattedData = {
+      ...data,
+      UserId: userId,
+      ReviewerId: reviewerId,
       ComplianceTitle: data.ComplianceTitle || '',
       ComplianceItemDescription: data.ComplianceItemDescription || '',
       ComplianceType: data.ComplianceType || '',
