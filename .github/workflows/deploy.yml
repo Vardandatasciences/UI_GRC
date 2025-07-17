@@ -1,0 +1,71 @@
+name: Deploy Django Backend and Vue.js Frontend to EC2
+
+on:
+  push:
+    branches:
+      - main3  # Trigger deployment on push to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the repository
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    # Step 2: Set up SSH to communicate with EC2
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+    # Step 3: Deploy Django Backend
+    - name: Deploy Django Backend to EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+          # Pull the latest changes from the repo
+          cd /home/ubuntu/app/backend
+          git pull origin main
+
+          # Activate the virtual environment
+          source venv/bin/activate
+
+          # Install dependencies
+          pip install -r requirements.txt
+
+          # Run migrations
+          python manage.py migrate --fake-initial
+
+          # Collect static files
+          python manage.py collectstatic --noinput
+
+          # Restart Gunicorn to apply changes
+          sudo systemctl restart gunicorn
+        EOF
+
+    # Step 4: Deploy Vue.js Frontend
+    - name: Deploy Vue.js Frontend to EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+          # Pull the latest changes from the repo
+          cd /home/ubuntu/app/frontend
+          git pull origin main
+
+          # Install dependencies
+          npm install
+
+          # Build the Vue.js app
+          npm run build
+
+          # Restart Nginx to serve the latest build
+          sudo systemctl restart nginx
+        EOF
+
+    # Step 5: Verify the Deployment
+    - name: Verify Deployment
+      run: |
+        curl -I http://${{ secrets.EC2_PUBLIC_IP }}/api/frameworks/
+        curl -I http://${{ secrets.EC2_PUBLIC_IP }}
